@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Gold & Silver Rates &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .rate-hero-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+    .rate-card-hero {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-5);
+      box-shadow: var(--shadow-sm);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .rate-card-hero.gold-22k {
+      border-top: 4px solid var(--gold-500);
+      background: linear-gradient(180deg, rgba(254, 243, 199, 0.25) 0%, #FFFFFF 60%);
+    }
+    .rate-card-hero.gold-24k {
+      border-top: 4px solid var(--gold-600);
+    }
+    .rate-card-hero.silver {
+      border-top: 4px solid var(--slate-400);
+      background: linear-gradient(180deg, rgba(241, 245, 249, 0.5) 0%, #FFFFFF 60%);
+    }
+    .rate-val-display {
+      font-size: var(--font-size-2xl);
+      font-weight: 900;
+      color: var(--slate-900);
+      letter-spacing: -0.5px;
+      margin: var(--space-2) 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="rates">Gold & Silver Rates (தங்கம் & வெள்ளி விலை)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Live market pricing, counter overrides & historical appraisal rates.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button class="btn btn-secondary" id="refreshRatesBtn">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+              <span data-i18n="fetch_latest_rates">Fetch Latest Rates</span>
+            </button>
+            <button class="btn btn-primary" id="openOverrideModalBtn">
+              <span>⚡ Manual Rate Override</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Status & Source Pill Banner -->
+        <div class="card" style="margin-bottom:var(--space-4); background:var(--slate-900); color:#FFF;">
+          <div class="card-body" style="padding:var(--space-3) var(--space-4); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2);">
+            <div style="display:flex; align-items:center; gap:var(--space-3);">
+              <span id="rateStatusPill" class="badge badge-success" style="font-size:11px; padding:4px 10px;">● LIVE MARKET API</span>
+              <span style="font-size:12px; color:var(--slate-300);" id="rateSourceText">Source: api.metals.dev &bull; Base Currency: INR (₹)</span>
+            </div>
+            <div style="font-size:12px; color:var(--slate-300);">
+              <strong style="color:#FFF;">Last Sync:</strong> <span id="rateLastUpdatedText">30-Aug-2026 10:30 AM</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Hero Metal Rate Cards -->
+        <div class="rate-hero-grid">
+          
+          <!-- Gold 22K (916 Hallmark) Card - Main Pawn Valuation Rate -->
+          <div class="rate-card-hero gold-22k">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--gold-900);" data-i18n="gold_22k">Gold 22K (916 Hallmark)</span>
+                <span class="badge badge-gold">Pawn Base Rate</span>
+              </div>
+              <div class="rate-val-display text-gold" id="cardGold22k">₹ 6,765.00 / g</div>
+              <div style="font-size:12px; color:var(--slate-600);">8 Grams (1 Sovereign / சவரன்): <strong id="cardGold22kSovereign" style="color:var(--slate-900);">₹ 54,120.00</strong></div>
+            </div>
+            <div style="margin-top:var(--space-4); font-size:11px; color:var(--slate-500);">
+              Standard appraisal benchmark for loan eligibility calculations.
+            </div>
+          </div>
+
+          <!-- Gold 24K (Pure Gold) Card -->
+          <div class="rate-card-hero gold-24k">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--slate-700);" data-i18n="gold_24k">Gold 24K (Pure Gold 99.9%)</span>
+                <span class="badge badge-slate">Market Spot</span>
+              </div>
+              <div class="rate-val-display" id="cardGold24k">₹ 7,380.00 / g</div>
+              <div style="font-size:12px; color:var(--slate-600);">10 Grams: <strong id="cardGold24k10g" style="color:var(--slate-900);">₹ 73,800.00</strong></div>
+            </div>
+            <div style="margin-top:var(--space-4); font-size:11px; color:var(--slate-500);">
+              Bullion & fine gold international benchmark.
+            </div>
+          </div>
+
+          <!-- Silver Card -->
+          <div class="rate-card-hero silver">
+            <div>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:12px; font-weight:800; text-transform:uppercase; color:var(--slate-700);" data-i18n="silver_rate_1g">Silver (வெள்ளி விலை)</span>
+                <span class="badge badge-slate">999 Fine</span>
+              </div>
+              <div class="rate-val-display" id="cardSilver">₹ 92.50 / g</div>
+              <div style="font-size:12px; color:var(--slate-600);">1 Kilogram (1 kg): <strong id="cardSilverKg" style="color:var(--slate-900);">₹ 92,500.00</strong></div>
+            </div>
+            <div style="margin-top:var(--space-4); font-size:11px; color:var(--slate-500);">
+              Silver articles appraisal & settlement rate.
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Historical Rate Records Ledger Card -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title" data-i18n="rate_history_ledger">Historical Rates Audit Ledger</h3>
+              <span class="badge badge-slate" id="historyCountBadge">4 Records</span>
+            </div>
+            
+            <div style="display:flex; gap:var(--space-2); align-items:center;">
+              <input type="date" id="historyDateFilter" class="form-input" style="padding:4px 8px; height:32px; font-size:12px;" />
+              <button class="btn btn-outline btn-sm" id="clearDateFilterBtn">Clear</button>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Gold 24K (₹/g)</th>
+                  <th>Gold 22K (₹/g)</th>
+                  <th>Silver (₹/g)</th>
+                  <th>Source</th>
+                  <th>Override Flag</th>
+                  <th>Updated By</th>
+                  <th>Notes</th>
+                </tr>
+              </thead>
+              <tbody id="rateHistoryTbody">
+                <!-- Dynamically Injected via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: MANUAL RATE OVERRIDE
+       ========================================================================== -->
+  <div class="modal-backdrop" id="overrideRateModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">⚡ Manual Metal Rate Override</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('overrideRateModal')">&times;</button>
+      </div>
+      <form id="overrideRateForm">
+        <div class="modal-body">
+          <div class="alert alert-warning" style="margin-bottom:var(--space-4);" data-i18n="override_warning">
+            Overriding rates will apply to all subsequent pledge evaluations until reset.
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="overrideGold24k">Gold 24K Rate (₹ per gram) *</label>
+            <div class="input-group">
+              <span class="input-addon">₹</span>
+              <input type="number" step="0.01" id="overrideGold24k" class="form-input" placeholder="7380.00" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="overrideGold22k">
+              Gold 22K Rate (₹ per gram) *
+              <button type="button" class="btn btn-ghost btn-sm" id="autoCalc22kBtn" style="padding:0 4px; font-size:11px; float:right;">[Auto 91.67% of 24K]</button>
+            </label>
+            <div class="input-group">
+              <span class="input-addon">₹</span>
+              <input type="number" step="0.01" id="overrideGold22k" class="form-input" placeholder="6765.00" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="overrideSilver">Silver Rate (₹ per gram) *</label>
+            <div class="input-group">
+              <span class="input-addon">₹</span>
+              <input type="number" step="0.01" id="overrideSilver" class="form-input" placeholder="92.50" required />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="overrideNotes">Override Reason / Local Association Note</label>
+            <textarea id="overrideNotes" class="form-textarea" rows="2" placeholder="e.g. Madurai Jewellers Association daily evening revision..."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('overrideRateModal')" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary">Apply Shop Override Rates</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('rates');
+      renderRateCards();
+      renderHistoryTable();
+      bindRateEvents();
+    });
+
+    function renderRateCards() {
+      const r = window.rateManager.activeRates;
+
+      document.getElementById('cardGold24k').textContent = window.rateManager.formatRate(r.gold24k);
+      document.getElementById('cardGold24k10g').textContent = `₹ ${(r.gold24k * 10).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      document.getElementById('cardGold22k').textContent = window.rateManager.formatRate(r.gold22k);
+      document.getElementById('cardGold22kSovereign').textContent = `₹ ${(r.gold22k * 8).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      document.getElementById('cardSilver').textContent = window.rateManager.formatRate(r.silver);
+      document.getElementById('cardSilverKg').textContent = `₹ ${(r.silver * 1000).toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
+
+      // Status Pill
+      const statusPill = document.getElementById('rateStatusPill');
+      const sourceText = document.getElementById('rateSourceText');
+      const updatedText = document.getElementById('rateLastUpdatedText');
+
+      if (r.source === 'MANUAL_OVERRIDE' || r.isOverride) {
+        statusPill.className = 'badge badge-warning';
+        statusPill.textContent = '⚡ MANUAL ADMIN OVERRIDE';
+        sourceText.textContent = `Shop counter override by ${r.updatedBy || 'ADMIN'}`;
+      } else if (r.source === 'CACHED' || !navigator.onLine) {
+        statusPill.className = 'badge badge-slate';
+        statusPill.textContent = '💾 CACHED (OFFLINE)';
+        sourceText.textContent = 'Showing last known validated market rates';
+      } else {
+        statusPill.className = 'badge badge-success';
+        statusPill.textContent = '● LIVE MARKET API';
+        sourceText.textContent = 'Source: api.metals.dev (INR / gram)';
+      }
+
+      updatedText.textContent = window.Validation.formatDate(r.updatedAt) + ' ' + new Date(r.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function renderHistoryTable(dateFilter = '') {
+      const history = window.rateManager.getHistoricalRates(dateFilter);
+      const tbody = document.getElementById('rateHistoryTbody');
+      document.getElementById('historyCountBadge').textContent = `${history.length} Records`;
+
+      if (history.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:var(--space-4);">No historical rate records found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = history.map(h => {
+        const overrideBadge = h.isOverride
+          ? `<span class="badge badge-warning">YES (Override)</span>`
+          : `<span class="badge badge-success">NO (Live)</span>`;
+
+        return `
+          <tr>
+            <td>
+              <div class="cell-primary">${window.Validation.formatDate(h.date)}</div>
+              <div class="text-muted" style="font-size:11px;">${h.time}</div>
+            </td>
+            <td class="cell-mono">${window.rateManager.formatRate(h.gold24k)}</td>
+            <td class="cell-mono text-gold" style="font-weight:700;">${window.rateManager.formatRate(h.gold22k)}</td>
+            <td class="cell-mono">${window.rateManager.formatRate(h.silver)}</td>
+            <td><span class="badge badge-slate">${h.source}</span></td>
+            <td>${overrideBadge}</td>
+            <td style="font-size:11px;">${h.updatedBy}</td>
+            <td style="font-size:11px; color:var(--slate-600);">${h.notes || '-'}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindRateEvents() {
+      // Refresh Live Rates Button
+      document.getElementById('refreshRatesBtn').addEventListener('click', async () => {
+        UI.showLoading('Fetching latest market rates from provider...');
+        const res = await window.rateManager.fetchLatestRates(true);
+        UI.hideLoading();
+        if (res.success) {
+          UI.showToast(window.t('rates_refresh_success'), 'success');
+          renderRateCards();
+          renderHistoryTable();
+        }
+      });
+
+      // Open Override Modal
+      document.getElementById('openOverrideModalBtn').addEventListener('click', () => {
+        const cur = window.rateManager.activeRates;
+        document.getElementById('overrideGold24k').value = cur.gold24k;
+        document.getElementById('overrideGold22k').value = cur.gold22k;
+        document.getElementById('overrideSilver').value = cur.silver;
+        document.getElementById('overrideNotes').value = '';
+        UI.openModal('overrideRateModal');
+      });
+
+      // Auto Calc 22K button in modal
+      document.getElementById('autoCalc22kBtn').addEventListener('click', () => {
+        const g24 = parseFloat(document.getElementById('overrideGold24k').value);
+        if (g24 > 0) {
+          document.getElementById('overrideGold22k').value = Math.round(g24 * (22 / 24));
+        }
+      });
+
+      // Submit Override Form
+      document.getElementById('overrideRateForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const g24 = document.getElementById('overrideGold24k').value;
+        const g22 = document.getElementById('overrideGold22k').value;
+        const sil = document.getElementById('overrideSilver').value;
+        const notes = document.getElementById('overrideNotes').value;
+
+        UI.showLoading('Applying custom metal rates...');
+        const res = await window.rateManager.manualOverrideRates({
+          gold24k: g24,
+          gold22k: g22,
+          silver: sil,
+          notes
+        });
+        UI.hideLoading();
+
+        if (res.success) {
+          UI.showToast(window.t('rate_override_success'), 'success');
+          UI.closeModal('overrideRateModal');
+          renderRateCards();
+          renderHistoryTable();
+        } else {
+          UI.showToast(res.message || 'Failed to update rates', 'error');
+        }
+      });
+
+      // Date Filter
+      document.getElementById('historyDateFilter').addEventListener('change', (e) => {
+        renderHistoryTable(e.target.value);
+      });
+
+      document.getElementById('clearDateFilterBtn').addEventListener('click', () => {
+        document.getElementById('historyDateFilter').value = '';
+        renderHistoryTable('');
+      });
+    }
+  </script>
+</body>
+</html>

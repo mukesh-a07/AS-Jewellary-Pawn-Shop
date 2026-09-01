@@ -1,0 +1,165 @@
+/* ==========================================================================
+   AS JEWELLAR PAWN SHOP - RESPONSIVE & PRINT CSS
+   Mobile Counter Mode, Tablet Adjustments, Thermal & A4 Printing.
+   ========================================================================== */
+
+/* Tablet & Smaller Desktops (Under 1024px) */
+@media (max-width: 1024px) {
+  :root {
+    --sidebar-width: 220px;
+  }
+  
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-sidebar-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .global-search-btn {
+    min-width: 180px;
+  }
+}
+
+/* Mobile Devices & Touch POS Counter Mode (Under 768px) */
+@media (max-width: 768px) {
+  :root {
+    --header-height: 56px;
+  }
+
+  /* Hide Desktop Sidebar by default on Mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  /* Adjust Main Wrapper for Mobile */
+  .main-wrapper {
+    margin-left: 0;
+    padding-bottom: calc(var(--mobile-nav-height) + var(--space-4));
+  }
+
+  /* Show Mobile Bottom Navigation */
+  .mobile-bottom-nav {
+    display: flex;
+  }
+
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  /* Top Header compact on mobile */
+  .top-header {
+    padding: 0 var(--space-3);
+  }
+
+  .page-subtitle {
+    display: none;
+  }
+
+  .global-search-btn {
+    display: none;
+  }
+
+  .search-kbd {
+    display: none;
+  }
+
+  .content-body {
+    padding: var(--space-3);
+  }
+
+  /* Stack Grids on Mobile */
+  .grid-4, .grid-3, .grid-2 {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  /* Touch POS buttons expanded */
+  .btn-pos {
+    min-height: 84px;
+    padding: var(--space-3);
+  }
+
+  /* Full width modals on small screens */
+  .modal-dialog {
+    max-width: 100% !important;
+    height: 100%;
+    max-height: 100%;
+    border-radius: 0;
+  }
+
+  .modal-backdrop {
+    padding: 0;
+  }
+
+  /* Toasts positioned full width at top */
+  .toast-container {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    max-width: none;
+  }
+}
+
+/* Very Small Mobile (Under 400px) */
+@media (max-width: 400px) {
+  .lang-btn {
+    padding: 3px 8px;
+    font-size: 11px;
+  }
+
+  .connection-pill span {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   PRINT STYLESHEET (Pawn Tickets & Thermal Receipts)
+   ========================================================================== */
+@media print {
+  /* Hide non-printable UI shells */
+  .sidebar,
+  .top-header,
+  .mobile-bottom-nav,
+  .btn,
+  .no-print {
+    display: none !important;
+  }
+
+  body, .app-shell, .main-wrapper, .content-body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Printable Pawn Ticket (A4 / Form Format) */
+  .printable-ticket {
+    display: block !important;
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+    font-family: Arial, "Noto Sans Tamil", sans-serif;
+    color: #000000;
+  }
+
+  /* Thermal Receipt Format (80mm width) */
+  .thermal-receipt {
+    display: block !important;
+    width: 72mm;
+    margin: 0 auto;
+    font-size: 11px;
+    font-family: 'Courier New', monospace, "Noto Sans Tamil";
+    line-height: 1.3;
+  }
+}

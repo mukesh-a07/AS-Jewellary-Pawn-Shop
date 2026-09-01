@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Payments & Interest Collection &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .payment-layout {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--space-5);
+      margin-bottom: var(--space-6);
+    }
+    @media (max-width: 900px) {
+      .payment-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #paymentReceiptModal, #paymentReceiptModal * {
+        visibility: visible;
+      }
+      #paymentReceiptModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .modal-header, .modal-footer, .tab-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="payments">Payments & Interest (பணம் வசூல்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Collect monthly interest, partial principal repayments, and full loan payoff settlements.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="pledges.html" class="btn btn-outline">
+              <span>View All Pledges &rarr;</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="payment-layout">
+          
+          <!-- LEFT COLUMN: Ticket Selection & Payment Entry -->
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            
+            <!-- 1. Search Active Ticket Card -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header">
+                <h3 class="card-title">1. Select Active Pawn Ticket (அடகு சீட்டு தேர்வு)</h3>
+              </div>
+              <div class="card-body">
+                <div class="search-box" style="margin-bottom:var(--space-3);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="payTicketSearch" class="form-input" placeholder="Type Ticket No (e.g. PLG-2026-002341), Customer Mobile, or Name..." autocomplete="off" />
+                  <div id="payTicketSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                    <!-- Auto-complete options -->
+                  </div>
+                </div>
+
+                <!-- Selected Ticket Summary Banner -->
+                <div id="paySelectedTicketBanner" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3);">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-2);">
+                    <div>
+                      <div style="font-weight:900; font-size:var(--font-size-md); color:var(--slate-900);">
+                        <span class="cell-mono" id="payDisplayTicketNo"></span> &bull; <span id="payDisplayCustName"></span>
+                      </div>
+                      <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
+                        📞 <span id="payDisplayCustMobile"></span> &bull; 📍 <span id="payDisplayPacket"></span> &bull; 🗓 Pledged: <span id="payDisplayPledgeDate"></span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="payChangeTicketBtn">Change Ticket</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Transparent Calculation & Payment Form -->
+            <div class="card" id="payFormCard" style="border-top:3px solid var(--success-main);">
+              <div class="card-header">
+                <h3 class="card-title">2. Payment Collection & Allocation</h3>
+              </div>
+              <div class="card-body">
+                
+                <!-- Quick Preset Chips -->
+                <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--slate-600); margin-bottom:var(--space-2);">Quick Allocation Options</div>
+                <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-4);">
+                  <button type="button" class="btn btn-outline btn-sm" id="presetInterestOnlyBtn">💰 Interest Only (<span id="chipInterestAmt">₹ 750</span>)</button>
+                  <button type="button" class="btn btn-outline btn-sm" id="presetPlus5kBtn">📉 Pay ₹ 5,000</button>
+                  <button type="button" class="btn btn-outline btn-sm" id="presetPlus10kBtn">📉 Pay ₹ 10,000</button>
+                  <button type="button" class="btn btn-gold btn-sm" id="presetFullPayoffBtn">🏆 Full Payoff (<span id="chipFullAmt">₹ 75,750</span>)</button>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  
+                  <!-- Payment Amount -->
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="amount_to_pay">Payment Amount (₹) *</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="payAmountInput" class="form-input" style="font-size:18px; font-weight:900; color:var(--slate-900);" placeholder="0" />
+                    </div>
+                  </div>
+
+                  <!-- Payment Mode -->
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="payment_mode">Payment Mode</label>
+                    <select id="payModeSelect" class="form-select">
+                      <option value="CASH" selected>Cash (ரொக்கம்)</option>
+                      <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
+                      <option value="BANK_TRANSFER">Bank Transfer (IMPS / NEFT)</option>
+                      <option value="OTHER">Other Method</option>
+                    </select>
+                  </div>
+
+                </div>
+
+                <!-- UPI / Bank Reference Field (Conditional) -->
+                <div class="form-group" id="payUtrGroup" style="display:none;">
+                  <label class="form-label" data-i18n="utr_ref_number">UPI UTR / Bank Reference Number *</label>
+                  <input type="text" id="payUtrInput" class="form-input cell-mono" placeholder="e.g. 423891238910" />
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Internal Notes / Remarks</label>
+                  <input type="text" id="payNotesInput" class="form-input" placeholder="e.g. Counter cash interest payment" />
+                </div>
+
+                <!-- Live Allocation Breakdown Preview -->
+                <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-4);">
+                  <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:#166534; margin-bottom:6px;">Live Payment Allocation Preview</div>
+                  <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:2px;">
+                    <span>Interest Settled (வட்டி):</span>
+                    <strong style="color:var(--gold-900);" id="prevInterestSettled">₹ 0</strong>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:2px;">
+                    <span>Principal Settled (அசல்):</span>
+                    <strong style="color:#15803D;" id="prevPrincipalSettled">₹ 0</strong>
+                  </div>
+                  <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; border-top:1px dashed #86EFAC; padding-top:4px; margin-top:4px;">
+                    <span>Remaining Principal Balance:</span>
+                    <span style="color:#0F172A;" id="prevRemainingPrincipal">₹ 0</span>
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="paySubmitBtn" style="width:100%; padding:14px; font-size:15px; justify-content:center;">
+                  <span data-i18n="collect_payment_btn">Collect Payment & Issue Receipt</span>
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: ACCRUED INTEREST & LOAN DETAILS -->
+          <div>
+            <div class="card" style="position:sticky; top:80px; border-top:4px solid var(--gold-600);">
+              <div class="card-header">
+                <h3 class="card-title">Accrued Interest Calculator</h3>
+              </div>
+              <div class="card-body">
+                
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                  
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Current Principal:</span>
+                    <strong style="font-size:15px;" id="sidePrincipal">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Days Elapsed:</span>
+                    <strong id="sideDaysElapsed">0 Days (0.0 Mo)</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Interest Rate:</span>
+                    <strong>1.0% / month (12% p.a.)</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Total Accrued Interest:</span>
+                    <strong style="font-size:14px; color:var(--gold-900);" id="sideAccruedInt">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Previously Paid Interest:</span>
+                    <span style="color:var(--slate-600);" id="sidePrevPaidInt">₹ 0</span>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:14px; font-weight:bold; padding:var(--space-2) 0; border-top:1px solid var(--border-subtle); border-bottom:1px solid var(--border-subtle);">
+                    <span style="color:var(--gold-900);">Net Interest Due:</span>
+                    <span style="color:var(--gold-900);" id="sideNetIntDue">₹ 0</span>
+                  </div>
+
+                  <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md); padding:10px 12px; margin-top:var(--space-2); text-align:center;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#92400E; font-weight:bold;">Total Settlement Due</div>
+                    <div style="font-size:20px; font-weight:900; color:#78350F;" id="sideTotalDue">₹ 0</div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. PAYMENTS HISTORY LEDGER -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title" data-i18n="payment_history_ledger">Payment & Settlement Ledger</h3>
+              <span class="badge badge-gold" id="payCountBadge">0 Records</span>
+            </div>
+            
+            <div style="display:flex; gap:var(--space-2);">
+              <select class="form-select" id="payModeFilter" style="width:160px;">
+                <option value="ALL">All Modes (அனைத்தும்)</option>
+                <option value="CASH">Cash Only</option>
+                <option value="UPI">UPI Only</option>
+                <option value="BANK_TRANSFER">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Receipt No</th>
+                  <th>Date & Time</th>
+                  <th>Ticket Ref</th>
+                  <th>Customer</th>
+                  <th>Amount Paid</th>
+                  <th>Interest Settled</th>
+                  <th>Principal Settled</th>
+                  <th>Remaining Principal</th>
+                  <th>Mode</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="paymentsTableBody">
+                <!-- Dynamically Rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: PRINTABLE BILINGUAL PAYMENT RECEIPT (A4 & 80mm Thermal Dual Layouts)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="paymentReceiptModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="receiptModalTitle">Payment Collection Receipt</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('paymentReceiptModal')">&times;</button>
+      </div>
+
+      <!-- Format Switcher Tab Bar -->
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="receiptTabA4Btn" onclick="switchReceiptFormat('A4')">
+          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
+        </button>
+        <button type="button" class="tab-btn" id="receiptTabThermalBtn" onclick="switchReceiptFormat('THERMAL')">
+          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="receiptRenderContainer">
+        <!-- Rendered dynamically via BillingManager -->
+      </div>
+
+      <div class="modal-footer" style="background:#FFF;">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('paymentReceiptModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨 Print Official Receipt</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activePledgeForPayment = null;
+    let activePaymentForModal = null;
+    let activeReceiptFormat = 'A4';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('payments');
+      renderPaymentsTable();
+      bindPaymentEvents();
+
+      // Check URL query parameter ?ticket=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketParam = urlParams.get('ticket');
+      if (ticketParam) {
+        selectPledgeForPayment(ticketParam);
+      } else if (window.pledgePosManager.pledges.length > 0) {
+        // Default select first active pledge
+        const firstActive = window.pledgePosManager.pledges.find(p => p.status === 'ACTIVE' || p.status === 'DUE') || window.pledgePosManager.pledges[0];
+        selectPledgeForPayment(firstActive.ticketNo);
+      }
+    });
+
+    function selectPledgeForPayment(ticketNo) {
+      const p = window.pledgePosManager.pledges.find(item => item.ticketNo === ticketNo);
+      if (!p) return;
+
+      activePledgeForPayment = p;
+      const cust = window.customerManager.getCustomerById(p.customerId);
+
+      document.getElementById('paySelectedTicketBanner').style.display = 'block';
+      document.getElementById('payTicketSearch').parentElement.style.display = 'none';
+      document.getElementById('payTicketSuggestions').style.display = 'none';
+
+      document.getElementById('payDisplayTicketNo').textContent = p.ticketNo;
+      document.getElementById('payDisplayCustName').textContent = cust ? `${cust.nameEn} (${cust.nameTa || ''})` : p.customerId;
+      document.getElementById('payDisplayCustMobile').textContent = cust ? cust.mobile : '';
+      document.getElementById('payDisplayPacket').textContent = `${p.packetId} (${p.vaultLocation})`;
+      document.getElementById('payDisplayPledgeDate').textContent = p.pledgeDate;
+
+      // Calculate Accrual
+      const accrual = window.paymentManager.calculateInterestAccrual(p);
+
+      document.getElementById('sidePrincipal').textContent = `₹ ${accrual.principal.toLocaleString('en-IN')}`;
+      document.getElementById('sideDaysElapsed').textContent = `${accrual.daysElapsed} Days (${accrual.monthsElapsed} Mo)`;
+      document.getElementById('sideAccruedInt').textContent = `₹ ${accrual.accruedInterest.toLocaleString('en-IN')}`;
+      document.getElementById('sidePrevPaidInt').textContent = `₹ ${accrual.previouslyPaidInterest.toLocaleString('en-IN')}`;
+      document.getElementById('sideNetIntDue').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
+      document.getElementById('sideTotalDue').textContent = `₹ ${accrual.totalAmountDue.toLocaleString('en-IN')}`;
+
+      // Update Preset Chips
+      document.getElementById('chipInterestAmt').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
+      document.getElementById('chipFullAmt').textContent = `₹ ${accrual.totalAmountDue.toLocaleString('en-IN')}`;
+
+      // Default amount input to Net Interest Due
+      document.getElementById('payAmountInput').value = accrual.netInterestDue || 1000;
+      updateLiveAllocation();
+    }
+
+    function updateLiveAllocation() {
+      if (!activePledgeForPayment) return;
+      const amt = parseFloat(document.getElementById('payAmountInput').value) || 0;
+      const alloc = window.paymentManager.allocatePayment(amt, activePledgeForPayment, 'AUTO');
+
+      document.getElementById('prevInterestSettled').textContent = `₹ ${alloc.interestSettled.toLocaleString('en-IN')}`;
+      document.getElementById('prevPrincipalSettled').textContent = `₹ ${alloc.principalSettled.toLocaleString('en-IN')}`;
+      document.getElementById('prevRemainingPrincipal').textContent = `₹ ${alloc.remainingPrincipal.toLocaleString('en-IN')}`;
+    }
+
+    function bindPaymentEvents() {
+      // Live allocation on amount change
+      document.getElementById('payAmountInput').addEventListener('input', updateLiveAllocation);
+
+      // Payment Mode Toggle for UTR Input
+      document.getElementById('payModeSelect').addEventListener('change', (e) => {
+        const utrGroup = document.getElementById('payUtrGroup');
+        if (e.target.value === 'UPI' || e.target.value === 'BANK_TRANSFER') {
+          utrGroup.style.display = 'block';
+        } else {
+          utrGroup.style.display = 'none';
+        }
+      });
+
+      // Quick Preset Buttons
+      document.getElementById('presetInterestOnlyBtn').addEventListener('click', () => {
+        if (!activePledgeForPayment) return;
+        const accrual = window.paymentManager.calculateInterestAccrual(activePledgeForPayment);
+        document.getElementById('payAmountInput').value = accrual.netInterestDue;
+        updateLiveAllocation();
+      });
+
+      document.getElementById('presetPlus5kBtn').addEventListener('click', () => {
+        if (!activePledgeForPayment) return;
+        const accrual = window.paymentManager.calculateInterestAccrual(activePledgeForPayment);
+        document.getElementById('payAmountInput').value = accrual.netInterestDue + 5000;
+        updateLiveAllocation();
+      });
+
+      document.getElementById('presetPlus10kBtn').addEventListener('click', () => {
+        if (!activePledgeForPayment) return;
+        const accrual = window.paymentManager.calculateInterestAccrual(activePledgeForPayment);
+        document.getElementById('payAmountInput').value = accrual.netInterestDue + 10000;
+        updateLiveAllocation();
+      });
+
+      document.getElementById('presetFullPayoffBtn').addEventListener('click', () => {
+        if (!activePledgeForPayment) return;
+        const accrual = window.paymentManager.calculateInterestAccrual(activePledgeForPayment);
+        document.getElementById('payAmountInput').value = accrual.totalAmountDue;
+        updateLiveAllocation();
+      });
+
+      // Ticket Search Auto-complete
+      const searchInput = document.getElementById('payTicketSearch');
+      const suggBox = document.getElementById('payTicketSuggestions');
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (q.length < 1) {
+          suggBox.style.display = 'none';
+          return;
+        }
+
+        const matches = window.pledgePosManager.pledges.filter(p => {
+          const cust = window.customerManager.getCustomerById(p.customerId);
+          const custName = cust ? cust.nameEn.toLowerCase() : '';
+          const custMob = cust ? cust.mobile : '';
+          return p.ticketNo.toLowerCase().includes(q) || custName.includes(q) || custMob.includes(q) || p.packetId.toLowerCase().includes(q);
+        });
+
+        if (matches.length === 0) {
+          suggBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No matching active pledges found</div>`;
+        } else {
+          suggBox.innerHTML = matches.slice(0, 5).map(p => {
+            const cust = window.customerManager.getCustomerById(p.customerId);
+            return `
+              <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectPledgeForPayment('${p.ticketNo}')">
+                <div>
+                  <strong>${p.ticketNo}</strong> &bull; <span style="font-size:12px; color:var(--slate-700);">${cust ? cust.nameEn : p.customerId}</span>
+                  <div style="font-size:11px; color:var(--slate-500);">Principal: ₹${Number(p.loanAmount).toLocaleString('en-IN')} &bull; Packet: ${p.packetId}</div>
+                </div>
+                <span class="badge badge-outline">Select &rarr;</span>
+              </div>
+            `;
+          }).join('');
+        }
+        suggBox.style.display = 'block';
+      });
+
+      // Change Ticket
+      document.getElementById('payChangeTicketBtn').addEventListener('click', () => {
+        activePledgeForPayment = null;
+        document.getElementById('paySelectedTicketBanner').style.display = 'none';
+        searchInput.parentElement.style.display = 'block';
+        searchInput.value = '';
+        searchInput.focus();
+      });
+
+      // Submit Payment
+      document.getElementById('paySubmitBtn').addEventListener('click', handlePaymentSubmit);
+
+      // Filter Ledger
+      document.getElementById('payModeFilter').addEventListener('change', renderPaymentsTable);
+    }
+
+    async function handlePaymentSubmit() {
+      if (!activePledgeForPayment) {
+        UI.showToast('Please select a pawn ticket first', 'warning');
+        return;
+      }
+
+      const amt = parseFloat(document.getElementById('payAmountInput').value) || 0;
+      if (amt <= 0) {
+        UI.showToast('Please enter a valid payment amount > ₹ 0', 'warning');
+        return;
+      }
+
+      const alloc = window.paymentManager.allocatePayment(amt, activePledgeForPayment, 'AUTO');
+      const mode = document.getElementById('payModeSelect').value;
+      const utr = document.getElementById('payUtrInput').value.trim();
+      const notes = document.getElementById('payNotesInput').value.trim();
+
+      const btn = document.getElementById('paySubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Recording Payment...';
+
+      const payload = {
+        ticketNo: activePledgeForPayment.ticketNo,
+        customerId: activePledgeForPayment.customerId,
+        amount: amt,
+        paymentType: alloc.isFullSettlement ? 'FULL_SETTLEMENT' : (alloc.principalSettled > 0 ? 'COMBINED' : 'INTEREST_ONLY'),
+        paymentMode: mode,
+        referenceNo: utr || (mode === 'CASH' ? 'CASH-COUNTER' : 'UPI-CONFIRMED'),
+        interestSettled: alloc.interestSettled,
+        principalSettled: alloc.principalSettled,
+        remainingPrincipal: alloc.remainingPrincipal,
+        notes: notes || 'Counter collection'
+      };
+
+      const res = await window.paymentManager.recordPayment(payload);
+
+      if (res.success) {
+        btn.textContent = 'Payment Confirmed!';
+        UI.showToast(window.t('payment_recorded_success'), 'success');
+
+        renderPaymentsTable();
+        openReceiptModal(res.payment.paymentId, 'A4');
+
+        // Refresh calculations on active ticket
+        selectPledgeForPayment(activePledgeForPayment.ticketNo);
+
+        btn.disabled = false;
+        btn.textContent = 'Collect Payment & Issue Receipt';
+      } else {
+        UI.showToast(res.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Collect Payment & Issue Receipt';
+      }
+    }
+
+    function renderPaymentsTable() {
+      const modeFilter = document.getElementById('payModeFilter').value;
+      let list = [...window.paymentManager.payments];
+
+      if (modeFilter !== 'ALL') {
+        list = list.filter(p => p.paymentMode === modeFilter);
+      }
+
+      document.getElementById('payCountBadge').textContent = `${list.length} Records`;
+      const tbody = document.getElementById('paymentsTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align:center; padding:var(--space-6);">
+              <div class="empty-state" style="padding:0;">
+                <div class="empty-title">No payment records found</div>
+                <div class="empty-text">Collect payments at the counter above.</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => {
+        const cust = window.customerManager.getCustomerById(p.customerId);
+        const custName = cust ? cust.nameEn : p.customerId;
+
+        const statusBadge = (p.status === 'CONFIRMED')
+          ? `<span class="badge badge-success">CONFIRMED</span>`
+          : `<span class="badge badge-danger">REVERSED</span>`;
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">
+              <a href="#" onclick="openReceiptModal('${p.paymentId}', 'A4'); return false;" style="font-weight:800; color:inherit;">${p.paymentId}</a>
+            </td>
+            <td>${p.date}<br/><span style="font-size:10px; color:var(--slate-400);">${p.time || ''}</span></td>
+            <td class="cell-mono"><a href="pledges.html?ticket=${p.ticketNo}">${p.ticketNo}</a></td>
+            <td>${custName}</td>
+            <td class="cell-primary text-success" style="font-weight:900;">₹ ${Number(p.amount).toLocaleString('en-IN')}</td>
+            <td class="cell-mono text-gold" style="font-weight:700;">₹ ${Number(p.interestSettled || 0).toLocaleString('en-IN')}</td>
+            <td class="cell-mono">₹ ${Number(p.principalSettled || 0).toLocaleString('en-IN')}</td>
+            <td class="cell-mono">₹ ${Number(p.remainingPrincipal !== undefined ? p.remainingPrincipal : '-').toLocaleString('en-IN')}</td>
+            <td><span class="badge badge-slate">${p.paymentMode}</span></td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:var(--space-1);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="openReceiptModal('${p.paymentId}', 'A4')" title="Print A4 Receipt">📄 A4</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openReceiptModal('${p.paymentId}', 'THERMAL')" title="Print 80mm Slip">🧾 80mm</button>
+                ${p.status === 'CONFIRMED' ? `<button type="button" class="btn btn-ghost btn-sm" onclick="handleReverseAction('${p.paymentId}')" title="Reverse Payment" style="color:var(--danger-main);">↩</button>` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openReceiptModal(paymentId, format = 'A4') {
+      const p = window.paymentManager.payments.find(item => item.paymentId === paymentId);
+      if (!p) return;
+
+      activePaymentForModal = p;
+      activeReceiptFormat = format;
+      document.getElementById('receiptModalTitle').textContent = `Payment Receipt &bull; ${p.paymentId}`;
+
+      switchReceiptFormat(format);
+      UI.openModal('paymentReceiptModal');
+    }
+
+    function switchReceiptFormat(format) {
+      activeReceiptFormat = format;
+      const a4Btn = document.getElementById('receiptTabA4Btn');
+      const thermalBtn = document.getElementById('receiptTabThermalBtn');
+
+      if (format === 'A4') {
+        a4Btn.classList.add('active');
+        thermalBtn.classList.remove('active');
+      } else {
+        a4Btn.classList.remove('active');
+        thermalBtn.classList.add('active');
+      }
+
+      if (activePaymentForModal) {
+        const pledge = window.pledgePosManager.pledges.find(it => it.ticketNo === activePaymentForModal.ticketNo);
+        const cust = window.customerManager.getCustomerById(activePaymentForModal.customerId);
+        const docHtml = window.billingManager.renderPaymentReceipt(activePaymentForModal, pledge, cust, format, false);
+        document.getElementById('receiptRenderContainer').innerHTML = docHtml;
+      }
+    }
+
+    async function handleReverseAction(paymentId) {
+      if (confirm(window.t('reversal_confirm_msg'))) {
+        const res = await window.paymentManager.reversePayment(paymentId, 'Counter admin correction');
+        if (res.success) {
+          UI.showToast('Payment reversed successfully', 'success');
+          renderPaymentsTable();
+          if (activePledgeForPayment) {
+            selectPledgeForPayment(activePledgeForPayment.ticketNo);
+          }
+        } else {
+          UI.showToast(res.message, 'error');
+        }
+      }
+    }
+  </script>
+</body>
+</html>

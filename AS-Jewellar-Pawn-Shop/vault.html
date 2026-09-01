@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Vault & Packet Management &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .locker-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+      gap: var(--space-3);
+      margin-top: var(--space-3);
+    }
+    .locker-box {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      text-align: center;
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+    .locker-box:hover {
+      border-color: var(--primary-main);
+      background: #EFF6FF;
+    }
+    .locker-box.active {
+      border-color: var(--primary-main);
+      background: #DBEAFE;
+      box-shadow: var(--shadow-sm);
+    }
+    .locker-title {
+      font-weight: 800;
+      font-size: 13px;
+      color: var(--slate-900);
+    }
+    .locker-count {
+      font-size: 11px;
+      color: var(--slate-500);
+      margin-top: 2px;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printTagModal, #printTagModal * {
+        visibility: visible;
+      }
+      #printTagModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .modal-header, .modal-footer {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="vault_title">Vault & Packet Management (பெட்டகம் & பாக்கெட்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Physical safe inventory tracking, locker/tray hierarchy, immutable movement auditing, and pouch QR tags.</p>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="new-pledge.html" class="btn btn-primary">+ New Pledge POS</a>
+          </div>
+        </div>
+
+        <!-- 1. VAULT INVENTORY KPIS (5 Cards) -->
+        <div class="grid-5" style="margin-bottom:var(--space-5);">
+          
+          <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+            <div class="kpi-label" data-i18n="total_packets_safe">Packets in Vault</div>
+            <div class="kpi-value" id="kpiVaultPackets">0</div>
+            <div class="kpi-trend text-muted">Active Safekeeping</div>
+          </div>
+
+          <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+            <div class="kpi-label" data-i18n="total_weight_safe">Total Gold in Safe</div>
+            <div class="kpi-value text-gold" id="kpiVaultGoldWeight">0.000 g</div>
+            <div class="kpi-trend text-gold">Net Pure Weight</div>
+          </div>
+
+          <div class="kpi-card" style="border-top:3px solid var(--slate-700);">
+            <div class="kpi-label" data-i18n="total_capital_safe">Loan Capital Stored</div>
+            <div class="kpi-value" style="font-size:19px;" id="kpiVaultCapital">₹ 0</div>
+            <div class="kpi-trend text-muted">Secured Value</div>
+          </div>
+
+          <div class="kpi-card" style="border-top:3px solid var(--warning-main);">
+            <div class="kpi-label" data-i18n="out_for_verif_count">Out for Verification</div>
+            <div class="kpi-value text-warning" id="kpiVaultOutVerif">0</div>
+            <div class="kpi-trend text-warning">Counter Inspection</div>
+          </div>
+
+          <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+            <div class="kpi-label" data-i18n="vacant_packets">Released / Vacant</div>
+            <div class="kpi-value text-success" id="kpiVaultReleased">0</div>
+            <div class="kpi-trend text-success">Slots Freed</div>
+          </div>
+
+        </div>
+
+        <!-- 2. VISUAL VAULT LOCKER MATRIX -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 class="card-title">Physical Safe & Locker Occupancy</h3>
+            <div style="display:flex; gap:var(--space-2);">
+              <select id="vaultSelectBox" class="form-select" style="width:auto; font-size:13px; font-weight:bold;">
+                <option value="Vault A" selected>Vault A (Main Safe)</option>
+                <option value="Vault B">Vault B (Auxiliary Safe)</option>
+              </select>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="locker-grid" id="lockerGridContainer">
+              <!-- Rendered Dynamically (Lockers 01 - 10) -->
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PACKET MASTER DIRECTORY -->
+        <div class="card">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+            <div style="display:flex; align-items:center; gap:var(--space-3);">
+              <h3 class="card-title">Packet Master Inventory</h3>
+              <span class="badge badge-gold" id="packetCountBadge">0 Packets</span>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="tab-bar" style="margin:0; border:none; padding:0; flex-wrap:wrap;">
+              <button type="button" class="tab-btn active" data-vfilter="ALL">All</button>
+              <button type="button" class="tab-btn" data-vfilter="IN_VAULT">In Vault</button>
+              <button type="button" class="tab-btn" data-vfilter="OUT_FOR_VERIFICATION">Out for Verification</button>
+              <button type="button" class="tab-btn" data-vfilter="RELEASED">Released</button>
+              <button type="button" class="tab-btn" data-vfilter="AUCTION_REVIEW">Auction Review</button>
+            </div>
+          </div>
+
+          <!-- Search Bar -->
+          <div class="card-body" style="border-bottom:1px solid var(--border-subtle); padding:var(--space-3) var(--space-4);">
+            <div class="search-box">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <input type="text" id="packetSearchInput" class="form-input" placeholder="Search by Packet ID, Ticket No, or Customer Name..." />
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Packet Tag</th>
+                  <th>Physical Location</th>
+                  <th>Ticket Reference</th>
+                  <th>Customer (வாடிக்கையாளர்)</th>
+                  <th>Net Gold Wt</th>
+                  <th>Loan Amount</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="packetsTableBody">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: MOVE / RELOCATE PHYSICAL PACKET
+       ========================================================================== -->
+  <div class="modal-backdrop" id="movePacketModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" id="moveModalTitle">Relocate Physical Packet</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('movePacketModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div id="moveCurrentBanner" style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:var(--space-4); font-size:12.5px;">
+          <div><strong>Packet ID:</strong> <span id="moveDisplayPacket" class="cell-mono font-bold"></span></div>
+          <div><strong>Ticket Ref:</strong> <span id="moveDisplayTicket" class="cell-mono"></span></div>
+          <div><strong>Current Location:</strong> <span id="moveDisplayCurrentLoc" class="font-bold text-gold"></span></div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:var(--space-3);">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" data-i18n="vault_room">Vault Room</label>
+            <select id="moveVaultSelect" class="form-select">
+              <option value="Vault A" selected>Vault A (Main Safe)</option>
+              <option value="Vault B">Vault B (Auxiliary Safe)</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" data-i18n="locker_number">Locker Number</label>
+            <select id="moveLockerSelect" class="form-select">
+              <option value="Locker 01">Locker 01</option>
+              <option value="Locker 02">Locker 02</option>
+              <option value="Locker 03">Locker 03</option>
+              <option value="Locker 04">Locker 04</option>
+              <option value="Locker 05">Locker 05</option>
+              <option value="Locker 06">Locker 06</option>
+              <option value="Locker 07">Locker 07</option>
+              <option value="Locker 08">Locker 08</option>
+              <option value="Locker 09">Locker 09</option>
+              <option value="Locker 10">Locker 10</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-bottom:var(--space-3);">
+          <div class="form-group" style="margin:0;">
+            <label class="form-label" data-i18n="tray_number">Tray Number</label>
+            <select id="moveTraySelect" class="form-select">
+              <option value="Tray 01">Tray 01</option>
+              <option value="Tray 02">Tray 02</option>
+              <option value="Tray 03">Tray 03</option>
+              <option value="Tray 04">Tray 04</option>
+              <option value="Tray 05">Tray 05</option>
+              <option value="Tray 06">Tray 06</option>
+              <option value="Tray 07">Tray 07</option>
+              <option value="Tray 08">Tray 08</option>
+              <option value="Tray 09">Tray 09</option>
+              <option value="Tray 10">Tray 10</option>
+              <option value="Tray 11">Tray 11</option>
+              <option value="Tray 12">Tray 12</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin:0;">
+            <label class="form-label">Packet Physical Status</label>
+            <select id="moveStatusSelect" class="form-select">
+              <option value="IN_VAULT" selected>IN VAULT (பெட்டகத்தில்)</option>
+              <option value="OUT_FOR_VERIFICATION">OUT FOR VERIFICATION (சரிபார்ப்பு)</option>
+              <option value="AUCTION_REVIEW">AUCTION REVIEW (ஏல பரிசீலனை)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-bottom:var(--space-3);">
+          <label class="form-label" style="font-weight:800;" data-i18n="reason_for_move">Reason for Relocation *</label>
+          <input type="text" id="moveReasonInput" class="form-input" placeholder="e.g. Reorganized safe capacity / Tray consolidation" required />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="location_note">Location Pouch Note</label>
+          <input type="text" id="moveNoteInput" class="form-input" placeholder="e.g. Blue velvet pouch with certificate" />
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('movePacketModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveRelocationBtn">
+          <span>Save Relocation & Audit Record</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: PRINT PACKET QR TAG (Compact Thermal / Sticker)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="printTagModal">
+    <div class="modal-dialog modal-sm">
+      <div class="modal-header">
+        <h3 class="modal-title">Packet QR Tag</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('printTagModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:var(--space-4); background:#F1F5F9; display:flex; justify-content:center;" id="tagContainer">
+        <!-- Rendered Dynamically -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('printTagModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print Sticker Label</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: MOVEMENT AUDIT HISTORY LEDGER
+       ========================================================================== -->
+  <div class="modal-backdrop" id="historyModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="historyModalTitle">Packet Movement Audit Ledger</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('historyModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:var(--space-3);">
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Log ID</th>
+                <th>Timestamp</th>
+                <th>Previous Location</th>
+                <th>New Location</th>
+                <th>Status</th>
+                <th>Moved By</th>
+                <th>Admin Reason</th>
+              </tr>
+            </thead>
+            <tbody id="historyTbody">
+              <!-- Rendered Dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('historyModal')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activeVaultFilter = 'ALL';
+    let selectedLocker = null;
+    let activePacketForMove = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('vault');
+      refreshVaultScreen();
+      bindVaultEvents();
+    });
+
+    function refreshVaultScreen() {
+      renderVaultStats();
+      renderLockerGrid();
+      renderPacketsTable();
+    }
+
+    function renderVaultStats() {
+      const stats = window.vaultManager.getVaultStats();
+      document.getElementById('kpiVaultPackets').textContent = stats.totalPacketsInVault;
+      document.getElementById('kpiVaultGoldWeight').textContent = `${Number(stats.totalGoldWeightInSafe).toFixed(3)} g`;
+      document.getElementById('kpiVaultCapital').textContent = `₹ ${Number(stats.totalCapitalStoredInSafe).toLocaleString('en-IN')}`;
+      document.getElementById('kpiVaultOutVerif').textContent = stats.outForVerificationCount;
+      document.getElementById('kpiVaultReleased').textContent = stats.releasedCount;
+    }
+
+    function renderLockerGrid() {
+      const selectedVault = document.getElementById('vaultSelectBox').value;
+      const packets = window.vaultManager.getPackets('IN_VAULT').filter(p => p.vaultLocation === selectedVault);
+
+      const lockerCounts = {};
+      for (let i = 1; i <= 10; i++) {
+        const key = `Locker ${i.toString().padStart(2, '0')}`;
+        lockerCounts[key] = 0;
+      }
+
+      packets.forEach(p => {
+        if (lockerCounts[p.locker] !== undefined) {
+          lockerCounts[p.locker]++;
+        }
+      });
+
+      const container = document.getElementById('lockerGridContainer');
+      container.innerHTML = Object.keys(lockerCounts).map(lockerKey => {
+        const count = lockerCounts[lockerKey];
+        const isActive = (selectedLocker === lockerKey) ? 'active' : '';
+
+        return `
+          <div class="locker-box ${isActive}" onclick="filterByLocker('${lockerKey}')">
+            <div style="font-size:18px;">🗄️</div>
+            <div class="locker-title">${lockerKey}</div>
+            <div class="locker-count">${count} Packets</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function filterByLocker(lockerKey) {
+      if (selectedLocker === lockerKey) {
+        selectedLocker = null;
+      } else {
+        selectedLocker = lockerKey;
+      }
+      renderLockerGrid();
+      renderPacketsTable();
+    }
+
+    function renderPacketsTable() {
+      const search = (document.getElementById('packetSearchInput').value || '').toLowerCase().trim();
+      let list = window.vaultManager.getPackets(activeVaultFilter);
+
+      if (selectedLocker) {
+        list = list.filter(p => p.locker === selectedLocker);
+      }
+
+      if (search.length > 0) {
+        list = list.filter(p =>
+          p.packetId.toLowerCase().includes(search) ||
+          p.ticketNo.toLowerCase().includes(search) ||
+          p.customerName.toLowerCase().includes(search) ||
+          p.mobile.includes(search)
+        );
+      }
+
+      document.getElementById('packetCountBadge').textContent = `${list.length} Packets`;
+      const tbody = document.getElementById('packetsTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No packets found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => {
+        let statusBadge = `<span class="badge badge-success">IN VAULT</span>`;
+        if (p.status === 'OUT_FOR_VERIFICATION') {
+          statusBadge = `<span class="badge badge-warning">OUT FOR VERIF</span>`;
+        } else if (p.status === 'RELEASED') {
+          statusBadge = `<span class="badge badge-slate">RELEASED</span>`;
+        } else if (p.status === 'AUCTION_REVIEW') {
+          statusBadge = `<span class="badge badge-danger">AUCTION REV</span>`;
+        }
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary"><strong>${p.packetId}</strong></td>
+            <td>
+              <span class="font-bold">${p.vaultLocation}</span> &bull; <span class="badge badge-outline">${p.locker}</span> &bull; <span>${p.tray}</span>
+              <div style="font-size:10px; color:var(--slate-500);">${p.locationNote}</div>
+            </td>
+            <td class="cell-mono"><a href="pledges.html?ticket=${p.ticketNo}">${p.ticketNo}</a></td>
+            <td>
+              <div class="cell-primary"><a href="customer.html?id=${p.customerId}">${p.customerName}</a></div>
+              <div style="font-size:11px; color:var(--slate-500);">📞 ${p.mobile}</div>
+            </td>
+            <td class="cell-mono text-gold font-bold">${Number(p.netWeight).toFixed(3)} g</td>
+            <td class="cell-mono">₹ ${Number(p.loanAmount).toLocaleString('en-IN')}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:var(--space-1);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="openMoveModal('${p.packetId}')" title="Move Packet">
+                  <span>📍 Move</span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="openTagModal('${p.packetId}')" title="Print Tag">
+                  <span>🏷 Tag</span>
+                </button>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="openHistoryModal('${p.packetId}')" title="View Audit History">
+                  <span>📜</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindVaultEvents() {
+      // Vault Select change
+      document.getElementById('vaultSelectBox').addEventListener('change', () => {
+        selectedLocker = null;
+        renderLockerGrid();
+        renderPacketsTable();
+      });
+
+      // Filter Tabs
+      document.querySelectorAll('.tab-bar .tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.tab-bar .tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeVaultFilter = btn.getAttribute('data-vfilter');
+          renderPacketsTable();
+        });
+      });
+
+      // Search input
+      document.getElementById('packetSearchInput').addEventListener('input', () => {
+        renderPacketsTable();
+      });
+
+      // Relocation Save
+      document.getElementById('saveRelocationBtn').addEventListener('click', handleSaveRelocation);
+    }
+
+    function openMoveModal(packetId) {
+      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId);
+      if (!p) return;
+
+      activePacketForMove = p;
+      document.getElementById('moveDisplayPacket').textContent = p.packetId;
+      document.getElementById('moveDisplayTicket').textContent = p.ticketNo;
+      document.getElementById('moveDisplayCurrentLoc').textContent = `${p.vaultLocation} • ${p.locker} • ${p.tray}`;
+
+      document.getElementById('moveVaultSelect').value = p.vaultLocation || 'Vault A';
+      document.getElementById('moveLockerSelect').value = p.locker || 'Locker 01';
+      document.getElementById('moveTraySelect').value = p.tray || 'Tray 01';
+      document.getElementById('moveStatusSelect').value = p.status || 'IN_VAULT';
+      document.getElementById('moveReasonInput').value = '';
+      document.getElementById('moveNoteInput').value = p.locationNote || '';
+
+      UI.openModal('movePacketModal');
+    }
+
+    async function handleSaveRelocation() {
+      if (!activePacketForMove) return;
+
+      const reason = document.getElementById('moveReasonInput').value.trim();
+      if (!reason) {
+        UI.showToast('Please provide an admin reason for physical relocation', 'error');
+        document.getElementById('moveReasonInput').focus();
+        return;
+      }
+
+      const newVault = document.getElementById('moveVaultSelect').value;
+      const newLocker = document.getElementById('moveLockerSelect').value;
+      const newTray = document.getElementById('moveTraySelect').value;
+      const newStatus = document.getElementById('moveStatusSelect').value;
+      const newNote = document.getElementById('moveNoteInput').value.trim();
+
+      const btn = document.getElementById('saveRelocationBtn');
+      btn.disabled = true;
+      btn.textContent = 'Saving Relocation...';
+
+      const res = await window.vaultManager.updatePacketLocation(activePacketForMove.packetId, {
+        vaultLocation: newVault,
+        locker: newLocker,
+        tray: newTray,
+        status: newStatus,
+        locationNote: newNote
+      }, reason);
+
+      if (res.success) {
+        UI.showToast(window.t('relocation_success'), 'success');
+        UI.closeModal('movePacketModal');
+        refreshVaultScreen();
+      } else {
+        UI.showToast(res.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Save Relocation & Audit Record';
+    }
+
+    function openTagModal(packetId) {
+      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId);
+      if (!p) return;
+
+      const html = window.vaultManager.generatePacketQrTag(p);
+      document.getElementById('tagContainer').innerHTML = html;
+      UI.openModal('printTagModal');
+    }
+
+    function openHistoryModal(packetId) {
+      const logs = window.vaultManager.getPacketAuditHistory(packetId);
+      document.getElementById('historyModalTitle').textContent = `Movement Audit Ledger &bull; ${packetId}`;
+      const tbody = document.getElementById('historyTbody');
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:var(--space-4); color:var(--slate-400);">No movement logs recorded yet for this packet</td></tr>`;
+      } else {
+        tbody.innerHTML = logs.map(l => `
+          <tr>
+            <td class="cell-mono cell-primary">${l.logId}</td>
+            <td style="font-size:12px;">${l.timestamp.split('T')[0]}</td>
+            <td style="font-size:12px;">${l.previousLocation}</td>
+            <td style="font-size:12px; font-weight:bold; color:var(--primary-main);">${l.newLocation}</td>
+            <td><span class="badge badge-outline">${l.newStatus}</span></td>
+            <td>${l.movedBy}</td>
+            <td style="font-size:12px; color:var(--slate-700);">${l.reason}</td>
+          </tr>
+        `).join('');
+      }
+
+      UI.openModal('historyModal');
+    }
+  </script>
+</body>
+</html>

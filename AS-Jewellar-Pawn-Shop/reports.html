@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Reports & Cash Day-Book &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .report-tabs {
+      display: flex;
+      gap: var(--space-2);
+      border-bottom: 2px solid var(--border-subtle);
+      margin-bottom: var(--space-4);
+      overflow-x: auto;
+      padding-bottom: var(--space-1);
+    }
+    .report-tab-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 700;
+      border: none;
+      background: transparent;
+      color: var(--slate-600);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+    }
+    .report-tab-btn:hover {
+      color: var(--primary-main);
+    }
+    .report-tab-btn.active {
+      color: var(--primary-main);
+      border-bottom-color: var(--primary-main);
+      background: #F8FAFC;
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printableReportArea, #printableReportArea * {
+        visibility: visible;
+      }
+      #printableReportArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .app-header, .app-sidebar, .report-tabs, .filter-bar, .action-bar-no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header & Action Controls -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);" class="action-bar-no-print">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="reports">Reports & Day-Book (அறிக்கைகள் & பேரேடு)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Daily counter inflows/outflows, cash drawer reconciliation, portfolio risk, customer statements, and metal inventory.</p>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2);">
+            <button type="button" class="btn btn-outline" id="exportCsvBtn">
+              <span>📥 Export CSV</span>
+            </button>
+            <button type="button" class="btn btn-primary" id="printReportBtn">
+              <span>🖨 Print Report</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- DATE RANGE FILTER BAR -->
+        <div class="card filter-bar" style="margin-bottom:var(--space-4);">
+          <div class="card-body" style="padding:var(--space-3); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+            
+            <!-- Quick Preset Buttons -->
+            <div style="display:flex; gap:var(--space-1); flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm btn-outline date-preset-btn active" data-preset="TODAY" data-i18n="range_today">Today</button>
+              <button type="button" class="btn btn-sm btn-outline date-preset-btn" data-preset="YESTERDAY" data-i18n="range_yesterday">Yesterday</button>
+              <button type="button" class="btn btn-sm btn-outline date-preset-btn" data-preset="THIS_WEEK" data-i18n="range_this_week">This Week</button>
+              <button type="button" class="btn btn-sm btn-outline date-preset-btn" data-preset="THIS_MONTH" data-i18n="range_this_month">This Month</button>
+              <button type="button" class="btn btn-sm btn-outline date-preset-btn" data-preset="LAST_MONTH" data-i18n="range_last_month">Last Month</button>
+            </div>
+
+            <!-- Custom Date Inputs -->
+            <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:12px; font-weight:bold; color:var(--slate-700);" data-i18n="from_date">From:</label>
+                <input type="date" id="filterStartDate" class="form-input" style="padding:6px 10px; font-size:12px; width:auto;" />
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:12px; font-weight:bold; color:var(--slate-700);" data-i18n="to_date">To:</label>
+                <input type="date" id="filterEndDate" class="form-input" style="padding:6px 10px; font-size:12px; width:auto;" />
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="applyDateFilterBtn" data-i18n="apply_filter">Apply</button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 6 REPORT SELECTOR TABS -->
+        <div class="report-tabs">
+          <button type="button" class="report-tab-btn active" data-report="DAILY" data-i18n="rep_daily_daybook">📊 Daily Day-Book</button>
+          <button type="button" class="report-tab-btn" data-report="CASH" data-i18n="rep_cash_management">💰 Cash Drawer & Expenses</button>
+          <button type="button" class="report-tab-btn" data-report="OUTSTANDING" data-i18n="rep_outstanding">📑 Outstanding Portfolio</button>
+          <button type="button" class="report-tab-btn" data-report="CUSTOMER" data-i18n="rep_cust_statement">👤 Customer 360° Statement</button>
+          <button type="button" class="report-tab-btn" data-report="METALS" data-i18n="rep_metal_inventory">🥇 Gold/Silver Inventory</button>
+          <button type="button" class="report-tab-btn" data-report="MONTHLY" data-i18n="rep_monthly_summary">📅 Monthly Summary</button>
+        </div>
+
+        <!-- REPORT CONTENT CONTAINER (Printable) -->
+        <div id="printableReportArea">
+          
+          <!-- TAB 1: DAILY DAY-BOOK -->
+          <div id="viewDaily" class="report-view">
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+                <div class="kpi-label">Loans Disbursed (Outflow)</div>
+                <div class="kpi-value text-primary" id="dailyKpiLoans">₹ 0</div>
+                <div class="kpi-trend text-muted" id="dailyKpiLoansCount">0 New Pledges</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+                <div class="kpi-label">Total Collections (Inflow)</div>
+                <div class="kpi-value text-success" id="dailyKpiCollections">₹ 0</div>
+                <div class="kpi-trend text-success" id="dailyKpiModeBreakdown">Cash + UPI + Bank</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+                <div class="kpi-label">Interest Profit Inflow</div>
+                <div class="kpi-value text-gold" id="dailyKpiInterest">₹ 0</div>
+                <div class="kpi-trend text-gold">Accrued Profit</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--slate-700);">
+                <div class="kpi-label">Closings & Renewals</div>
+                <div class="kpi-value" id="dailyKpiClosings">0 / 0</div>
+                <div class="kpi-trend text-muted">Redemptions / Renewals</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Day-Book Transaction Ledger</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Date</th>
+                      <th>Type</th>
+                      <th>Ref Number</th>
+                      <th>Customer</th>
+                      <th>Inflow (+)</th>
+                      <th>Outflow (-)</th>
+                      <th>Mode</th>
+                      <th>Details</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dailyTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 2: CASH DAY-BOOK & EXPENSES -->
+          <div id="viewCash" class="report-view" style="display:none;">
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="kpi-card">
+                <div class="kpi-label" data-i18n="opening_balance">Opening Balance</div>
+                <div class="kpi-value" id="cashKpiOpening">₹ 1,00,000</div>
+                <div class="kpi-trend text-muted">Drawer Start</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+                <div class="kpi-label" data-i18n="cash_collections">Cash Collections (+)</div>
+                <div class="kpi-value text-success" id="cashKpiCollections">₹ 0</div>
+                <div class="kpi-trend text-success">Cash Inflow</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--danger-main);">
+                <div class="kpi-label">Loans & Expenses (-)</div>
+                <div class="kpi-value text-danger" id="cashKpiOutflows">₹ 0</div>
+                <div class="kpi-trend text-danger">Loans + Shop Expenses</div>
+              </div>
+              <div class="kpi-card" style="border-top:4px solid var(--gold-600); background:#FEFCE8;">
+                <div class="kpi-label" style="font-weight:900;" data-i18n="expected_closing_cash">Expected Closing Cash</div>
+                <div class="kpi-value text-gold" style="font-size:22px; font-weight:900;" id="cashKpiExpected">₹ 0</div>
+                <div class="kpi-trend" style="color:#78350F;">In Drawer Balance</div>
+              </div>
+            </div>
+
+            <!-- Expenses Section -->
+            <div class="card">
+              <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title" data-i18n="expenses_title">Shop Expenses Ledger</h3>
+                <button type="button" class="btn btn-primary btn-sm action-bar-no-print" id="openExpenseModalBtn">
+                  <span data-i18n="add_expense_btn">+ Add Shop Expense</span>
+                </button>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Expense ID</th>
+                      <th>Date</th>
+                      <th>Category</th>
+                      <th>Description</th>
+                      <th>Method</th>
+                      <th>Amount (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expensesTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 3: OUTSTANDING PORTFOLIO -->
+          <div id="viewOutstanding" class="report-view" style="display:none;">
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+                <div class="kpi-label">Active Pledges</div>
+                <div class="kpi-value" id="outKpiCount">0</div>
+                <div class="kpi-trend text-muted">Contracts in Force</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--slate-900);">
+                <div class="kpi-label">Outstanding Principal</div>
+                <div class="kpi-value" id="outKpiPrincipal">₹ 0</div>
+                <div class="kpi-trend text-muted">Total Capital Lent</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+                <div class="kpi-label">Accrued Interest Pending</div>
+                <div class="kpi-value text-gold" id="outKpiInterest">₹ 0</div>
+                <div class="kpi-trend text-gold">Earned to Date</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--danger-main);">
+                <div class="kpi-label">Overdue Loans (>12 Mo)</div>
+                <div class="kpi-value text-danger" id="outKpiOverdue">0</div>
+                <div class="kpi-trend text-danger">Action Required</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Live Outstanding Portfolio Ledger</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Ticket No</th>
+                      <th>Packet & Vault</th>
+                      <th>Customer</th>
+                      <th>Pledge Date</th>
+                      <th>Maturity</th>
+                      <th>Principal</th>
+                      <th>Accrued Interest</th>
+                      <th>Total Due</th>
+                      <th>Risk Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="outstandingTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 4: CUSTOMER 360 STATEMENT -->
+          <div id="viewCustomer" class="report-view" style="display:none;">
+            <div class="card action-bar-no-print" style="margin-bottom:var(--space-4);">
+              <div class="card-body" style="padding:var(--space-3);">
+                <div style="display:flex; align-items:center; gap:var(--space-3);">
+                  <label style="font-weight:bold; font-size:13px;">Select Customer:</label>
+                  <select id="custStatementSelect" class="form-select" style="max-width:360px;">
+                    <!-- Rendered Dynamically -->
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div id="custStatementContent">
+              <!-- Rendered Dynamically -->
+            </div>
+          </div>
+
+          <!-- TAB 5: GOLD/SILVER INVENTORY -->
+          <div id="viewMetals" class="report-view" style="display:none;">
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+                <div class="kpi-label">Total Gold 22K (916)</div>
+                <div class="kpi-value text-gold" id="metalKpi22k">0.000 g</div>
+                <div class="kpi-trend text-gold">Hallmark Pure</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--gold-600);">
+                <div class="kpi-label">Total Gold 24K (Pure)</div>
+                <div class="kpi-value" id="metalKpi24k">0.000 g</div>
+                <div class="kpi-trend text-muted">Fine Gold Coins</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--slate-400);">
+                <div class="kpi-label">Total Silver Articles</div>
+                <div class="kpi-value text-muted" id="metalKpiSilver">0.000 g</div>
+                <div class="kpi-trend text-muted">Pawn Vessels & Items</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+                <div class="kpi-label">Total Valuation at Safe</div>
+                <div class="kpi-value text-success" id="metalKpiValuation">₹ 0</div>
+                <div class="kpi-trend text-success">Live Market Value</div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Precious Metal Purity Breakdown</h3>
+              </div>
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Purity Category</th>
+                      <th>Karat</th>
+                      <th>Pledged Items Count</th>
+                      <th>Gross Weight (g)</th>
+                      <th>Net Pure Weight (g)</th>
+                      <th>Market Valuation (₹)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="metalsTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB 6: MONTHLY SUMMARY -->
+          <div id="viewMonthly" class="report-view" style="display:none;">
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+                <div class="kpi-label">Monthly Loans Disbursed</div>
+                <div class="kpi-value text-primary" id="monthKpiLoans">₹ 0</div>
+                <div class="kpi-trend text-muted" id="monthKpiLoansCount">0 Pledges</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+                <div class="kpi-label">Monthly Collections</div>
+                <div class="kpi-value text-success" id="monthKpiCollections">₹ 0</div>
+                <div class="kpi-trend text-success">Inflows</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+                <div class="kpi-label">Monthly Interest Profit</div>
+                <div class="kpi-value text-gold" id="monthKpiInterest">₹ 0</div>
+                <div class="kpi-trend text-gold">Profit Inflow</div>
+              </div>
+              <div class="kpi-card" style="border-top:3px solid var(--slate-700);">
+                <div class="kpi-label">Redemptions / Renewals</div>
+                <div class="kpi-value" id="monthKpiClosings">0 / 0</div>
+                <div class="kpi-trend text-muted">Settled Contracts</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: ADD SHOP EXPENSE
+       ========================================================================== -->
+  <div class="modal-backdrop" id="addExpenseModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="add_expense_btn">Add Shop Expense</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('addExpenseModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="form-group">
+          <label class="form-label" data-i18n="expense_category">Expense Category *</label>
+          <select id="expCategorySelect" class="form-select" required>
+            <option value="TEA_SNACKS" selected>Tea & Refreshments (தேநீர்)</option>
+            <option value="RENT">Shop Rent (கடை வாடகை)</option>
+            <option value="ELECTRICITY">EB / Electricity Bill</option>
+            <option value="STATIONERY">Stationery & Printing Rolls</option>
+            <option value="OFFICE">Office Supplies & Cleaning</option>
+            <option value="MAINTENANCE">Shop Maintenance</option>
+            <option value="SALARY">Staff Wages / Salary</option>
+            <option value="OTHER">Other Expense</option>
+          </select>
+        </div>
+
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label" data-i18n="expense_amount">Amount (₹) *</label>
+            <div class="input-group">
+              <span class="input-addon">₹</span>
+              <input type="number" id="expAmountInput" class="form-input" style="font-weight:bold; font-size:16px;" required min="1" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Payment Method</label>
+            <select id="expMethodSelect" class="form-select">
+              <option value="CASH" selected>Cash (ரொக்கம்)</option>
+              <option value="UPI">UPI (GPay / PhonePe)</option>
+              <option value="BANK_TRANSFER">Bank Transfer</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" data-i18n="expense_desc">Description / Notes *</label>
+          <input type="text" id="expDescInput" class="form-input" placeholder="e.g. Tea & biscuits for customers" required />
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('addExpenseModal')">Cancel</button>
+        <button type="button" class="btn btn-primary" id="saveExpenseBtn">Save Expense</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/cash.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activeReport = 'DAILY';
+    let currentStartDate = new Date().toISOString().split('T')[0];
+    let currentEndDate = new Date().toISOString().split('T')[0];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('reports');
+      document.getElementById('filterStartDate').value = currentStartDate;
+      document.getElementById('filterEndDate').value = currentEndDate;
+
+      populateCustomerSelect();
+      refreshActiveReport();
+      bindReportEvents();
+    });
+
+    function setDateRangePreset(preset) {
+      const now = new Date();
+      let sDate = new Date();
+      let eDate = new Date();
+
+      if (preset === 'TODAY') {
+        // sDate & eDate are today
+      } else if (preset === 'YESTERDAY') {
+        sDate.setDate(now.getDate() - 1);
+        eDate.setDate(now.getDate() - 1);
+      } else if (preset === 'THIS_WEEK') {
+        const day = now.getDay();
+        const diff = now.getDate() - day + (day === 0 ? -6 : 1);
+        sDate.setDate(diff);
+      } else if (preset === 'THIS_MONTH') {
+        sDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      } else if (preset === 'LAST_MONTH') {
+        sDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        eDate = new Date(now.getFullYear(), now.getMonth(), 0);
+      }
+
+      currentStartDate = sDate.toISOString().split('T')[0];
+      currentEndDate = eDate.toISOString().split('T')[0];
+
+      document.getElementById('filterStartDate').value = currentStartDate;
+      document.getElementById('filterEndDate').value = currentEndDate;
+
+      refreshActiveReport();
+    }
+
+    function refreshActiveReport() {
+      if (activeReport === 'DAILY') renderDailyReport();
+      else if (activeReport === 'CASH') renderCashReport();
+      else if (activeReport === 'OUTSTANDING') renderOutstandingReport();
+      else if (activeReport === 'CUSTOMER') renderCustomerStatement();
+      else if (activeReport === 'METALS') renderMetalsReport();
+      else if (activeReport === 'MONTHLY') renderMonthlyReport();
+    }
+
+    function renderDailyReport() {
+      const rep = window.reportManager.generateDailyReport(currentStartDate, currentEndDate);
+
+      document.getElementById('dailyKpiLoans').textContent = `₹ ${Number(rep.summary.totalLoansDisbursed).toLocaleString('en-IN')}`;
+      document.getElementById('dailyKpiLoansCount').textContent = `${rep.summary.newPledgesCount} New Pledges`;
+      document.getElementById('dailyKpiCollections').textContent = `₹ ${Number(rep.summary.totalCollections).toLocaleString('en-IN')}`;
+      document.getElementById('dailyKpiModeBreakdown').textContent = `Cash: ₹${rep.summary.cashCollections} • UPI: ₹${rep.summary.upiCollections}`;
+      document.getElementById('dailyKpiInterest').textContent = `₹ ${Number(rep.summary.interestCollected).toLocaleString('en-IN')}`;
+      document.getElementById('dailyKpiClosings').textContent = `${rep.summary.redemptionsCount} Red / ${rep.summary.renewalsCount} Ren`;
+
+      const tbody = document.getElementById('dailyTbody');
+      if (rep.rows.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No transactions found in this date range</td></tr>`;
+      } else {
+        tbody.innerHTML = rep.rows.map(r => `
+          <tr>
+            <td style="font-size:12px;">${r.date}</td>
+            <td><span class="badge ${r.inflow > 0 ? 'badge-success' : 'badge-gold'}">${r.typeLabel}</span></td>
+            <td class="cell-mono font-bold">${r.refNo}</td>
+            <td>${r.customerName}</td>
+            <td class="cell-mono text-success font-bold">${r.inflow > 0 ? `₹ ${Number(r.inflow).toLocaleString('en-IN')}` : '-'}</td>
+            <td class="cell-mono text-danger font-bold">${r.outflow > 0 ? `₹ ${Number(r.outflow).toLocaleString('en-IN')}` : '-'}</td>
+            <td><span class="badge badge-outline">${r.mode}</span></td>
+            <td style="font-size:11px; color:var(--slate-600);">${r.notes}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderCashReport() {
+      const summary = window.cashManager.getDailyCashSummary(currentEndDate);
+      const expenses = window.cashManager.getExpenses(currentStartDate, currentEndDate);
+
+      document.getElementById('cashKpiOpening').textContent = `₹ ${Number(summary.openingBalance).toLocaleString('en-IN')}`;
+      document.getElementById('cashKpiCollections').textContent = `₹ ${Number(summary.cashCollections).toLocaleString('en-IN')}`;
+      document.getElementById('cashKpiOutflows').textContent = `₹ ${Number(summary.cashLoansGiven + summary.cashExpensesTotal).toLocaleString('en-IN')}`;
+      document.getElementById('cashKpiExpected').textContent = `₹ ${Number(summary.expectedClosingCash).toLocaleString('en-IN')}`;
+
+      const tbody = document.getElementById('expensesTbody');
+      if (expenses.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No expenses recorded in this period</td></tr>`;
+      } else {
+        tbody.innerHTML = expenses.map(e => `
+          <tr>
+            <td class="cell-mono cell-primary">${e.expenseId}</td>
+            <td>${e.date}</td>
+            <td><span class="badge badge-outline">${e.category}</span></td>
+            <td>${e.description}</td>
+            <td><span class="badge badge-slate">${e.paymentMethod}</span></td>
+            <td class="cell-mono text-danger font-bold">₹ ${Number(e.amount).toLocaleString('en-IN')}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderOutstandingReport() {
+      const rep = window.reportManager.generateOutstandingReport();
+
+      document.getElementById('outKpiCount').textContent = rep.summary.activeCount;
+      document.getElementById('outKpiPrincipal').textContent = `₹ ${Number(rep.summary.totalOutstandingPrincipal).toLocaleString('en-IN')}`;
+      document.getElementById('outKpiInterest').textContent = `₹ ${Number(rep.summary.totalEstimatedInterest).toLocaleString('en-IN')}`;
+      document.getElementById('outKpiOverdue').textContent = `${rep.summary.overdueCount} Overdue`;
+
+      const tbody = document.getElementById('outstandingTbody');
+      tbody.innerHTML = rep.rows.map(r => `
+        <tr>
+          <td class="cell-mono font-bold"><a href="pledges.html?ticket=${r.ticketNo}">${r.ticketNo}</a></td>
+          <td><span class="badge badge-outline">${r.packetId}</span><br/><span style="font-size:10px; color:var(--slate-500);">${r.vaultLocation}</span></td>
+          <td>
+            <div class="cell-primary"><a href="customer.html?id=${r.customerId}">${r.customerName}</a></div>
+            <div style="font-size:11px; color:var(--slate-500);">📞 ${r.mobile}</div>
+          </td>
+          <td>${r.pledgeDate}</td>
+          <td>${r.maturityDate}</td>
+          <td class="cell-mono font-bold">₹ ${Number(r.principal).toLocaleString('en-IN')}</td>
+          <td class="cell-mono text-gold font-bold">₹ ${Number(r.accruedInterest).toLocaleString('en-IN')}</td>
+          <td class="cell-mono text-success" style="font-weight:900;">₹ ${Number(r.totalDue).toLocaleString('en-IN')}</td>
+          <td><span class="badge ${r.riskStatus === 'OVERDUE' ? 'badge-danger' : (r.riskStatus === 'DUE' ? 'badge-warning' : 'badge-active')}">${r.riskStatus}</span></td>
+        </tr>
+      `).join('');
+    }
+
+    function populateCustomerSelect() {
+      const customers = (window.customerManager && window.customerManager.customers) || [];
+      const sel = document.getElementById('custStatementSelect');
+      sel.innerHTML = customers.map(c => `
+        <option value="${c.customerId}">${c.nameEn} (${c.mobile}) - ${c.customerId}</option>
+      `).join('');
+    }
+
+    function renderCustomerStatement() {
+      const custId = document.getElementById('custStatementSelect').value;
+      if (!custId) return;
+
+      const stmt = window.reportManager.generateCustomerStatement(custId);
+      const container = document.getElementById('custStatementContent');
+
+      container.innerHTML = `
+        <div class="grid-4" style="margin-bottom:var(--space-4);">
+          <div class="kpi-card">
+            <div class="kpi-label">Lifetime Pledges</div>
+            <div class="kpi-value">${stmt.summary.totalPledgesCount}</div>
+            <div class="kpi-trend text-muted">${stmt.summary.activePledgesCount} Active Now</div>
+          </div>
+          <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+            <div class="kpi-label">Total Loans Taken</div>
+            <div class="kpi-value">₹ ${Number(stmt.summary.totalLoansTaken).toLocaleString('en-IN')}</div>
+            <div class="kpi-trend text-muted">Cumulative Borrowing</div>
+          </div>
+          <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+            <div class="kpi-label">Total Payments Made</div>
+            <div class="kpi-value text-success">₹ ${Number(stmt.summary.totalPaymentsMade).toLocaleString('en-IN')}</div>
+            <div class="kpi-trend text-success">Settled to Date</div>
+          </div>
+          <div class="kpi-card" style="border-top:3px solid var(--gold-600);">
+            <div class="kpi-label">Current Outstanding</div>
+            <div class="kpi-value text-gold">₹ ${Number(stmt.summary.currentOutstanding).toLocaleString('en-IN')}</div>
+            <div class="kpi-trend text-gold">Principal Balance</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Customer Pledges History</h3>
+          </div>
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticket No</th>
+                  <th>Date</th>
+                  <th>Net Wt</th>
+                  <th>Loan Principal</th>
+                  <th>Packet</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${stmt.pledges.map(p => `
+                  <tr>
+                    <td class="cell-mono font-bold">${p.ticketNo}</td>
+                    <td>${p.pledgeDate}</td>
+                    <td class="cell-mono">${p.totalNetWeight} g</td>
+                    <td class="cell-mono font-bold">₹ ${Number(p.loanAmount).toLocaleString('en-IN')}</td>
+                    <td class="cell-mono">${p.packetId}</td>
+                    <td><span class="badge ${p.status === 'ACTIVE' ? 'badge-active' : 'badge-slate'}">${p.status}</span></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMetalsReport() {
+      const rep = window.reportManager.generateMetalInventoryReport();
+
+      document.getElementById('metalKpi22k').textContent = `${Number(rep.summary.gold22kNetWeight).toFixed(3)} g`;
+      document.getElementById('metalKpi24k').textContent = `${Number(rep.summary.gold24kNetWeight).toFixed(3)} g`;
+      document.getElementById('metalKpiSilver').textContent = `${Number(rep.summary.silverNetWeight).toFixed(3)} g`;
+      document.getElementById('metalKpiValuation').textContent = `₹ ${Number(rep.summary.totalValuation).toLocaleString('en-IN')}`;
+
+      const tbody = document.getElementById('metalsTbody');
+      tbody.innerHTML = rep.purityBreakdown.map(p => `
+        <tr>
+          <td><strong>${p.purity}</strong></td>
+          <td><span class="badge badge-gold">${p.karat}</span></td>
+          <td class="cell-mono">${p.itemsCount} Articles</td>
+          <td class="cell-mono">${Number(p.grossWeight).toFixed(3)} g</td>
+          <td class="cell-mono text-gold font-bold">${Number(p.netWeight).toFixed(3)} g</td>
+          <td class="cell-mono text-success font-bold">₹ ${Number(p.valuation).toLocaleString('en-IN')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function renderMonthlyReport() {
+      const rep = window.reportManager.generateMonthlyReport();
+
+      document.getElementById('monthKpiLoans').textContent = `₹ ${Number(rep.totalLoansDisbursed).toLocaleString('en-IN')}`;
+      document.getElementById('monthKpiLoansCount').textContent = `${rep.newPledgesCount} Pledges (${rep.monthLabel})`;
+      document.getElementById('monthKpiCollections').textContent = `₹ ${Number(rep.totalCollections).toLocaleString('en-IN')}`;
+      document.getElementById('monthKpiInterest').textContent = `₹ ${Number(rep.interestCollected).toLocaleString('en-IN')}`;
+      document.getElementById('monthKpiClosings').textContent = `${rep.redemptionsCount} Red / ${rep.renewalsCount} Ren`;
+    }
+
+    function bindReportEvents() {
+      // Date Preset buttons
+      document.querySelectorAll('.date-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.date-preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          setDateRangePreset(btn.getAttribute('data-preset'));
+        });
+      });
+
+      // Apply Custom Date Filter
+      document.getElementById('applyDateFilterBtn').addEventListener('click', () => {
+        currentStartDate = document.getElementById('filterStartDate').value;
+        currentEndDate = document.getElementById('filterEndDate').value;
+        document.querySelectorAll('.date-preset-btn').forEach(b => b.classList.remove('active'));
+        refreshActiveReport();
+      });
+
+      // Report Tabs
+      document.querySelectorAll('.report-tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.report-tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeReport = btn.getAttribute('data-report');
+
+          // Toggle View Divs
+          document.querySelectorAll('.report-view').forEach(v => v.style.display = 'none');
+          if (activeReport === 'DAILY') document.getElementById('viewDaily').style.display = 'block';
+          else if (activeReport === 'CASH') document.getElementById('viewCash').style.display = 'block';
+          else if (activeReport === 'OUTSTANDING') document.getElementById('viewOutstanding').style.display = 'block';
+          else if (activeReport === 'CUSTOMER') document.getElementById('viewCustomer').style.display = 'block';
+          else if (activeReport === 'METALS') document.getElementById('viewMetals').style.display = 'block';
+          else if (activeReport === 'MONTHLY') document.getElementById('viewMonthly').style.display = 'block';
+
+          refreshActiveReport();
+        });
+      });
+
+      // Customer select change
+      document.getElementById('custStatementSelect').addEventListener('change', renderCustomerStatement);
+
+      // Print Button
+      document.getElementById('printReportBtn').addEventListener('click', () => {
+        window.print();
+      });
+
+      // CSV Export Button
+      document.getElementById('exportCsvBtn').addEventListener('click', handleCsvExport);
+
+      // Expense Modal Open & Save
+      document.getElementById('openExpenseModalBtn').addEventListener('click', () => {
+        document.getElementById('expAmountInput').value = '';
+        document.getElementById('expDescInput').value = '';
+        UI.openModal('addExpenseModal');
+      });
+
+      document.getElementById('saveExpenseBtn').addEventListener('click', handleSaveExpense);
+    }
+
+    async function handleSaveExpense() {
+      const cat = document.getElementById('expCategorySelect').value;
+      const amt = parseFloat(document.getElementById('expAmountInput').value);
+      const mode = document.getElementById('expMethodSelect').value;
+      const desc = document.getElementById('expDescInput').value.trim();
+
+      if (isNaN(amt) || amt <= 0) {
+        UI.showToast('Please enter a valid expense amount', 'error');
+        return;
+      }
+      if (!desc) {
+        UI.showToast('Expense description is required', 'error');
+        return;
+      }
+
+      const res = await window.cashManager.recordExpense({
+        category: cat,
+        amount: amt,
+        paymentMethod: mode,
+        description: desc
+      });
+
+      if (res.success) {
+        UI.showToast('Shop expense recorded successfully', 'success');
+        UI.closeModal('addExpenseModal');
+        renderCashReport();
+      } else {
+        UI.showToast(res.message, 'error');
+      }
+    }
+
+    function handleCsvExport() {
+      if (activeReport === 'DAILY') {
+        const rep = window.reportManager.generateDailyReport(currentStartDate, currentEndDate);
+        const headers = ['Date', 'Type', 'Ref Number', 'Customer', 'Inflow (INR)', 'Outflow (INR)', 'Mode', 'Notes'];
+        const rows = rep.rows.map(r => [r.date, r.typeLabel, r.refNo, r.customerName, r.inflow, r.outflow, r.mode, r.notes]);
+        window.reportManager.exportToCsv('AS_Jewellar_Daily_DayBook', headers, rows);
+      } else if (activeReport === 'CASH') {
+        const expenses = window.cashManager.getExpenses(currentStartDate, currentEndDate);
+        const headers = ['Expense ID', 'Date', 'Category', 'Description', 'Method', 'Amount (INR)'];
+        const rows = expenses.map(e => [e.expenseId, e.date, e.category, e.description, e.paymentMethod, e.amount]);
+        window.reportManager.exportToCsv('AS_Jewellar_Expenses', headers, rows);
+      } else if (activeReport === 'OUTSTANDING') {
+        const rep = window.reportManager.generateOutstandingReport();
+        const headers = ['Ticket No', 'Packet ID', 'Customer Name', 'Mobile', 'Pledge Date', 'Maturity Date', 'Principal (INR)', 'Accrued Interest (INR)', 'Total Due (INR)', 'Risk Status'];
+        const rows = rep.rows.map(r => [r.ticketNo, r.packetId, r.customerName, r.mobile, r.pledgeDate, r.maturityDate, r.principal, r.accruedInterest, r.totalDue, r.riskStatus]);
+        window.reportManager.exportToCsv('AS_Jewellar_Outstanding_Portfolio', headers, rows);
+      } else if (activeReport === 'METALS') {
+        const rep = window.reportManager.generateMetalInventoryReport();
+        const headers = ['Purity Category', 'Karat', 'Articles Count', 'Gross Weight (g)', 'Net Weight (g)', 'Valuation (INR)'];
+        const rows = rep.purityBreakdown.map(p => [p.purity, p.karat, p.itemsCount, p.grossWeight, p.netWeight, p.valuation]);
+        window.reportManager.exportToCsv('AS_Jewellar_Metal_Inventory', headers, rows);
+      }
+      UI.showToast('CSV export downloaded successfully', 'success');
+    }
+  </script>
+</body>
+</html>
