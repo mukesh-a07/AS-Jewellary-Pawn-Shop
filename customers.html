@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Customer Directory &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .recent-chips-container {
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      overflow-x: auto;
+      padding: var(--space-2) 0;
+      scrollbar-width: thin;
+    }
+    .recent-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      background: #FFFFFF;
+      border: 1px solid var(--slate-200);
+      border-radius: var(--radius-full);
+      padding: 4px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--slate-800);
+      text-decoration: none;
+      white-space: nowrap;
+      transition: all var(--transition-fast);
+      box-shadow: var(--shadow-sm);
+    }
+    .recent-chip:hover {
+      border-color: var(--gold-500);
+      background: var(--gold-50);
+      color: var(--slate-900);
+      text-decoration: none;
+    }
+    .recent-chip .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--gold-200);
+      color: var(--gold-900);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 800;
+    }
+    .customer-mobile-card {
+      display: none;
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      margin-bottom: var(--space-3);
+      box-shadow: var(--shadow-sm);
+    }
+    @media (max-width: 768px) {
+      .customer-table-desktop { display: none; }
+      .customer-mobile-card { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="customers">Customer Directory (வாடிக்கையாளர்கள்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Manage customer profiles, KYC records, and active pledge portfolios.</p>
+          </div>
+          <button class="btn btn-primary" id="openNewCustBtn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+            <span data-i18n="add_customer">+ New Customer (புதியவர்)</span>
+          </button>
+        </div>
+
+        <!-- Recent Customers Quick Bar -->
+        <div style="margin-bottom:var(--space-4);">
+          <div style="font-size:11px; font-weight:700; color:var(--slate-500); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;" data-i18n="recent_customers">
+            Recently Accessed Customers (சமீபத்திய வாடிக்கையாளர்கள்)
+          </div>
+          <div class="recent-chips-container" id="recentCustomersContainer">
+            <!-- Dynamic Recent Chips Injected Here -->
+          </div>
+        </div>
+
+        <!-- Search, Filter and Sort Controls -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-body" style="padding:var(--space-4);">
+            <div style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+              
+              <!-- Real-time Multi-field Search Input -->
+              <div class="search-box" style="flex:2; min-width:260px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="custSearchInput" class="form-input" placeholder="Search by Mobile, Name (தமிழ் / English), ID, Town..." data-i18n-placeholder="search_placeholder" />
+                <button type="button" class="search-clear-btn" id="clearSearchBtn">&times;</button>
+              </div>
+
+              <!-- Status Filter Dropdown -->
+              <div style="flex:1; min-width:180px;">
+                <select class="form-select" id="custStatusFilter">
+                  <option value="ALL">All Customers (அனைத்தும்)</option>
+                  <option value="ACTIVE_PLEDGES">With Active Pledges (அடகு உள்ளவை)</option>
+                  <option value="OVERDUE">With Overdue Loans (காலாவதி)</option>
+                  <option value="KYC_PENDING">KYC Pending (ஆவண நிலுவை)</option>
+                  <option value="NO_PLEDGES">No Active Pledges (அடகு இல்லை)</option>
+                </select>
+              </div>
+
+              <!-- Sort Selector -->
+              <div style="flex:1; min-width:160px;">
+                <select class="form-select" id="custSortBy">
+                  <option value="RECENT_DESC">Sort: Most Recent</option>
+                  <option value="NAME_ASC">Name (A &rarr; Z)</option>
+                  <option value="OUTSTANDING_DESC">Highest Outstanding</option>
+                  <option value="PLEDGES_DESC">Most Active Pledges</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Directory Card (Desktop Table & Mobile Card List) -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title">Customer List</h3>
+              <span class="badge badge-gold" id="custTotalBadge">0 Registered</span>
+            </div>
+            <div style="font-size:12px; color:var(--slate-500);" id="paginationSummary">Showing 1 - 5</div>
+          </div>
+
+          <!-- Desktop Data Table (Sensitive ID masked) -->
+          <div class="table-responsive customer-table-desktop">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer ID</th>
+                  <th>Customer Name (வாடிக்கையாளர்)</th>
+                  <th>Mobile Number</th>
+                  <th>Town / Village</th>
+                  <th>KYC Proof (Masked)</th>
+                  <th>Active Loans</th>
+                  <th>Outstanding</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="customersTableBody">
+                <!-- Dynamically Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Mobile Card List Container -->
+          <div id="customersMobileList" style="padding:var(--space-3);" class="customer-mobile-list">
+            <!-- Dynamically Rendered via JS -->
+          </div>
+
+          <!-- Card Footer & Pagination Controls -->
+          <div class="card-footer">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <span style="font-size:12px; color:var(--slate-600);">Rows per page:</span>
+              <select id="pageSizeSelect" class="form-select" style="width:auto; padding:2px 8px; height:32px; font-size:12px;">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+              </select>
+            </div>
+
+            <div style="display:flex; gap:var(--space-2); align-items:center;">
+              <button class="btn btn-outline btn-sm" id="prevPageBtn" disabled>&larr; Prev</button>
+              <span style="font-size:12px; font-weight:700;" id="pageIndicator">Page 1 of 1</span>
+              <button class="btn btn-outline btn-sm" id="nextPageBtn" disabled>Next &rarr;</button>
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: REGISTER NEW CUSTOMER (With Live Duplicate Detection)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="newCustomerModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="add_customer">+ Register New Customer (புதிய வாடிக்கையாளர்)</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('newCustomerModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="newCustomerForm">
+        <div class="modal-body">
+          
+          <!-- Live Duplicate Detection Warning Banner -->
+          <div id="duplicateWarningBanner" class="alert alert-danger" style="display:none; flex-direction:column; gap:4px;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <strong data-i18n="duplicate_warning_title">Possible Duplicate Customer Detected!</strong>
+            </div>
+            <div style="font-size:12px;" id="duplicateWarningText">A customer with this mobile number already exists in the system.</div>
+            <div style="margin-top:4px;">
+              <a href="#" id="duplicateViewLink" class="btn btn-outline btn-sm" style="background:#FFF;">View Existing Profile &rarr;</a>
+            </div>
+          </div>
+
+          <!-- Form Fields Grid -->
+          <div class="grid-2">
+            
+            <div class="form-group">
+              <label class="form-label" for="newCustNameEn">
+                <span data-i18n="customer_name">Full Name (English)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustNameEn" class="form-input" placeholder="e.g. R. Murugan" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustNameTa">
+                <span data-i18n="tamil_name">வாடிக்கையாளர் பெயர் (தமிழ்)</span>
+                <span class="text-muted">(Optional)</span>
+              </label>
+              <input type="text" id="newCustNameTa" class="form-input" placeholder="எ.கா. ஆர். முருகன்" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustFatherHusband">
+                <span data-i18n="father_husband_name">Father / Husband Name</span>
+              </label>
+              <input type="text" id="newCustFatherHusband" class="form-input" placeholder="e.g. M. Ramanathan" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustDob">
+                <span data-i18n="dob">Date of Birth</span>
+              </label>
+              <input type="date" id="newCustDob" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustGender">
+                <span data-i18n="gender">Gender (பாலினம்)</span>
+              </label>
+              <select id="newCustGender" class="form-select">
+                <option value="MALE">Male (ஆண்)</option>
+                <option value="FEMALE">Female (பெண்)</option>
+                <option value="OTHER">Other (மற்றவை)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustOccupation">
+                <span data-i18n="occupation">Occupation (தொழில்)</span>
+              </label>
+              <input type="text" id="newCustOccupation" class="form-input" placeholder="e.g. Business / Agriculture / Service" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustMobile">
+                <span data-i18n="mobile_number">Primary Mobile (கைபேசி எண்)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="tel" id="newCustMobile" class="form-input" placeholder="10-digit mobile" maxlength="10" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustAltMobile">
+                <span data-i18n="alt_mobile">Alternate Mobile</span>
+              </label>
+              <input type="tel" id="newCustAltMobile" class="form-input" placeholder="Alternate phone" maxlength="10" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustEmail">
+                <span data-i18n="email">Email Address</span>
+              </label>
+              <input type="email" id="newCustEmail" class="form-input" placeholder="customer@example.com" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustIdType">
+                <span data-i18n="id_type">KYC ID Proof Type</span>
+                <span class="required">*</span>
+              </label>
+              <select id="newCustIdType" class="form-select" required>
+                <option value="AADHAAR">Aadhaar Card (ஆதார்)</option>
+                <option value="VOTER_ID">Voter ID (வாக்காளர் அட்டை)</option>
+                <option value="RATION_CARD">Smart Ration Card (குடும்ப அட்டை)</option>
+                <option value="DRIVING_LICENCE">Driving Licence (ஓட்டுநர் உரிமம்)</option>
+                <option value="PAN">PAN Card</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustIdNumber">
+                <span data-i18n="id_number">ID Proof Number</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustIdNumber" class="form-input" placeholder="e.g. 8945-2314-4589" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustTown">
+                <span data-i18n="town_village">Town / Village (ஊர் / கிராமம்)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustTown" class="form-input" placeholder="e.g. Madurai" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustTaluk">
+                <span data-i18n="taluk">Taluk (வட்டம்)</span>
+              </label>
+              <input type="text" id="newCustTaluk" class="form-input" placeholder="e.g. Madurai North" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustDistrict">
+                <span data-i18n="district">District (மாவட்டம்)</span>
+              </label>
+              <input type="text" id="newCustDistrict" class="form-input" value="Madurai" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustPincode">
+                <span data-i18n="pincode">PIN Code</span>
+              </label>
+              <input type="text" id="newCustPincode" class="form-input" placeholder="625001" maxlength="6" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustState">
+                <span data-i18n="state">State (மாநிலம்)</span>
+              </label>
+              <input type="text" id="newCustState" class="form-input" value="Tamil Nadu" />
+            </div>
+
+          </div>
+
+          <div class="form-group" style="margin-top:var(--space-2);">
+            <label class="form-label" for="newCustAddress">
+              <span data-i18n="address">Full Address / Street (முழு முகவரி)</span>
+              <span class="required">*</span>
+            </label>
+            <textarea id="newCustAddress" class="form-textarea" rows="2" placeholder="Door No, Street Name, Landmark..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newCustNotes">
+              <span data-i18n="notes">Internal Counter Remarks / Notes (உள் குறிப்புகள்)</span>
+            </label>
+            <textarea id="newCustNotes" class="form-textarea" rows="2" placeholder="Customer relationship remarks, credit behavior, etc."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveCustomerSubmitBtn" data-i18n="save_customer">
+            Save Customer Profile (சேமி)
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: EDIT CUSTOMER
+       ========================================================================== -->
+  <div class="modal-backdrop" id="editCustomerModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="edit_customer">Edit Customer Profile</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('editCustomerModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="editCustomerForm">
+        <input type="hidden" id="editCustId" />
+        <div class="modal-body">
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="form-label" for="editCustNameEn">Full Name (English) *</label>
+              <input type="text" id="editCustNameEn" class="form-input" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCustNameTa">பெயர் (தமிழ்)</label>
+              <input type="text" id="editCustNameTa" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCustMobile">Primary Mobile *</label>
+              <input type="tel" id="editCustMobile" class="form-input" maxlength="10" required />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCustAltMobile">Alternate Mobile</label>
+              <input type="tel" id="editCustAltMobile" class="form-input" maxlength="10" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCustOccupation">Occupation</label>
+              <input type="text" id="editCustOccupation" class="form-input" />
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="editCustTown">Town / Village *</label>
+              <input type="text" id="editCustTown" class="form-input" required />
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:var(--space-2);">
+            <label class="form-label" for="editCustAddress">Address *</label>
+            <textarea id="editCustAddress" class="form-textarea" rows="2" required></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editCustNotes">Internal Notes</label>
+            <textarea id="editCustNotes" class="form-textarea" rows="2"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('editCustomerModal')" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="update_customer">Update Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let currentPage = 1;
+    let pageSize = 10;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('customers');
+
+      renderRecentChips();
+      renderCustomerDirectory();
+      bindDirectoryEvents();
+    });
+
+    // 1. Render Recent Customer Quick Chips
+    function renderRecentChips() {
+      const container = document.getElementById('recentCustomersContainer');
+      const recentIds = window.customerManager.getRecentCustomers();
+      if (recentIds.length === 0) {
+        container.innerHTML = `<span style="font-size:12px; color:var(--slate-400);">No recent counter lookups</span>`;
+        return;
+      }
+
+      container.innerHTML = recentIds.map(id => {
+        const c = window.customerManager.getCustomerById(id);
+        if (!c) return '';
+        const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        return `
+          <a href="customer.html?id=${c.customerId}" class="recent-chip" title="View 360 Profile">
+            <span class="avatar">${initials}</span>
+            <span>${c.nameEn}</span>
+            <span style="color:var(--slate-400); font-family:var(--font-family-mono); font-size:11px;">(${c.customerId.slice(-6)})</span>
+          </a>
+        `;
+      }).join('');
+    }
+
+    // 2. Render Customer Directory (Table + Mobile Cards with Masked KYC)
+    function renderCustomerDirectory() {
+      const query = document.getElementById('custSearchInput').value;
+      const statusFilter = document.getElementById('custStatusFilter').value;
+      const sortBy = document.getElementById('custSortBy').value;
+
+      const result = window.customerManager.search({
+        query,
+        statusFilter,
+        sortBy,
+        page: currentPage,
+        pageSize
+      });
+
+      document.getElementById('custTotalBadge').textContent = `${result.totalCount} Registered`;
+      const startIdx = result.totalCount > 0 ? (result.currentPage - 1) * pageSize + 1 : 0;
+      const endIdx = Math.min(result.currentPage * pageSize, result.totalCount);
+      document.getElementById('paginationSummary').textContent = `Showing ${startIdx} - ${endIdx} of ${result.totalCount}`;
+      document.getElementById('pageIndicator').textContent = `Page ${result.currentPage} of ${result.totalPages}`;
+
+      document.getElementById('prevPageBtn').disabled = (result.currentPage <= 1);
+      document.getElementById('nextPageBtn').disabled = (result.currentPage >= result.totalPages);
+
+      const tbody = document.getElementById('customersTableBody');
+      const mobileList = document.getElementById('customersMobileList');
+
+      if (result.items.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:var(--space-8);">
+              <div class="empty-state" style="padding:0;">
+                <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+                <div class="empty-title" data-i18n="no_records_found">No customers found</div>
+                <div class="empty-text">Try modifying search keyword or status filter.</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        mobileList.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-title" data-i18n="no_records_found">No customers found</div>
+          </div>
+        `;
+        return;
+      }
+
+      // Desktop Table Render
+      tbody.innerHTML = result.items.map(c => {
+        const maskedId = window.customerManager.maskIdNumber(c.idType, c.idNumber);
+        const kycBadge = c.kycStatus === 'VERIFIED'
+          ? `<span class="badge badge-success">✓ Verified</span>`
+          : `<span class="badge badge-warning">⚠ Pending</span>`;
+        const pledgeBadge = (c.activePledgesCount > 0)
+          ? `<span class="badge badge-active">${c.activePledgesCount} Active</span>`
+          : `<span class="badge badge-slate">0 Active</span>`;
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">
+              <a href="customer.html?id=${c.customerId}" style="color:inherit; font-weight:800;">${c.customerId}</a>
+            </td>
+            <td>
+              <div class="cell-primary">
+                <a href="customer.html?id=${c.customerId}">${c.nameEn}</a>
+              </div>
+              <div style="font-size:11px; color:var(--gold-700); font-weight:600;">${c.nameTa || ''}</div>
+            </td>
+            <td class="cell-mono">
+              <a href="tel:${c.mobile}" style="color:inherit;">${c.mobile}</a>
+            </td>
+            <td>${c.townVillage || c.district}</td>
+            <td>
+              <div style="font-size:12px; font-weight:600;">${c.idType}</div>
+              <div class="cell-mono text-muted" style="font-size:11px;">${maskedId}</div>
+            </td>
+            <td>${pledgeBadge}</td>
+            <td class="cell-primary">${window.Validation.formatINR(c.totalOutstanding || 0)}</td>
+            <td>
+              <div style="display:flex; gap:var(--space-1);">
+                <a href="customer.html?id=${c.customerId}" class="btn btn-outline btn-sm" title="360 View">360°</a>
+                <a href="new-pledge.html?customerId=${c.customerId}" class="btn btn-primary btn-sm" title="New Pawn Ticket">+ Pledge</a>
+                <button class="btn btn-ghost btn-sm" onclick="openEditCustomerModal('${c.customerId}')" title="Edit Customer">&#9998;</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // Mobile Card List Render (Touch Optimized)
+      mobileList.innerHTML = result.items.map(c => {
+        return `
+          <div class="customer-mobile-card">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-2);">
+              <div>
+                <div style="font-weight:800; font-size:var(--font-size-base); color:var(--slate-900);">
+                  <a href="customer.html?id=${c.customerId}" style="color:inherit;">${c.nameEn}</a>
+                </div>
+                <div style="font-size:12px; color:var(--gold-700); font-weight:700;">${c.nameTa || ''}</div>
+                <div style="font-size:11px; color:var(--slate-500); margin-top:2px;">
+                  <span class="cell-mono">${c.customerId}</span> &bull; <span>${c.townVillage}</span>
+                </div>
+              </div>
+              <span class="badge ${c.activePledgesCount > 0 ? 'badge-active' : 'badge-slate'}">
+                ${c.activePledgesCount || 0} Pledges
+              </span>
+            </div>
+
+            <div style="background:var(--slate-50); padding:var(--space-2) var(--space-3); border-radius:var(--radius-md); display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+              <div>
+                <div style="font-size:10px; text-transform:uppercase; color:var(--slate-500);">Outstanding Loan</div>
+                <div style="font-size:var(--font-size-md); font-weight:800; color:var(--slate-900);">${window.Validation.formatINR(c.totalOutstanding || 0)}</div>
+              </div>
+              <a href="tel:${c.mobile}" class="btn btn-outline btn-sm" style="background:#FFF;">
+                📞 ${c.mobile}
+              </a>
+            </div>
+
+            <div style="display:flex; gap:var(--space-2);">
+              <a href="customer.html?id=${c.customerId}" class="btn btn-outline btn-sm" style="flex:1;">360° Profile</a>
+              <a href="new-pledge.html?customerId=${c.customerId}" class="btn btn-primary btn-sm" style="flex:1;">+ Pledge</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 3. Bind UI Events & Live Duplicate Checking
+    function bindDirectoryEvents() {
+      const searchInput = document.getElementById('custSearchInput');
+      const clearBtn = document.getElementById('clearSearchBtn');
+
+      searchInput.addEventListener('input', () => {
+        currentPage = 1;
+        clearBtn.style.display = searchInput.value ? 'block' : 'none';
+        renderCustomerDirectory();
+      });
+
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        currentPage = 1;
+        renderCustomerDirectory();
+      });
+
+      document.getElementById('custStatusFilter').addEventListener('change', () => {
+        currentPage = 1;
+        renderCustomerDirectory();
+      });
+
+      document.getElementById('custSortBy').addEventListener('change', () => {
+        renderCustomerDirectory();
+      });
+
+      document.getElementById('pageSizeSelect').addEventListener('change', (e) => {
+        pageSize = parseInt(e.target.value, 10) || 10;
+        currentPage = 1;
+        renderCustomerDirectory();
+      });
+
+      document.getElementById('prevPageBtn').addEventListener('click', () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderCustomerDirectory();
+        }
+      });
+
+      document.getElementById('nextPageBtn').addEventListener('click', () => {
+        currentPage++;
+        renderCustomerDirectory();
+      });
+
+      // Open New Customer Modal
+      document.getElementById('openNewCustBtn').addEventListener('click', () => {
+        document.getElementById('newCustomerForm').reset();
+        document.getElementById('duplicateWarningBanner').style.display = 'none';
+        UI.openModal('newCustomerModal');
+      });
+
+      // Real-time Duplicate Detection on Mobile input
+      const mobileInput = document.getElementById('newCustMobile');
+      const nameInput = document.getElementById('newCustNameEn');
+
+      const runDuplicateCheck = () => {
+        const mobile = mobileInput.value.trim();
+        const name = nameInput.value.trim();
+        const banner = document.getElementById('duplicateWarningBanner');
+        const text = document.getElementById('duplicateWarningText');
+        const link = document.getElementById('duplicateViewLink');
+
+        if (mobile.length >= 10 || name.length >= 3) {
+          const dupResult = window.customerManager.checkDuplicate(mobile, name);
+          if (dupResult.isDuplicate && dupResult.matchedCustomer) {
+            text.textContent = dupResult.message;
+            link.href = `customer.html?id=${dupResult.matchedCustomer.customerId}`;
+            banner.style.display = 'flex';
+          } else {
+            banner.style.display = 'none';
+          }
+        } else {
+          banner.style.display = 'none';
+        }
+      };
+
+      mobileInput.addEventListener('input', runDuplicateCheck);
+      nameInput.addEventListener('input', runDuplicateCheck);
+
+      // Handle New Customer Submit
+      document.getElementById('newCustomerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mobile = mobileInput.value.trim();
+        if (!window.Validation.isValidMobile(mobile)) {
+          UI.showToast('Please enter a valid 10-digit Indian mobile number starting with 6,7,8,9', 'error');
+          return;
+        }
+
+        const nameEn = nameInput.value.trim();
+        const nameTa = document.getElementById('newCustNameTa').value.trim();
+        const address = document.getElementById('newCustAddress').value.trim();
+        const townVillage = document.getElementById('newCustTown').value.trim();
+        const idType = document.getElementById('newCustIdType').value;
+        const idNumber = document.getElementById('newCustIdNumber').value.trim();
+
+        if (!nameEn || !address || !townVillage || !idNumber) {
+          UI.showToast('Please fill all required customer fields', 'warning');
+          return;
+        }
+
+        UI.showLoading('Registering customer profile...');
+        const payload = {
+          nameEn,
+          nameTa,
+          fatherHusbandName: document.getElementById('newCustFatherHusband').value,
+          dob: document.getElementById('newCustDob').value,
+          gender: document.getElementById('newCustGender').value,
+          occupation: document.getElementById('newCustOccupation').value,
+          mobile,
+          altMobile: document.getElementById('newCustAltMobile').value,
+          email: document.getElementById('newCustEmail').value,
+          address,
+          townVillage,
+          taluk: document.getElementById('newCustTaluk').value,
+          district: document.getElementById('newCustDistrict').value,
+          state: document.getElementById('newCustState').value,
+          pincode: document.getElementById('newCustPincode').value,
+          idType,
+          idNumber,
+          notes: document.getElementById('newCustNotes').value
+        };
+
+        const res = await window.customerManager.createCustomer(payload);
+        UI.hideLoading();
+
+        if (res.success) {
+          UI.showToast(`Customer ${res.customer.nameEn} registered successfully (${res.customer.customerId})!`, 'success');
+          UI.closeModal('newCustomerModal');
+          renderRecentChips();
+          renderCustomerDirectory();
+        } else {
+          UI.showToast(res.message || 'Failed to save customer', 'error');
+        }
+      });
+
+      // Handle Edit Customer Submit
+      document.getElementById('editCustomerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const custId = document.getElementById('editCustId').value;
+        const updated = {
+          nameEn: document.getElementById('editCustNameEn').value.trim(),
+          nameTa: document.getElementById('editCustNameTa').value.trim(),
+          mobile: document.getElementById('editCustMobile').value.trim(),
+          altMobile: document.getElementById('editCustAltMobile').value.trim(),
+          occupation: document.getElementById('editCustOccupation').value.trim(),
+          townVillage: document.getElementById('editCustTown').value.trim(),
+          address: document.getElementById('editCustAddress').value.trim(),
+          notes: document.getElementById('editCustNotes').value.trim()
+        };
+
+        UI.showLoading('Updating customer profile...');
+        const res = await window.customerManager.updateCustomer(custId, updated);
+        UI.hideLoading();
+
+        if (res.success) {
+          UI.showToast('Customer profile updated successfully!', 'success');
+          UI.closeModal('editCustomerModal');
+          renderRecentChips();
+          renderCustomerDirectory();
+        } else {
+          UI.showToast(res.message || 'Update failed', 'error');
+        }
+      });
+    }
+
+    // 4. Open Edit Customer Modal
+    function openEditCustomerModal(customerId) {
+      const c = window.customerManager.getCustomerById(customerId);
+      if (!c) return;
+
+      document.getElementById('editCustId').value = c.customerId;
+      document.getElementById('editCustNameEn').value = c.nameEn;
+      document.getElementById('editCustNameTa').value = c.nameTa || '';
+      document.getElementById('editCustMobile').value = c.mobile;
+      document.getElementById('editCustAltMobile').value = c.altMobile || '';
+      document.getElementById('editCustOccupation').value = c.occupation || '';
+      document.getElementById('editCustTown').value = c.townVillage || '';
+      document.getElementById('editCustAddress').value = c.address || '';
+      document.getElementById('editCustNotes').value = c.notes || '';
+
+      UI.openModal('editCustomerModal');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pledges & Pawn Tickets &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #printDocumentModal, #printDocumentModal * {
+        visibility: visible;
+      }
+      #printDocumentModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .modal-header, .modal-footer, .tab-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="pledges">Pledges & Pawn Tickets (அடகுகள்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Master ledger of all active, due, redeemed and renewed pawn loan contracts.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="new-pledge.html" class="btn btn-primary">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+              <span data-i18n="new_pledge">+ New Pledge POS</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Filter & Search Controls Card -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-body" style="padding:var(--space-4);">
+            <div style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+              
+              <!-- Search box -->
+              <div class="search-box" style="flex:2; min-width:240px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="pledgeSearchInput" class="form-input" placeholder="Search by Ticket No, Customer Name, Mobile, Packet ID..." />
+              </div>
+
+              <!-- Status Filter Dropdown -->
+              <div style="flex:1.2; min-width:180px;">
+                <select class="form-select" id="pledgeStatusFilter">
+                  <option value="ALL">All Pledges (அனைத்தும்)</option>
+                  <option value="ACTIVE" selected>Active Loans Only (செயலில் உள்ளவை)</option>
+                  <option value="DUE">Due for Renewal / Closure (கெடு தேதி)</option>
+                  <option value="OVERDUE">Overdue Loans (காலாவதி)</option>
+                  <option value="REDEEMED">Redeemed / Released (மீட்கப்பட்டது)</option>
+                </select>
+              </div>
+
+              <!-- Date Filter -->
+              <div style="flex:1; min-width:140px;">
+                <input type="date" id="pledgeDateFilter" class="form-input" title="Filter by Pledge Date" />
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Master Pledges Table Card -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title">Pawn Tickets Master Ledger</h3>
+              <span class="badge badge-gold" id="pledgeCountBadge">0 Pledges</span>
+            </div>
+            <div style="font-size:12px; color:var(--slate-500);">Statutory Form F Standard</div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Ticket No</th>
+                  <th>Pledge Date</th>
+                  <th>Maturity</th>
+                  <th>Customer (வாடிக்கையாளர்)</th>
+                  <th>Pledged Articles</th>
+                  <th>Net Wt</th>
+                  <th>Loan Amount</th>
+                  <th>Monthly Int</th>
+                  <th>Status</th>
+                  <th>Packet / Vault</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="pledgesTableBody">
+                <!-- Dynamically Rendered via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: UNIFIED DOCUMENT PRINT & PREVIEW (A4 & 80mm Thermal Dual Layouts)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="printDocumentModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="docModalTitle">Official Pawn Document</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('printDocumentModal')">&times;</button>
+      </div>
+
+      <!-- Format Switcher Tab Bar -->
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="tabFormatA4Btn" onclick="switchPrintFormat('A4')">
+          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
+        </button>
+        <button type="button" class="tab-btn" id="tabFormatThermalBtn" onclick="switchPrintFormat('THERMAL')">
+          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="docRenderContainer">
+        <!-- Rendered dynamically via BillingManager -->
+      </div>
+
+      <div class="modal-footer" style="background:#FFF;">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('printDocumentModal')">Close</button>
+        <button type="button" class="btn btn-secondary" id="reprintDocBtn">
+          <span>🔄 Reprint (Audit Logged)</span>
+        </button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨 Print Document</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activePledgeForModal = null;
+    let activeFormat = 'A4';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('pledges');
+      renderPledgesTable();
+      bindPledgeEvents();
+
+      // Check URL query parameter ?ticket=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketParam = urlParams.get('ticket');
+      if (ticketParam) {
+        openDocumentModal(ticketParam, 'A4');
+      }
+    });
+
+    function renderPledgesTable() {
+      const query = document.getElementById('pledgeSearchInput').value.toLowerCase().trim();
+      const statusFilter = document.getElementById('pledgeStatusFilter').value;
+      const dateFilter = document.getElementById('pledgeDateFilter').value;
+
+      let list = [...window.pledgePosManager.pledges];
+
+      // 1. Status filter
+      if (statusFilter !== 'ALL') {
+        list = list.filter(p => p.status === statusFilter);
+      }
+
+      // 2. Date filter
+      if (dateFilter) {
+        list = list.filter(p => p.pledgeDate === dateFilter);
+      }
+
+      // 3. Search query
+      if (query) {
+        list = list.filter(p => {
+          const cust = window.customerManager.getCustomerById(p.customerId);
+          const custName = cust ? cust.nameEn.toLowerCase() : '';
+          const custMob = cust ? cust.mobile : '';
+          return (
+            p.ticketNo.toLowerCase().includes(query) ||
+            p.customerId.toLowerCase().includes(query) ||
+            p.packetId.toLowerCase().includes(query) ||
+            custName.includes(query) ||
+            custMob.includes(query)
+          );
+        });
+      }
+
+      document.getElementById('pledgeCountBadge').textContent = `${list.length} Pledges`;
+      const tbody = document.getElementById('pledgesTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="11" style="text-align:center; padding:var(--space-6);">
+              <div class="empty-state" style="padding:0;">
+                <div class="empty-title">No pawn tickets found</div>
+                <div class="empty-text">Try adjusting search filters or book a new pledge POS ticket.</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map(p => {
+        const cust = window.customerManager.getCustomerById(p.customerId);
+        const custName = cust ? `${cust.nameEn} <span style="font-size:11px; color:var(--gold-700);">(${cust.nameTa || ''})</span>` : p.customerId;
+        const custPhone = cust ? cust.mobile : '';
+
+        const statusBadge = (p.status === 'ACTIVE')
+          ? `<span class="badge badge-active">ACTIVE</span>`
+          : (p.status === 'DUE' ? `<span class="badge badge-warning">DUE</span>` : (p.status === 'OVERDUE' ? `<span class="badge badge-danger">OVERDUE</span>` : `<span class="badge badge-slate">${p.status}</span>`));
+
+        const itemSummary = p.items ? p.items.map(it => `${it.itemType} (${it.purity})`).join(', ') : 'Jewellery Articles';
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">
+              <a href="#" onclick="openDocumentModal('${p.ticketNo}', 'A4'); return false;" style="font-weight:800; color:inherit;">${p.ticketNo}</a>
+            </td>
+            <td>${window.Validation.formatDate(p.pledgeDate)}</td>
+            <td>${window.Validation.formatDate(p.maturityDate)}</td>
+            <td>
+              <div class="cell-primary"><a href="customer.html?id=${p.customerId}">${custName}</a></div>
+              <div style="font-size:11px; color:var(--slate-500);">📞 ${custPhone}</div>
+            </td>
+            <td style="max-width:180px; font-size:11.5px;">${itemSummary}</td>
+            <td class="cell-mono text-gold" style="font-weight:800;">${Number(p.totalNetWeight).toFixed(3)} g</td>
+            <td class="cell-primary">${window.Validation.formatINR(p.loanAmount)}</td>
+            <td class="cell-mono" style="color:var(--gold-900); font-weight:700;">${window.Validation.formatINR(p.monthlyInterestAmount)}</td>
+            <td>${statusBadge}</td>
+            <td class="cell-mono" style="font-size:11px;">${p.packetId}<br/><span style="font-size:10px; color:var(--slate-400);">${p.vaultLocation}</span></td>
+            <td>
+              <div style="display:flex; gap:var(--space-1);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="openDocumentModal('${p.ticketNo}', 'A4')" title="Print A4 Ticket">📄 A4</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="openDocumentModal('${p.ticketNo}', 'THERMAL')" title="Print 80mm Slip">🧾 80mm</button>
+                <a href="payments.html?ticket=${p.ticketNo}" class="btn btn-secondary btn-sm" title="Collect Payment">Pay</a>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindPledgeEvents() {
+      document.getElementById('pledgeSearchInput').addEventListener('input', renderPledgesTable);
+      document.getElementById('pledgeStatusFilter').addEventListener('change', renderPledgesTable);
+      document.getElementById('pledgeDateFilter').addEventListener('change', renderPledgesTable);
+
+      document.getElementById('reprintDocBtn').addEventListener('click', () => {
+        if (activePledgeForModal) {
+          const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+          const docHtml = window.billingManager.renderPawnTicket(activePledgeForModal, cust, activeFormat, true);
+          document.getElementById('docRenderContainer').innerHTML = docHtml;
+          UI.showToast(window.t('reprint_logged'), 'success');
+        }
+      });
+    }
+
+    function openDocumentModal(ticketNo, format = 'A4') {
+      const p = window.pledgePosManager.pledges.find(item => item.ticketNo === ticketNo);
+      if (!p) return;
+
+      activePledgeForModal = p;
+      activeFormat = format;
+      document.getElementById('docModalTitle').textContent = `Pawn Ticket &bull; ${p.ticketNo}`;
+
+      switchPrintFormat(format);
+      UI.openModal('printDocumentModal');
+    }
+
+    function switchPrintFormat(format) {
+      activeFormat = format;
+      const a4Btn = document.getElementById('tabFormatA4Btn');
+      const thermalBtn = document.getElementById('tabFormatThermalBtn');
+
+      if (format === 'A4') {
+        a4Btn.classList.add('active');
+        thermalBtn.classList.remove('active');
+      } else {
+        a4Btn.classList.remove('active');
+        thermalBtn.classList.add('active');
+      }
+
+      if (activePledgeForModal) {
+        const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+        const docHtml = window.billingManager.renderPawnTicket(activePledgeForModal, cust, format, false);
+        document.getElementById('docRenderContainer').innerHTML = docHtml;
+      }
+    }
+  </script>
+</body>
+</html>

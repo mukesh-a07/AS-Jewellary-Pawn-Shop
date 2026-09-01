@@ -1,0 +1,731 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Document Repository &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+    }
+    .doc-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+    }
+    .doc-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--gold-400);
+    }
+    .doc-preview-box {
+      height: 160px;
+      background: var(--slate-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .doc-preview-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .doc-preview-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 13px;
+      gap: 6px;
+    }
+    .doc-preview-box:hover .doc-preview-overlay {
+      opacity: 1;
+    }
+    .camera-viewport {
+      width: 100%;
+      height: 280px;
+      background: #000000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .camera-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header Actions Bar -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="doc_repository">Secure Document Repository (ஆவண காப்பகம்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Private Google Drive cloud documents, KYC identity proofs, customer photos & pawn receipts.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2);">
+            <button class="btn btn-primary" id="openUploadDocBtn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span data-i18n="upload_doc">+ Upload Document (ஆவணம் ஏற்று)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter & Search Bar -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-body" style="padding:var(--space-4);">
+            <div style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+              
+              <!-- Search box -->
+              <div class="search-box" style="flex:2; min-width:240px;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input type="text" id="docSearchInput" class="form-input" placeholder="Search by Filename, Customer ID, Document ID, Ticket..." />
+              </div>
+
+              <!-- Customer Selector Filter -->
+              <div style="flex:1.5; min-width:200px;">
+                <select class="form-select" id="docCustomerFilter">
+                  <option value="ALL">All Customers (அனைத்து வாடிக்கையாளர்கள்)</option>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+
+              <!-- Document Category Filter -->
+              <div style="flex:1.2; min-width:180px;">
+                <select class="form-select" id="docCategoryFilter">
+                  <option value="ALL" data-i18n="all_documents">All Categories</option>
+                  <option value="KYC" data-i18n="kyc_proofs">KYC & ID Proofs</option>
+                  <option value="PROFILE" data-i18n="photos_signatures">Photos & Signatures</option>
+                  <option value="PLEDGES" data-i18n="pledge_docs">Pledge & Jewellery Photos</option>
+                  <option value="RECEIPTS" data-i18n="receipts">Receipts & Tickets</option>
+                  <option value="ARCHIVED" data-i18n="archived_docs">Archived / Deleted</option>
+                </select>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Documents Repository Grid Container -->
+        <div class="doc-grid" id="docsGridContainer">
+          <!-- Dynamically Injected via JS -->
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: UPLOAD DOCUMENT (Dual Tabs: File Upload & Live Camera Capture)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="uploadDocModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="upload_doc">+ Secure Document Upload (ஆவணம் ஏற்று)</h3>
+        <button class="modal-close-btn" onclick="closeUploadModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <!-- Upload Source Tabs -->
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="tabSourceFileBtn" onclick="switchUploadSource('FILE')">
+          📁 1. Upload from Device (கோப்பு ஏற்று)
+        </button>
+        <button type="button" class="tab-btn" id="tabSourceCameraBtn" onclick="switchUploadSource('CAMERA')">
+          📷 2. Live Camera Capture (கேமரா படம்)
+        </button>
+      </div>
+
+      <form id="uploadDocForm">
+        <div class="modal-body">
+          
+          <!-- Metadata Fields (Common for both File and Camera) -->
+          <div class="grid-2" style="margin-bottom:var(--space-4);">
+            
+            <div class="form-group">
+              <label class="form-label" for="uploadDocCustomer">
+                <span data-i18n="customer_name">Associated Customer</span>
+                <span class="required">*</span>
+              </label>
+              <select id="uploadDocCustomer" class="form-select" required>
+                <!-- Populated via JS -->
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uploadDocType">
+                <span data-i18n="doc_type">Document Category</span>
+                <span class="required">*</span>
+              </label>
+              <select id="uploadDocType" class="form-select" required>
+                <option value="ID_PROOF" data-i18n="type_id_proof">ID Proof (Aadhaar/Voter)</option>
+                <option value="CUSTOMER_PHOTO" data-i18n="type_customer_photo">Customer Photo</option>
+                <option value="ADDRESS_PROOF" data-i18n="type_address_proof">Address Proof (Ration Card)</option>
+                <option value="PLEDGE_ITEM_PHOTO" data-i18n="type_pledge_photo">Jewellery Item Photo</option>
+                <option value="SIGNATURE" data-i18n="type_signature">Signature Specimen</option>
+                <option value="THUMB" data-i18n="type_thumb">Thumb Impression</option>
+                <option value="PAWN_TICKET_PDF" data-i18n="type_pawn_ticket">Signed Pawn Ticket PDF</option>
+                <option value="OTHER" data-i18n="type_other">Other Supporting Doc</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uploadDocTitle">Document Title / Description *</label>
+              <input type="text" id="uploadDocTitle" class="form-input" placeholder="e.g. Aadhaar Card Front / Back" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uploadDocPledgeId">Pledge Ticket Ref (Optional)</label>
+              <input type="text" id="uploadDocPledgeId" class="form-input" placeholder="e.g. PLG-2026-002341" />
+            </div>
+
+          </div>
+
+          <!-- TAB SOURCE A: FILE PICKER -->
+          <div id="uploadSourceFilePane">
+            <div class="form-group">
+              <label class="form-label">Select File (Max 5MB &bull; JPG, PNG, WEBP, PDF)</label>
+              <input type="file" id="filePickerInput" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf" />
+            </div>
+            
+            <div id="fileSelectedSummary" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3); margin-top:var(--space-2);">
+              <div style="font-weight:700; font-size:13px;" id="selectedFileName">file.pdf</div>
+              <div style="font-size:11px; color:var(--slate-500); margin-top:2px;" id="selectedFileSize">1.2 MB</div>
+            </div>
+          </div>
+
+          <!-- TAB SOURCE B: LIVE CAMERA CAPTURE -->
+          <div id="uploadSourceCameraPane" style="display:none;">
+            <div class="camera-viewport">
+              <video id="cameraVideo" autoplay playsinline></video>
+              <canvas id="cameraCanvas" style="display:none;"></canvas>
+              <div id="cameraPlaceholder" style="color:var(--slate-400); font-size:13px; text-align:center; padding:var(--space-4);">
+                Click "Start Camera" to initialize counter webcam or mobile camera.
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:center; gap:var(--space-3); margin-top:var(--space-3);">
+              <button type="button" class="btn btn-secondary btn-sm" id="startCamBtn">▶ Start Camera</button>
+              <button type="button" class="btn btn-primary btn-sm" id="snapPhotoBtn" style="display:none;" data-i18n="snap_photo">📷 Snap Photo</button>
+              <button type="button" class="btn btn-outline btn-sm" id="retakePhotoBtn" style="display:none;" data-i18n="retake_photo">🔄 Retake</button>
+            </div>
+
+            <div id="cameraCapturedPreview" style="display:none; margin-top:var(--space-3); text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--success-main); margin-bottom:4px;">✓ Photo Captured with Security Timestamp Watermark</div>
+              <img id="capturedImgEl" style="max-height:140px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" />
+            </div>
+          </div>
+
+          <!-- Live Upload Progress Bar -->
+          <div id="uploadProgressBarContainer" style="display:none; margin-top:var(--space-4);">
+            <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+              <span>Uploading to Google Drive...</span>
+              <span id="uploadPercentText">65%</span>
+            </div>
+            <div style="height:6px; background:var(--slate-200); border-radius:var(--radius-full); overflow:hidden;">
+              <div id="uploadProgressFill" style="height:100%; width:65%; background:var(--gold-500); transition:width 0.2s ease;"></div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeUploadModal()" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submitDocBtn">
+            <span data-i18n="upload_doc">Confirm & Upload Document</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: SECURE DOCUMENT PREVIEW & METADATA VIEWER
+       ========================================================================== -->
+  <div class="modal-backdrop" id="previewDocModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="prevDocTitle">Document Preview</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('previewDocModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div style="display:flex; flex-wrap:wrap;">
+          
+          <!-- Document Viewer Pane -->
+          <div style="flex:2; min-width:320px; background:var(--slate-900); padding:var(--space-4); display:flex; align-items:center; justify-content:center; min-height:360px;">
+            <img id="prevDocImg" src="" style="max-width:100%; max-height:360px; object-fit:contain; border-radius:var(--radius-md); display:none;" />
+            <div id="prevDocPdfPlaceholder" style="color:#FFF; text-align:center; display:none;">
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div style="font-weight:700; margin-top:8px;">PDF Document (Secured View)</div>
+              <div style="font-size:11px; color:var(--slate-400); margin-top:4px;" id="prevDocPdfName">ticket.pdf</div>
+            </div>
+          </div>
+
+          <!-- Metadata Sidebar -->
+          <div style="flex:1.2; min-width:240px; padding:var(--space-4); background:#FFFFFF; border-left:1px solid var(--border-subtle);">
+            <h4 style="font-size:13px; font-weight:800; text-transform:uppercase; color:var(--slate-500); margin-bottom:var(--space-3);">Document Metadata</h4>
+            
+            <table class="data-table" style="font-size:11px; border:none;">
+              <tbody>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Doc ID:</td>
+                  <td class="cell-mono" id="metaDocId" style="font-weight:700;">DOC-2026-000184-01</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Customer:</td>
+                  <td id="metaCustomer" style="font-weight:700;">R. Murugan (CUS-000184)</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Pledge Ref:</td>
+                  <td class="cell-mono" id="metaPledgeRef">-</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Category:</td>
+                  <td id="metaDocType">ID Proof</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Stored Name:</td>
+                  <td class="cell-mono text-muted" id="metaStoredFilename" style="word-break:break-all;">DOC_CUS_ID.pdf</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Drive Path:</td>
+                  <td class="text-muted" id="metaDriveFolder" style="font-size:10px; word-break:break-all;">AS Jewellar/Customers/...</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">File Size:</td>
+                  <td id="metaFileSize">1.42 MB</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Upload Date:</td>
+                  <td id="metaUploadDate">12-Jan-2024</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Uploaded By:</td>
+                  <td id="metaUploadedBy">ADMIN</td>
+                </tr>
+                <tr>
+                  <td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Status:</td>
+                  <td id="metaStatus"><span class="badge badge-success">VERIFIED</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('previewDocModal')">Close</button>
+        <button type="button" class="btn btn-primary" id="downloadDocBtn">
+          <span>⬇ Authorized Download</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: RENAME DOCUMENT
+       ========================================================================== -->
+  <div class="modal-backdrop" id="renameDocModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="rename_doc">Rename Document Title</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('renameDocModal')">&times;</button>
+      </div>
+      <form id="renameDocForm">
+        <input type="hidden" id="renameDocId" />
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">New Document Title *</label>
+            <input type="text" id="renameDocTitleInput" class="form-input" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('renameDocModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary" data-i18n="save">Save Changes</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/documents.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let capturedPhotoDataUrl = null;
+    let selectedFileObj = null;
+    let activePreviewDoc = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('documents');
+      populateCustomerFilters();
+      renderDocumentGrid();
+      bindDocEvents();
+    });
+
+    // Populate customer dropdowns in filter and modal
+    function populateCustomerFilters() {
+      const customers = window.customerManager.customers || [];
+      const filterSelect = document.getElementById('docCustomerFilter');
+      const uploadSelect = document.getElementById('uploadDocCustomer');
+
+      const optionsHtml = customers.map(c => `
+        <option value="${c.customerId}">${c.nameEn} (${c.customerId})</option>
+      `).join('');
+
+      filterSelect.innerHTML = `<option value="ALL">All Customers (அனைத்து வாடிக்கையாளர்கள்)</option>` + optionsHtml;
+      uploadSelect.innerHTML = optionsHtml;
+    }
+
+    // Render Document Cards Grid
+    function renderDocumentGrid() {
+      const customerId = document.getElementById('docCustomerFilter').value;
+      const docCategory = document.getElementById('docCategoryFilter').value;
+      const query = document.getElementById('docSearchInput').value;
+
+      const docs = window.documentManager.filterDocuments({
+        customerId,
+        docCategory,
+        query
+      });
+
+      const container = document.getElementById('docsGridContainer');
+
+      if (docs.length === 0) {
+        container.innerHTML = `
+          <div class="empty-state" style="grid-column: 1 / -1;">
+            <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="empty-title" data-i18n="no_records_found">No documents found</div>
+            <div class="empty-text">Upload new KYC identity proofs or adjust search filters.</div>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = docs.map(doc => {
+        const isPdf = doc.mimeType === 'application/pdf';
+        const typeBadgeClass = doc.docType.includes('ID') ? 'badge-gold' : (doc.docType.includes('PHOTO') ? 'badge-info' : 'badge-slate');
+        const statusBadge = (doc.status === 'VERIFIED') 
+          ? `<span class="badge badge-success">✓ VERIFIED</span>`
+          : (doc.status === 'ARCHIVED' ? `<span class="badge badge-danger">ARCHIVED</span>` : `<span class="badge badge-active">ACTIVE</span>`);
+
+        const previewContent = isPdf ? `
+          <div style="text-align:center; color:var(--slate-500);">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            <div style="font-size:11px; font-weight:700; margin-top:4px;">PDF DOCUMENT</div>
+          </div>
+        ` : `<img src="${doc.previewUrl}" alt="${doc.docTitle}" />`;
+
+        return `
+          <div class="doc-card">
+            <div class="doc-preview-box" onclick="openDocPreview('${doc.docId}')">
+              ${previewContent}
+              <div class="doc-preview-overlay">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <span>Preview</span>
+              </div>
+            </div>
+
+            <div style="padding:var(--space-3); flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px; margin-bottom:4px;">
+                  <span class="badge ${typeBadgeClass}" style="font-size:10px;">${doc.docType}</span>
+                  ${statusBadge}
+                </div>
+                
+                <h4 style="font-size:13px; font-weight:800; color:var(--slate-900); margin-bottom:4px; line-height:1.3;">
+                  <a href="#" onclick="openDocPreview('${doc.docId}'); return false;" style="color:inherit;">${doc.docTitle}</a>
+                </h4>
+                
+                <div style="font-size:11px; color:var(--slate-500); margin-bottom:2px;">
+                  <a href="customer.html?id=${doc.customerId}" style="color:var(--gold-800); font-weight:700;">${doc.customerId}</a>
+                  ${doc.pledgeId ? ` &bull; <span class="cell-mono">${doc.pledgeId}</span>` : ''}
+                </div>
+
+                <div class="cell-mono text-muted" style="font-size:10px; word-break:break-all;">${doc.storedFilename}</div>
+              </div>
+
+              <div style="margin-top:var(--space-3); padding-top:var(--space-2); border-top:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-size:11px; color:var(--slate-500);">${doc.fileSizeFormatted} &bull; ${window.Validation.formatDate(doc.uploadedAt)}</span>
+                
+                <div style="display:flex; gap:2px;">
+                  <button class="btn btn-ghost btn-sm" onclick="openRenameModal('${doc.docId}')" title="Rename Title">&#9998;</button>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleArchiveDoc('${doc.docId}')" title="Archive / Delete">&#128465;</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // Bind Event Listeners
+    function bindDocEvents() {
+      document.getElementById('docSearchInput').addEventListener('input', renderDocumentGrid);
+      document.getElementById('docCustomerFilter').addEventListener('change', renderDocumentGrid);
+      document.getElementById('docCategoryFilter').addEventListener('change', renderDocumentGrid);
+
+      document.getElementById('openUploadDocBtn').addEventListener('click', () => {
+        document.getElementById('uploadDocForm').reset();
+        capturedPhotoDataUrl = null;
+        selectedFileObj = null;
+        document.getElementById('fileSelectedSummary').style.display = 'none';
+        document.getElementById('cameraCapturedPreview').style.display = 'none';
+        switchUploadSource('FILE');
+        UI.openModal('uploadDocModal');
+      });
+
+      // File picker change listener
+      const fileInput = document.getElementById('filePickerInput');
+      fileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const val = window.documentManager.validateFile(file);
+        if (!val.valid) {
+          UI.showToast(val.message, 'error');
+          fileInput.value = '';
+          return;
+        }
+
+        selectedFileObj = file;
+        document.getElementById('selectedFileName').textContent = file.name;
+        document.getElementById('selectedFileSize').textContent = window.documentManager.formatBytes(file.size);
+        document.getElementById('fileSelectedSummary').style.display = 'block';
+
+        if (!document.getElementById('uploadDocTitle').value) {
+          document.getElementById('uploadDocTitle').value = file.name.replace(/\.[^/.]+$/, "");
+        }
+      });
+
+      // Live Camera Buttons
+      const videoEl = document.getElementById('cameraVideo');
+      const canvasEl = document.getElementById('cameraCanvas');
+      const startCamBtn = document.getElementById('startCamBtn');
+      const snapBtn = document.getElementById('snapPhotoBtn');
+      const retakeBtn = document.getElementById('retakePhotoBtn');
+
+      startCamBtn.addEventListener('click', async () => {
+        try {
+          UI.showLoading('Starting counter camera...');
+          await window.documentManager.startCamera(videoEl);
+          UI.hideLoading();
+          document.getElementById('cameraPlaceholder').style.display = 'none';
+          startCamBtn.style.display = 'none';
+          snapBtn.style.display = 'inline-flex';
+        } catch (err) {
+          UI.hideLoading();
+          UI.showToast(err.message, 'error');
+        }
+      });
+
+      snapBtn.addEventListener('click', () => {
+        capturedPhotoDataUrl = window.documentManager.capturePhoto(videoEl, canvasEl);
+        document.getElementById('capturedImgEl').src = capturedPhotoDataUrl;
+        document.getElementById('cameraCapturedPreview').style.display = 'block';
+        snapBtn.style.display = 'none';
+        retakeBtn.style.display = 'inline-flex';
+        window.documentManager.stopCamera();
+      });
+
+      retakeBtn.addEventListener('click', async () => {
+        document.getElementById('cameraCapturedPreview').style.display = 'none';
+        retakeBtn.style.display = 'none';
+        snapBtn.style.display = 'inline-flex';
+        await window.documentManager.startCamera(videoEl);
+      });
+
+      // Submit Upload Form
+      document.getElementById('uploadDocForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const customerId = document.getElementById('uploadDocCustomer').value;
+        const docType = document.getElementById('uploadDocType').value;
+        const docTitle = document.getElementById('uploadDocTitle').value.trim();
+        const pledgeId = document.getElementById('uploadDocPledgeId').value.trim();
+
+        if (!selectedFileObj && !capturedPhotoDataUrl) {
+          UI.showToast('Please select a file or take a camera snapshot first', 'warning');
+          return;
+        }
+
+        // Progress bar simulation
+        const progressBox = document.getElementById('uploadProgressBarContainer');
+        const progressFill = document.getElementById('uploadProgressFill');
+        const progressText = document.getElementById('uploadPercentText');
+        progressBox.style.display = 'block';
+
+        let pct = 10;
+        const interval = setInterval(() => {
+          pct += 25;
+          if (pct > 90) pct = 90;
+          progressFill.style.width = pct + '%';
+          progressText.textContent = pct + '%';
+        }, 150);
+
+        setTimeout(async () => {
+          clearInterval(interval);
+          progressFill.style.width = '100%';
+          progressText.textContent = '100%';
+
+          const res = await window.documentManager.uploadDocument({
+            customerId,
+            docType,
+            docTitle,
+            pledgeId,
+            fileOrDataUrl: capturedPhotoDataUrl || selectedFileObj,
+            originalFilename: selectedFileObj ? selectedFileObj.name : 'Counter_Photo.jpg',
+            mimeType: selectedFileObj ? selectedFileObj.type : 'image/jpeg',
+            fileSizeBytes: selectedFileObj ? selectedFileObj.size : 450000
+          });
+
+          progressBox.style.display = 'none';
+          closeUploadModal();
+          UI.showToast(window.t('upload_success'), 'success');
+          renderDocumentGrid();
+        }, 600);
+      });
+
+      // Download Doc Action
+      document.getElementById('downloadDocBtn').addEventListener('click', () => {
+        if (activePreviewDoc) {
+          UI.showToast(`Initiating secure authorized download for ${activePreviewDoc.storedFilename}...`, 'info');
+        }
+      });
+
+      // Rename Doc Form
+      document.getElementById('renameDocForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const docId = document.getElementById('renameDocId').value;
+        const newTitle = document.getElementById('renameDocTitleInput').value.trim();
+        const res = await window.documentManager.renameDocument(docId, newTitle);
+        if (res.success) {
+          UI.showToast(window.t('rename_success'), 'success');
+          UI.closeModal('renameDocModal');
+          renderDocumentGrid();
+        }
+      });
+    }
+
+    function switchUploadSource(source) {
+      const filePane = document.getElementById('uploadSourceFilePane');
+      const cameraPane = document.getElementById('uploadSourceCameraPane');
+      const fileBtn = document.getElementById('tabSourceFileBtn');
+      const cameraBtn = document.getElementById('tabSourceCameraBtn');
+
+      if (source === 'FILE') {
+        filePane.style.display = 'block';
+        cameraPane.style.display = 'none';
+        fileBtn.classList.add('active');
+        cameraBtn.classList.remove('active');
+        window.documentManager.stopCamera();
+      } else {
+        filePane.style.display = 'none';
+        cameraPane.style.display = 'block';
+        fileBtn.classList.remove('active');
+        cameraBtn.classList.add('active');
+      }
+    }
+
+    function closeUploadModal() {
+      window.documentManager.stopCamera();
+      UI.closeModal('uploadDocModal');
+    }
+
+    function openDocPreview(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+
+      activePreviewDoc = doc;
+      document.getElementById('prevDocTitle').textContent = doc.docTitle;
+      
+      const imgEl = document.getElementById('prevDocImg');
+      const pdfBox = document.getElementById('prevDocPdfPlaceholder');
+
+      if (doc.mimeType === 'application/pdf') {
+        imgEl.style.display = 'none';
+        pdfBox.style.display = 'block';
+        document.getElementById('prevDocPdfName').textContent = doc.storedFilename;
+      } else {
+        pdfBox.style.display = 'none';
+        imgEl.style.display = 'block';
+        imgEl.src = doc.previewUrl || 'assets/logo/logo.svg';
+      }
+
+      // Populate Metadata Sidebar
+      document.getElementById('metaDocId').textContent = doc.docId;
+      document.getElementById('metaCustomer').textContent = `${doc.customerId}`;
+      document.getElementById('metaPledgeRef').textContent = doc.pledgeId || '-';
+      document.getElementById('metaDocType').textContent = doc.docType;
+      document.getElementById('metaStoredFilename').textContent = doc.storedFilename;
+      document.getElementById('metaDriveFolder').textContent = doc.driveFolder || '-';
+      document.getElementById('metaFileSize').textContent = doc.fileSizeFormatted;
+      document.getElementById('metaUploadDate').textContent = window.Validation.formatDate(doc.uploadedAt);
+      document.getElementById('metaUploadedBy').textContent = doc.uploadedBy;
+      document.getElementById('metaStatus').innerHTML = `<span class="badge badge-success">${doc.status}</span>`;
+
+      UI.openModal('previewDocModal');
+    }
+
+    function openRenameModal(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+
+      document.getElementById('renameDocId').value = doc.docId;
+      document.getElementById('renameDocTitleInput').value = doc.docTitle;
+      UI.openModal('renameDocModal');
+    }
+
+    async function toggleArchiveDoc(docId) {
+      if (confirm('Are you sure you want to archive / soft-delete this document?')) {
+        const res = await window.documentManager.archiveDocument(docId);
+        if (res.success) {
+          UI.showToast(window.t('archive_success'), 'success');
+          renderDocumentGrid();
+        }
+      }
+    }
+  </script>
+</body>
+</html>

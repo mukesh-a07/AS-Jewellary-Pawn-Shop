@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="iconGold192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F3E7C4" />
+      <stop offset="50%" stop-color="#D4AF37" />
+      <stop offset="100%" stop-color="#996515" />
+    </linearGradient>
+    <linearGradient id="bgGrad192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="40" fill="url(#bgGrad192)" />
+  <circle cx="96" cy="96" r="76" fill="none" stroke="url(#iconGold192)" stroke-width="2" stroke-dasharray="6,4" opacity="0.4" />
+  <g transform="translate(16, 16)">
+    <!-- Diamond Scales Symbol -->
+    <path d="M80 24 L126 56 L80 132 L34 56 Z" fill="none" stroke="url(#iconGold192)" stroke-width="6" stroke-linejoin="round" />
+    <path d="M34 56 L126 56" stroke="url(#iconGold192)" stroke-width="4" />
+    <path d="M80 24 L80 132" stroke="url(#iconGold192)" stroke-width="4" />
+    <circle cx="80" cy="78" r="14" fill="url(#iconGold192)" />
+    <circle cx="80" cy="38" r="5" fill="#FFFDF9" />
+    <circle cx="56" cy="56" r="5" fill="#FFFDF9" />
+    <circle cx="104" cy="56" r="5" fill="#FFFDF9" />
+  </g>
+</svg>

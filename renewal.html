@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pledge Renewal &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .renewal-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--space-5);
+      margin-bottom: var(--space-6);
+    }
+    @media (max-width: 900px) {
+      .renewal-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #renewalReceiptModal, #renewalReceiptModal * {
+        visibility: visible;
+      }
+      #renewalReceiptModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .modal-header, .modal-footer, .tab-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="renewal_title">Pledge Renewal (அடகு புதுப்பித்தல்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Settle accrued interest and extend loan tenure for another 12 months with immutable history chaining.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="pledges.html" class="btn btn-outline">View All Pledges &rarr;</a>
+          </div>
+        </div>
+
+        <div class="renewal-grid">
+          
+          <!-- LEFT COLUMN: Lookup & Renewal Form -->
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            
+            <!-- 1. Search Ticket -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header">
+                <h3 class="card-title">1. Select Pledge to Renew (அடகு சீட்டு தேர்வு)</h3>
+              </div>
+              <div class="card-body">
+                <div class="search-box" style="margin-bottom:var(--space-3);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="renTicketSearch" class="form-input" placeholder="Type Ticket No (e.g. PLG-2026-002341), Mobile, or Customer Name..." autocomplete="off" />
+                  <div id="renTicketSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                    <!-- Auto-complete -->
+                  </div>
+                </div>
+
+                <!-- Selected Ticket Banner -->
+                <div id="renSelectedBanner" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3);">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                      <div style="font-weight:900; font-size:var(--font-size-md); color:var(--slate-900);">
+                        <span class="cell-mono" id="renDisplayTicketNo">PLG-2026-002341</span> &bull; <span id="renDisplayCustName">R. Murugan</span>
+                      </div>
+                      <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
+                        📞 <span id="renDisplayMobile">98765 43210</span> &bull; 🗓 Original Date: <span id="renDisplayDate">2026-07-10</span> &bull; Packet: <span id="renDisplayPacket">PKT-0087</span>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="renChangeTicketBtn">Change</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 2. Renewal Financial Terms -->
+            <div class="card" id="renFormCard" style="border-top:3px solid var(--primary-main);">
+              <div class="card-header">
+                <h3 class="card-title">2. Renewal Settlement & New Tenure</h3>
+              </div>
+              <div class="card-body">
+                
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="interest_to_settle">Accrued Interest to Settle (₹) *</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="renInterestInput" class="form-input" style="font-size:16px; font-weight:800; color:var(--gold-900);" />
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Payment Mode for Interest</label>
+                    <select id="renPaymentMode" class="form-select">
+                      <option value="CASH" selected>Cash (ரொக்கம்)</option>
+                      <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
+                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                </div>
+
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="new_loan_principal">New Loan Principal (₹) *</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="renNewPrincipalInput" class="form-input" style="font-size:16px; font-weight:800;" />
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="new_maturity_date">New Maturity Date</label>
+                    <input type="text" id="renNewMaturityInput" class="form-input" readonly style="background:#F1F5F9; font-weight:bold;" />
+                  </div>
+
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Renewal Notes / Remarks</label>
+                  <input type="text" id="renNotesInput" class="form-input" placeholder="e.g. 1 Year renewal with interest cleared" />
+                </div>
+
+                <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-4); font-size:12px; color:#1E40AF;">
+                  ℹ️ Original ticket will be immutably marked as <strong>RENEWED</strong>. A new ticket will be generated retaining full jewellery article and customer metadata.
+                </div>
+
+                <button type="button" class="btn btn-primary" id="renSubmitBtn" style="width:100%; padding:14px; font-size:15px; justify-content:center;">
+                  <span data-i18n="renew_pledge_btn">Renew Pledge & Issue New Ticket</span>
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: ACCRUED INTEREST & LOAN SUMMARY -->
+          <div>
+            <div class="card" style="position:sticky; top:80px; border-top:4px solid var(--gold-600);">
+              <div class="card-header">
+                <h3 class="card-title">Renewal Dues Summary</h3>
+              </div>
+              <div class="card-body">
+                
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                  
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Original Loan Principal:</span>
+                    <strong style="font-size:15px;" id="renSidePrincipal">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Days Elapsed:</span>
+                    <strong id="renSideDays">0 Days</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Accrued Interest Due:</span>
+                    <strong style="font-size:14px; color:var(--gold-900);" id="renSideInterestDue">₹ 0</strong>
+                  </div>
+
+                  <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md); padding:10px 12px; margin-top:var(--space-2); text-align:center;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#92400E; font-weight:bold;">Amount to Collect at Renewal</div>
+                    <div style="font-size:20px; font-weight:900; color:#78350F;" id="renSideTotalCollect">₹ 0</div>
+                  </div>
+
+                  <div style="border-top:1px dashed var(--slate-300); padding-top:var(--space-3); margin-top:var(--space-2); font-size:12px;">
+                    <div><strong>New Contract Tenure:</strong> 12 Months</div>
+                    <div><strong>Monthly Interest:</strong> 1.0% / month</div>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. RENEWALS HISTORY LEDGER -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Pledge Renewals Ledger</h3>
+            <span class="badge badge-gold" id="renCountBadge">0 Renewals</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Renewal ID</th>
+                  <th>Renewal Date</th>
+                  <th>Old Ticket Ref</th>
+                  <th>New Ticket Issued</th>
+                  <th>Customer</th>
+                  <th>Interest Settled</th>
+                  <th>Principal Carried</th>
+                  <th>New Maturity</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="renewalsTableBody">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: PRINTABLE RENEWAL RECEIPT & NEW TICKET (A4 & 80mm Layouts)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="renewalReceiptModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="renModalTitle">Pledge Renewal Receipt</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('renewalReceiptModal')">&times;</button>
+      </div>
+
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="renTabA4Btn" onclick="switchRenFormat('A4')">
+          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
+        </button>
+        <button type="button" class="tab-btn" id="renTabThermalBtn" onclick="switchRenFormat('THERMAL')">
+          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="renRenderContainer">
+        <!-- Rendered dynamically via BillingManager -->
+      </div>
+
+      <div class="modal-footer" style="background:#FFF;">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('renewalReceiptModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨 Print Official Renewal Document</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activePledgeForRenewal = null;
+    let activeRenRecordForModal = null;
+    let activeRenFormat = 'A4';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('renewal');
+      renderRenewalsTable();
+      bindRenewalEvents();
+
+      // Check URL query parameter ?ticket=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketParam = urlParams.get('ticket');
+      if (ticketParam) {
+        selectPledgeForRenewal(ticketParam);
+      } else if (window.pledgePosManager.pledges.length > 0) {
+        const firstActive = window.pledgePosManager.pledges.find(p => p.status === 'ACTIVE' || p.status === 'DUE') || window.pledgePosManager.pledges[0];
+        selectPledgeForRenewal(firstActive.ticketNo);
+      }
+    });
+
+    function selectPledgeForRenewal(ticketNo) {
+      const p = window.pledgePosManager.pledges.find(item => item.ticketNo === ticketNo);
+      if (!p) return;
+
+      activePledgeForRenewal = p;
+      const cust = window.customerManager.getCustomerById(p.customerId);
+
+      document.getElementById('renSelectedBanner').style.display = 'block';
+      document.getElementById('renTicketSearch').parentElement.style.display = 'none';
+      document.getElementById('renTicketSuggestions').style.display = 'none';
+
+      document.getElementById('renDisplayTicketNo').textContent = p.ticketNo;
+      document.getElementById('renDisplayCustName').textContent = cust ? `${cust.nameEn} (${cust.nameTa || ''})` : p.customerId;
+      document.getElementById('renDisplayMobile').textContent = cust ? cust.mobile : '';
+      document.getElementById('renDisplayDate').textContent = p.pledgeDate;
+      document.getElementById('renDisplayPacket').textContent = `${p.packetId} (${p.vaultLocation})`;
+
+      // Calculate Accrual
+      const accrual = window.paymentManager.calculateInterestAccrual(p);
+
+      document.getElementById('renSidePrincipal').textContent = `₹ ${accrual.principal.toLocaleString('en-IN')}`;
+      document.getElementById('renSideDays').textContent = `${accrual.daysElapsed} Days (${accrual.monthsElapsed} Mo)`;
+      document.getElementById('renSideInterestDue').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
+      document.getElementById('renSideTotalCollect').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
+
+      document.getElementById('renInterestInput').value = accrual.netInterestDue;
+      document.getElementById('renNewPrincipalInput').value = accrual.principal;
+
+      // 12 Months New Maturity Date
+      const nextYear = new Date();
+      nextYear.setFullYear(nextYear.getFullYear() + 1);
+      document.getElementById('renNewMaturityInput').value = nextYear.toISOString().split('T')[0];
+    }
+
+    function bindRenewalEvents() {
+      // Auto-complete Search
+      const searchInput = document.getElementById('renTicketSearch');
+      const suggBox = document.getElementById('renTicketSuggestions');
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (q.length < 1) {
+          suggBox.style.display = 'none';
+          return;
+        }
+
+        const matches = window.pledgePosManager.pledges.filter(p => {
+          if (p.status === 'REDEEMED' || p.status === 'RENEWED') return false;
+          const cust = window.customerManager.getCustomerById(p.customerId);
+          const custName = cust ? cust.nameEn.toLowerCase() : '';
+          const custMob = cust ? cust.mobile : '';
+          return p.ticketNo.toLowerCase().includes(q) || custName.includes(q) || custMob.includes(q) || p.packetId.toLowerCase().includes(q);
+        });
+
+        if (matches.length === 0) {
+          suggBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No active renewable pledges found</div>`;
+        } else {
+          suggBox.innerHTML = matches.slice(0, 5).map(p => {
+            const cust = window.customerManager.getCustomerById(p.customerId);
+            return `
+              <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectPledgeForRenewal('${p.ticketNo}')">
+                <div>
+                  <strong>${p.ticketNo}</strong> &bull; <span style="font-size:12px; color:var(--slate-700);">${cust ? cust.nameEn : p.customerId}</span>
+                  <div style="font-size:11px; color:var(--slate-500);">Principal: ₹${Number(p.loanAmount).toLocaleString('en-IN')} &bull; Status: ${p.status}</div>
+                </div>
+                <span class="badge badge-outline">Select &rarr;</span>
+              </div>
+            `;
+          }).join('');
+        }
+        suggBox.style.display = 'block';
+      });
+
+      // Change Ticket
+      document.getElementById('renChangeTicketBtn').addEventListener('click', () => {
+        activePledgeForRenewal = null;
+        document.getElementById('renSelectedBanner').style.display = 'none';
+        searchInput.parentElement.style.display = 'block';
+        searchInput.value = '';
+        searchInput.focus();
+      });
+
+      // Submit Renewal
+      document.getElementById('renSubmitBtn').addEventListener('click', handleRenewalSubmit);
+    }
+
+    async function handleRenewalSubmit() {
+      if (!activePledgeForRenewal) {
+        UI.showToast('Please select a pledge to renew', 'warning');
+        return;
+      }
+
+      const interestAmt = parseFloat(document.getElementById('renInterestInput').value) || 0;
+      const newPrincipal = parseFloat(document.getElementById('renNewPrincipalInput').value) || activePledgeForRenewal.loanAmount;
+      const mode = document.getElementById('renPaymentMode').value;
+      const notes = document.getElementById('renNotesInput').value.trim();
+
+      const btn = document.getElementById('renSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Renewing Pledge...';
+
+      const res = await window.renewalRedemptionManager.renewPledge(activePledgeForRenewal.ticketNo, {
+        interestAmount: interestAmt,
+        newPrincipal: newPrincipal,
+        paymentMode: mode,
+        notes: notes || '12-Month Pledge Renewal'
+      });
+
+      if (res.success) {
+        btn.textContent = 'Pledge Renewed!';
+        UI.showToast(`Pledge renewed successfully! New Ticket: ${res.newPledge.ticketNo}`, 'success');
+
+        renderRenewalsTable();
+        openRenewalReceiptModal(res.renewalRecord, res.oldPledge, res.newPledge, 'A4');
+
+        btn.disabled = false;
+        btn.textContent = 'Renew Pledge & Issue New Ticket';
+      } else {
+        UI.showToast(res.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Renew Pledge & Issue New Ticket';
+      }
+    }
+
+    function renderRenewalsTable() {
+      const list = [...window.renewalRedemptionManager.renewals];
+      document.getElementById('renCountBadge').textContent = `${list.length} Renewals`;
+      const tbody = document.getElementById('renewalsTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No renewals recorded yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(r => {
+        const cust = window.customerManager.getCustomerById(r.customerId);
+        const custName = cust ? cust.nameEn : r.customerId;
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">${r.renewalId}</td>
+            <td>${r.renewalDate}</td>
+            <td class="cell-mono">${r.oldTicketNo}</td>
+            <td class="cell-mono text-gold" style="font-weight:800;">${r.newTicketNo}</td>
+            <td>${custName}</td>
+            <td class="cell-mono text-success">₹ ${Number(r.interestSettled).toLocaleString('en-IN')}</td>
+            <td class="cell-mono font-bold">₹ ${Number(r.principalCarried).toLocaleString('en-IN')}</td>
+            <td>${r.newMaturityDate}</td>
+            <td>
+              <button type="button" class="btn btn-outline btn-sm" onclick="previewRenewalRow('${r.renewalId}')">📄 View Receipt</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function previewRenewalRow(renewalId) {
+      const r = window.renewalRedemptionManager.renewals.find(it => it.renewalId === renewalId);
+      if (!r) return;
+      const oldP = window.pledgePosManager.pledges.find(it => it.ticketNo === r.oldTicketNo) || { ticketNo: r.oldTicketNo, customerId: r.customerId, loanAmount: r.principalCarried };
+      const newP = window.pledgePosManager.pledges.find(it => it.ticketNo === r.newTicketNo) || { ticketNo: r.newTicketNo, loanAmount: r.principalCarried };
+      openRenewalReceiptModal(r, oldP, newP, 'A4');
+    }
+
+    function openRenewalReceiptModal(renewalRecord, oldPledge, newPledge, format = 'A4') {
+      activeRenRecordForModal = { renewalRecord, oldPledge, newPledge };
+      activeRenFormat = format;
+      document.getElementById('renModalTitle').textContent = `Renewal Receipt &bull; ${renewalRecord.renewalId}`;
+
+      switchRenFormat(format);
+      UI.openModal('renewalReceiptModal');
+    }
+
+    function switchRenFormat(format) {
+      activeRenFormat = format;
+      const a4Btn = document.getElementById('renTabA4Btn');
+      const thermalBtn = document.getElementById('renTabThermalBtn');
+
+      if (format === 'A4') {
+        a4Btn.classList.add('active');
+        thermalBtn.classList.remove('active');
+      } else {
+        a4Btn.classList.remove('active');
+        thermalBtn.classList.add('active');
+      }
+
+      if (activeRenRecordForModal) {
+        const { renewalRecord, oldPledge, newPledge } = activeRenRecordForModal;
+        const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
+        const docHtml = window.billingManager.renderRenewalReceipt(renewalRecord, oldPledge, newPledge, cust, format, false);
+        document.getElementById('renRenderContainer').innerHTML = docHtml;
+      }
+    }
+  </script>
+</body>
+</html>

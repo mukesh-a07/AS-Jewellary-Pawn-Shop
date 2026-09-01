@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Reminders & WhatsApp Follow-up &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="reminder_title">Maturity & Follow-up Reminders (நினைவூட்டல்கள்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Track upcoming maturities, overdue pawn loans, missing KYC proofs, and send 1-click WhatsApp notices.</p>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2);">
+            <button type="button" class="btn btn-outline" id="remRefreshBtn">
+              <span>↻ Refresh Reminders</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Tabs Bar -->
+        <div class="card" style="margin-bottom:var(--space-4);">
+          <div class="card-body" style="padding:var(--space-2) var(--space-3);">
+            <div class="tab-bar" style="margin:0; border:none; padding:0; flex-wrap:wrap;">
+              <button type="button" class="tab-btn active" data-filter="ALL">All (<span id="countAll">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="TODAY" style="color:var(--danger-main); font-weight:bold;">Due Today (<span id="countToday">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="TOMORROW">Tomorrow (<span id="countTomorrow">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="7DAYS">Next 7 Days (<span id="count7Days">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="OVERDUE" style="color:#7F1D1D; font-weight:bold;">Overdue (<span id="countOverdue">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="MISSING_DOCS">Missing KYC (<span id="countMissingKyc">0</span>)</button>
+              <button type="button" class="tab-btn" data-filter="COMPLETED">Contacted (<span id="countCompleted">0</span>)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Reminders Table Card -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title">Follow-up Ledger & WhatsApp Messaging</h3>
+              <span class="badge badge-gold" id="remListBadge">0 Reminders</span>
+            </div>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Priority</th>
+                  <th>Reminder Type</th>
+                  <th>Customer (வாடிக்கையாளர்)</th>
+                  <th>Ticket Ref</th>
+                  <th>Principal Loan</th>
+                  <th>Due Date</th>
+                  <th>Status</th>
+                  <th>Direct Contact Actions</th>
+                </tr>
+              </thead>
+              <tbody id="remindersTableBody">
+                <!-- Dynamically Rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activeFilter = 'ALL';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('reminders');
+
+      // Check URL query parameter ?filter=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const f = urlParams.get('filter');
+      if (f) {
+        activeFilter = f.toUpperCase();
+      }
+
+      renderReminders();
+      bindReminderEvents();
+    });
+
+    function renderReminders() {
+      // Update Tab Active states
+      document.querySelectorAll('.tab-bar .tab-btn').forEach(btn => {
+        if (btn.getAttribute('data-filter') === activeFilter) {
+          btn.classList.add('active');
+        } else {
+          btn.classList.remove('active');
+        }
+      });
+
+      // Update Counts
+      document.getElementById('countAll').textContent = window.reminderManager.getReminders('ALL').length;
+      document.getElementById('countToday').textContent = window.reminderManager.getReminders('TODAY').length;
+      document.getElementById('countTomorrow').textContent = window.reminderManager.getReminders('TOMORROW').length;
+      document.getElementById('count7Days').textContent = window.reminderManager.getReminders('7DAYS').length;
+      document.getElementById('countOverdue').textContent = window.reminderManager.getReminders('OVERDUE').length;
+      document.getElementById('countMissingKyc').textContent = window.reminderManager.getReminders('MISSING_DOCS').length;
+      document.getElementById('countCompleted').textContent = window.reminderManager.getReminders('COMPLETED').length;
+
+      const list = window.reminderManager.getReminders(activeFilter);
+      document.getElementById('remListBadge').textContent = `${list.length} Reminders`;
+
+      const tbody = document.getElementById('remindersTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="8" style="text-align:center; padding:var(--space-6);">
+              <div class="empty-state" style="padding:0;">
+                <div class="empty-title">No pending reminders in this filter</div>
+                <div class="empty-text">All pawn loans and customer KYC documents are up to date.</div>
+              </div>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = list.map(r => {
+        const priorityBadge = (r.priority === 'URGENT')
+          ? `<span class="badge badge-danger">URGENT</span>`
+          : (r.priority === 'HIGH' ? `<span class="badge badge-warning">HIGH</span>` : `<span class="badge badge-slate">${r.priority}</span>`);
+
+        const typeBadge = (r.reminderType === 'DUE_TODAY')
+          ? `<span class="badge badge-danger">DUE TODAY</span>`
+          : (r.reminderType === 'OVERDUE' ? `<span class="badge" style="background:#7F1D1D; color:#FFF;">OVERDUE</span>` : (r.reminderType === 'MISSING_KYC' ? `<span class="badge badge-slate">MISSING KYC</span>` : `<span class="badge badge-warning">UPCOMING 7D</span>`));
+
+        const statusBadge = (r.status === 'CONTACTED' || r.status === 'COMPLETED')
+          ? `<span class="badge badge-success">✓ CONTACTED</span>`
+          : `<span class="badge badge-outline">PENDING</span>`;
+
+        const waUrl = window.reminderManager.generateWhatsAppUrl(r);
+
+        return `
+          <tr>
+            <td>${priorityBadge}</td>
+            <td>${typeBadge}</td>
+            <td>
+              <div class="cell-primary"><a href="customer.html?id=${r.customerId}">${r.customerName} <span style="font-size:11px; color:var(--gold-700);">(${r.customerNameTa || ''})</span></a></div>
+              <div style="font-size:11px; color:var(--slate-500);">📞 ${r.mobile}</div>
+            </td>
+            <td class="cell-mono"><a href="pledges.html?ticket=${r.ticketNo}">${r.ticketNo}</a></td>
+            <td class="cell-primary">${r.loanAmount > 0 ? `₹ ${Number(r.loanAmount).toLocaleString('en-IN')}` : '-'}</td>
+            <td style="font-size:12px; font-weight:bold;">${r.dueDate}</td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:var(--space-1);">
+                <a href="${waUrl}" target="_blank" class="btn btn-sm btn-outline" style="background:#25D366; color:#FFF; border-color:#25D366;" title="Send WhatsApp Message">
+                  <span>💬 WhatsApp</span>
+                </a>
+                <a href="tel:${r.mobile}" class="btn btn-sm btn-outline" title="Call Borrower">
+                  <span>📞 Call</span>
+                </a>
+                ${r.status === 'PENDING' ? `
+                  <button type="button" class="btn btn-sm btn-ghost" onclick="markReminderDone('${r.reminderId}')" title="Mark as Contacted" style="color:var(--success-main);">
+                    <span>✓ Done</span>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindReminderEvents() {
+      // Tab Switching
+      document.querySelectorAll('.tab-bar .tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          activeFilter = btn.getAttribute('data-filter');
+          renderReminders();
+        });
+      });
+
+      // Refresh button
+      document.getElementById('remRefreshBtn').addEventListener('click', () => {
+        window.reminderManager.refreshReminders();
+        renderReminders();
+        UI.showToast('Reminders refreshed successfully', 'success');
+      });
+    }
+
+    function markReminderDone(reminderId) {
+      window.reminderManager.updateStatus(reminderId, 'CONTACTED', 'Contacted via counter phone/WhatsApp');
+      renderReminders();
+      UI.showToast('Reminder marked as Contacted', 'success');
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Operational Dashboard &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Live Metal Rate Ticker Bar -->
+        <div style="background:var(--slate-900); color:#FFF; border-radius:var(--radius-lg); padding:var(--space-3) var(--space-4); margin-bottom:var(--space-4); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3); border-left:4px solid var(--gold-500);">
+          <div style="display:flex; align-items:center; gap:var(--space-4); flex-wrap:wrap;">
+            <div>
+              <span style="font-size:10px; color:var(--slate-400); font-weight:800; text-transform:uppercase;">GOLD 24K (Pure):</span>
+              <span style="font-size:14px; font-weight:900; color:var(--gold-400); margin-left:4px;" id="dashGold24k">₹ 15,958.00 / g</span>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <span style="font-size:10px; color:var(--slate-400); font-weight:800; text-transform:uppercase;">GOLD 22K (916):</span>
+              <span style="font-size:15px; font-weight:900; color:#FFFFFF; margin-left:4px;" id="dashGold22k">₹ 14,628.00 / g</span>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <span style="font-size:10px; color:var(--slate-400); font-weight:800; text-transform:uppercase;">SILVER:</span>
+              <span style="font-size:14px; font-weight:900; color:var(--slate-300); margin-left:4px;" id="dashSilver">₹ 243.90 / g</span>
+            </div>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="new-pledge.html" class="btn btn-gold btn-sm">
+              <span>+ New Pledge POS</span>
+            </a>
+            <a href="payments.html" class="btn btn-secondary btn-sm">
+              <span>Collect Payment</span>
+            </a>
+            <a href="customers.html" class="btn btn-outline btn-sm" style="color:#FFF; border-color:var(--slate-700);">
+              <span>Customers</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Critical Operational Alerts Banner -->
+        <div id="dashAlertsContainer" style="display:flex; flex-direction:column; gap:var(--space-2); margin-bottom:var(--space-5);">
+          <!-- Alerts rendered dynamically -->
+        </div>
+
+        <!-- SECTION 1: TODAY'S COUNTER PERFORMANCE (5 KPIs) -->
+        <div style="margin-bottom:var(--space-5);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+            <h3 style="font-size:var(--font-size-md); font-weight:800;" data-i18n="today_overview">Today's Counter Activity (இன்றைய சுருக்கம்)</h3>
+            <span class="badge badge-slate" id="dashLastSyncText">Updated Live</span>
+          </div>
+
+          <div class="grid-5">
+            <!-- 1. Loans Disbursed -->
+            <div class="kpi-card" style="border-top:3px solid var(--primary-main);">
+              <div class="kpi-label" data-i18n="kpi_today_loans">Today's Loans Disbursed</div>
+              <div class="kpi-value" id="kpiTodayLoans">₹ 0</div>
+              <div class="kpi-trend text-muted" id="kpiTodayLoansCount">0 New Pledges</div>
+            </div>
+
+            <!-- 2. Collections Total -->
+            <div class="kpi-card" style="border-top:3px solid var(--success-main);">
+              <div class="kpi-label" data-i18n="kpi_today_collections">Today's Total Collections</div>
+              <div class="kpi-value text-success" id="kpiTodayCollections">₹ 0</div>
+              <div class="kpi-trend text-success">Principal + Interest</div>
+            </div>
+
+            <!-- 3. Interest Collected -->
+            <div class="kpi-card" style="border-top:3px solid var(--gold-500);">
+              <div class="kpi-label" data-i18n="kpi_today_interest">Today's Interest Collected</div>
+              <div class="kpi-value text-gold" id="kpiTodayInterest">₹ 0</div>
+              <div class="kpi-trend text-gold">Net Profit Inflow</div>
+            </div>
+
+            <!-- 4. New Pledges -->
+            <div class="kpi-card" style="border-top:3px solid var(--slate-600);">
+              <div class="kpi-label" data-i18n="kpi_today_pledges">New Pledges Today</div>
+              <div class="kpi-value" id="kpiTodayPledgesCount">0</div>
+              <div class="kpi-trend text-muted">Tickets Issued</div>
+            </div>
+
+            <!-- 5. Redemptions -->
+            <div class="kpi-card" style="border-top:3px solid var(--warning-main);">
+              <div class="kpi-label" data-i18n="kpi_today_redemptions">Redemptions Today</div>
+              <div class="kpi-value" id="kpiTodayRedemptionsCount">0</div>
+              <div class="kpi-trend text-muted">Jewellery Released</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: PORTFOLIO RISK HEALTH (6 Risk KPIs) -->
+        <div style="margin-bottom:var(--space-5);">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3);">
+            <h3 style="font-size:var(--font-size-md); font-weight:800;">Portfolio & Risk Health (அடகு இருப்பு & நிலுவை)</h3>
+            <a href="reminders.html" style="font-size:12px; font-weight:bold; color:var(--primary-main);">Open Reminders &rarr;</a>
+          </div>
+
+          <div class="grid-6">
+            <!-- 1. Active Pledges -->
+            <div class="kpi-card">
+              <div class="kpi-label" data-i18n="kpi_active_pledges">Active Pledges</div>
+              <div class="kpi-value" id="kpiActiveCount">0</div>
+              <div class="kpi-trend text-muted">Live Contracts</div>
+            </div>
+
+            <!-- 2. Outstanding Principal -->
+            <div class="kpi-card">
+              <div class="kpi-label" data-i18n="kpi_outstanding_principal">Outstanding Principal</div>
+              <div class="kpi-value" style="font-size:19px;" id="kpiOutstandingPrincipal">₹ 0</div>
+              <div class="kpi-trend text-muted">Total Capital at Loan</div>
+            </div>
+
+            <!-- 3. Estimated Interest Pending -->
+            <div class="kpi-card">
+              <div class="kpi-label" data-i18n="kpi_interest_pending">Interest Pending</div>
+              <div class="kpi-value text-gold" style="font-size:19px;" id="kpiInterestPending">₹ 0</div>
+              <div class="kpi-trend text-gold">Accrued to Date</div>
+            </div>
+
+            <!-- 4. Due Today -->
+            <div class="kpi-card" style="border-left:4px solid var(--danger-main);">
+              <div class="kpi-label" data-i18n="kpi_due_today">Due Today</div>
+              <div class="kpi-value text-danger" id="kpiDueToday">0</div>
+              <div class="kpi-trend text-danger">Immediate Action</div>
+            </div>
+
+            <!-- 5. Due in 7 Days -->
+            <div class="kpi-card" style="border-left:4px solid var(--warning-main);">
+              <div class="kpi-label" data-i18n="kpi_due_7days">Due in 7 Days</div>
+              <div class="kpi-value text-warning" id="kpiDue7Days">0</div>
+              <div class="kpi-trend text-warning">Upcoming Maturity</div>
+            </div>
+
+            <!-- 6. Overdue -->
+            <div class="kpi-card" style="border-left:4px solid #7F1D1D;">
+              <div class="kpi-label" data-i18n="kpi_overdue">Overdue (>12 Mo)</div>
+              <div class="kpi-value" style="color:#7F1D1D;" id="kpiOverdue">0</div>
+              <div class="kpi-trend" style="color:#7F1D1D;">Review Required</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: RECENT ACTIVITY FEED & QUICK RECENT CUSTOMERS -->
+        <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--space-5);">
+          
+          <!-- Recent Activity Feed -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title" data-i18n="recent_transactions">Recent Activity Feed</h3>
+              <a href="pledges.html" class="btn btn-ghost btn-sm">View All &rarr;</a>
+            </div>
+            <div class="card-body" style="padding:0;">
+              <div class="table-responsive">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Activity</th>
+                      <th>Reference</th>
+                      <th>Amount</th>
+                      <th>Date</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashRecentTbody">
+                    <!-- Rendered Dynamically -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Shortcuts & System Health -->
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title" data-i18n="quick_actions">Quick Actions</h3>
+              </div>
+              <div class="card-body" style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <a href="new-pledge.html" class="btn btn-primary" style="justify-content:center;">+ New Pledge POS</a>
+                <a href="payments.html" class="btn btn-secondary" style="justify-content:center;">Collect Payment</a>
+                <a href="redemption.html" class="btn btn-outline" style="justify-content:center;">Redeem & Release Note</a>
+                <a href="renewal.html" class="btn btn-outline" style="justify-content:center;">Renew Pledge</a>
+                <a href="rates.html" class="btn btn-ghost" style="justify-content:center;">Override Metal Rates</a>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">System Status</h3>
+              </div>
+              <div class="card-body" style="font-size:12px; display:flex; flex-direction:column; gap:6px;">
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Storage:</span>
+                  <span class="badge badge-success">IndexedDB + Drive</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Rate Provider:</span>
+                  <span class="badge badge-gold">api.metals.dev (IBJA)</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span class="text-muted">Licence:</span>
+                  <span>PB/MDU/2026/042</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      document.getElementById('pageTitleText').textContent = window.t('dashboard');
+      await refreshDashboard();
+    });
+
+    async function refreshDashboard() {
+      const summary = await window.dashboardManager.getDashboardSummary();
+
+      // 1. Rates
+      if (summary.ratesSnapshot) {
+        document.getElementById('dashGold24k').textContent = `₹ ${Number(summary.ratesSnapshot.gold24k).toLocaleString('en-IN')}.00 / g`;
+        document.getElementById('dashGold22k').textContent = `₹ ${Number(summary.ratesSnapshot.gold22k).toLocaleString('en-IN')}.00 / g`;
+        document.getElementById('dashSilver').textContent = `₹ ${Number(summary.ratesSnapshot.silver).toFixed(2)} / g`;
+      }
+
+      // 2. Today's KPIs
+      document.getElementById('kpiTodayLoans').textContent = `₹ ${Number(summary.today.loansDisbursed).toLocaleString('en-IN')}`;
+      document.getElementById('kpiTodayLoansCount').textContent = `${summary.today.newPledgesCount} New Pledges`;
+      document.getElementById('kpiTodayCollections').textContent = `₹ ${Number(summary.today.totalCollections).toLocaleString('en-IN')}`;
+      document.getElementById('kpiTodayInterest').textContent = `₹ ${Number(summary.today.interestCollected).toLocaleString('en-IN')}`;
+      document.getElementById('kpiTodayPledgesCount').textContent = summary.today.newPledgesCount;
+      document.getElementById('kpiTodayRedemptionsCount').textContent = summary.today.redemptionsCount;
+
+      // 3. Portfolio Health
+      document.getElementById('kpiActiveCount').textContent = summary.portfolio.activePledgesCount;
+      document.getElementById('kpiOutstandingPrincipal').textContent = `₹ ${Number(summary.portfolio.totalOutstandingPrincipal).toLocaleString('en-IN')}`;
+      document.getElementById('kpiInterestPending').textContent = `₹ ${Number(summary.portfolio.totalInterestPending).toLocaleString('en-IN')}`;
+      document.getElementById('kpiDueToday').textContent = summary.portfolio.dueTodayCount;
+      document.getElementById('kpiDue7Days').textContent = summary.portfolio.due7DaysCount;
+      document.getElementById('kpiOverdue').textContent = summary.portfolio.overdueCount;
+
+      // 4. Alerts Banner
+      const alertsBox = document.getElementById('dashAlertsContainer');
+      if (summary.alerts && summary.alerts.length > 0) {
+        alertsBox.innerHTML = summary.alerts.map(a => {
+          const bg = (a.type === 'DANGER') ? '#FEF2F2' : ((a.type === 'WARNING') ? '#FEFCE8' : '#EFF6FF');
+          const border = (a.type === 'DANGER') ? '#FCA5A5' : ((a.type === 'WARNING') ? '#FDE047' : '#BFDBFE');
+          const color = (a.type === 'DANGER') ? '#991B1B' : ((a.type === 'WARNING') ? '#854D0E' : '#1E40AF');
+
+          return `
+            <div style="background:${bg}; border:1px solid ${border}; border-radius:var(--radius-md); padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <strong style="color:${color}; font-size:13px;">${a.title}</strong>
+                <div style="font-size:11.5px; color:${color}; margin-top:2px;">${a.desc}</div>
+              </div>
+              <a href="${a.link}" class="btn btn-sm btn-outline" style="color:${color}; border-color:${border}; background:#FFF;">Resolve &rarr;</a>
+            </div>
+          `;
+        }).join('');
+      } else {
+        alertsBox.innerHTML = '';
+      }
+
+      // 5. Recent Activity Feed
+      const tbody = document.getElementById('dashRecentTbody');
+      if (summary.recentActivity && summary.recentActivity.length > 0) {
+        tbody.innerHTML = summary.recentActivity.map(item => `
+          <tr>
+            <td>
+              <strong>${item.title}</strong>
+              <div style="font-size:11px; color:var(--slate-500);">${item.subtitle}</div>
+            </td>
+            <td><span class="badge ${item.badgeClass}">${item.type}</span></td>
+            <td class="cell-mono font-bold">₹ ${Number(item.amount).toLocaleString('en-IN')}</td>
+            <td style="font-size:12px;">${item.date}</td>
+            <td>
+              <a href="${item.type === 'NEW_PLEDGE' ? `pledges.html?ticket=${item.ticketNo}` : `payments.html?ticket=${item.ticketNo}`}" class="btn btn-outline btn-sm">View</a>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:var(--space-4); color:var(--slate-400);">No recent activity recorded</td></tr>`;
+      }
+    }
+  </script>
+</body>
+</html>

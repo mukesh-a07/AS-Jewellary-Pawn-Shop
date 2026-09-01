@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>New Pledge POS &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .pos-layout {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: var(--space-5);
+      margin-bottom: 90px; /* space for sticky bottom bar */
+    }
+    .sticky-pos-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: #0F172A;
+      color: #FFFFFF;
+      padding: var(--space-3) var(--space-6);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
+      z-index: 1000;
+    }
+    @media (max-width: 900px) {
+      .pos-layout {
+        grid-template-columns: 1fr;
+      }
+      .sticky-pos-bar {
+        bottom: 56px; /* above mobile nav */
+        padding: var(--space-2) var(--space-4);
+      }
+    }
+    @media print {
+      .app-shell, .sticky-pos-bar, .modal-header, .modal-footer {
+        display: none !important;
+      }
+      .modal-backdrop, .modal-dialog, .modal-body {
+        position: static !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+      .pawn-ticket-print {
+        display: block !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Top Rate Banner & Title -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="new_pledge">New Pledge POS (புதிய அடகு பதிவு)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Fast counter pawn evaluation, loan approval & statutory ticket generation.</p>
+          </div>
+
+          <!-- Stamped Live Rate Indicator -->
+          <div style="background:var(--gold-50); border:1px solid var(--gold-300); border-radius:var(--radius-md); padding:6px 14px; display:flex; align-items:center; gap:var(--space-3);">
+            <div>
+              <div style="font-size:10px; font-weight:800; color:var(--gold-900);">STAMPED GOLD 22K (916):</div>
+              <div style="font-size:var(--font-size-md); font-weight:900; color:var(--gold-900);" id="posStamped22k">₹ 14,628.00 / g</div>
+            </div>
+            <div style="border-left:1px solid var(--gold-300); padding-left:var(--space-3);">
+              <div style="font-size:10px; font-weight:700; color:var(--slate-600);">SILVER:</div>
+              <div style="font-size:13px; font-weight:800; color:var(--slate-800);" id="posStampedSilver">₹ 243.90 / g</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pos-layout">
+          
+          <!-- LEFT COLUMN: Workflow Steps (Customer, Items Builder, Photos, Vault) -->
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            
+            <!-- STEP 1: CUSTOMER SELECTION -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header">
+                <h3 class="card-title">1. Customer Identification (வாடிக்கையாளர் தேர்வு)</h3>
+                <button type="button" class="btn btn-outline btn-sm" id="posQuickAddCustBtn" data-i18n="quick_register">
+                  + Quick Register Customer
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="search-box" style="margin-bottom:var(--space-3);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="posCustSearch" class="form-input" placeholder="Type Mobile Number, Customer Name (தமிழ் / EN), or ID..." data-i18n-placeholder="search_cust_help" autocomplete="off" />
+                  <div id="posCustSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                    <!-- Auto-complete options injected here -->
+                  </div>
+                </div>
+
+                <!-- Selected Customer Card -->
+                <div id="posSelectedCustCard" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3);">
+                  <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                      <div style="font-weight:800; font-size:var(--font-size-md); color:var(--slate-900);" id="posCustDisplayName">R. Murugan (ஆர். முருகன்)</div>
+                      <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
+                        <span class="cell-mono" id="posCustDisplayId">CUS-2026-000184</span> &bull; 📞 <span id="posCustDisplayMobile">98765 43210</span> &bull; 📍 <span id="posCustDisplayTown">Madurai</span>
+                      </div>
+                    </div>
+                    <div style="text-align:right;">
+                      <span class="badge badge-success" id="posCustKycBadge">✓ KYC Verified</span>
+                      <button type="button" class="btn btn-ghost btn-sm" id="posChangeCustBtn" style="margin-left:6px;">Change</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2: MULTI-ITEM JEWELLERY POS BUILDER -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header">
+                <h3 class="card-title" data-i18n="jewellery_items">2. Pledged Jewellery Articles (அடகு நகைகள்)</h3>
+                <span class="badge badge-gold" id="posItemCountBadge">0 Items Added</span>
+              </div>
+              <div class="card-body">
+                
+                <!-- Item Entry Form Inputs -->
+                <div style="background:#F8FAFC; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-4); margin-bottom:var(--space-4);">
+                  <div style="font-size:11px; font-weight:800; text-transform:uppercase; color:var(--slate-600); margin-bottom:var(--space-3);">+ Add Item To Ticket</div>
+                  
+                  <div class="grid-4" style="margin-bottom:var(--space-3);">
+                    
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label">Category</label>
+                      <select id="itemCategory" class="form-select">
+                        <option value="GOLD">Gold (தங்கம்)</option>
+                        <option value="SILVER">Silver (வெள்ளி)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" data-i18n="item_type">Item Type</label>
+                      <select id="itemType" class="form-select">
+                        <option value="Chain">Chain (சங்கிலி)</option>
+                        <option value="Ring">Ring (மோதிரம்)</option>
+                        <option value="Bangle">Bangle (வளையல்)</option>
+                        <option value="Necklace">Necklace (ஆரம் / நெக்லஸ்)</option>
+                        <option value="Earrings">Earrings (கம்மல் / தோடு)</option>
+                        <option value="Bracelet">Bracelet (காப்பு)</option>
+                        <option value="Thali">Thali (தாலி / மாங்கல்யம்)</option>
+                        <option value="Coin">Coin (தங்கக் காசு)</option>
+                        <option value="Nose Stud">Nose Stud (மூக்குத்தி)</option>
+                        <option value="Anklet">Anklet (கொலுசு)</option>
+                        <option value="Silver Article">Silver Vessel (பாத்திரம்)</option>
+                        <option value="Other">Other Article (இதர)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" data-i18n="purity_karat">Purity / Karat</label>
+                      <select id="itemPurity" class="form-select">
+                        <option value="22K" selected>22K (916 Hallmark)</option>
+                        <option value="24K">24K (Pure Gold)</option>
+                        <option value="18K">18K (750 Purity)</option>
+                        <option value="SILVER_999">Silver 999</option>
+                        <option value="SILVER_925">Silver 925 (Sterling)</option>
+                      </select>
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label">Description / Marks</label>
+                      <input type="text" id="itemDesc" class="form-input" placeholder="e.g. Rope Chain 916 Hallmark" />
+                    </div>
+
+                  </div>
+
+                  <!-- Weight & Calculation Inputs -->
+                  <div class="grid-4" style="align-items:flex-end;">
+                    
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" data-i18n="gross_weight">Gross Wt (g) *</label>
+                      <input type="number" step="0.001" id="itemGross" class="form-input" placeholder="0.000" />
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" data-i18n="stone_weight">Stone / Wax (g)</label>
+                      <input type="number" step="0.001" id="itemStone" class="form-input" placeholder="0.000" value="0.000" />
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" data-i18n="net_weight">Net Weight (g)</label>
+                      <input type="number" step="0.001" id="itemNet" class="form-input" placeholder="0.000" readonly style="background:#F1F5F9; font-weight:800; color:var(--gold-900);" />
+                    </div>
+
+                    <div>
+                      <button type="button" class="btn btn-primary" id="posAddItemBtn" style="width:100%;">
+                        <span>+ Add Item</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+                <!-- Items Table -->
+                <div class="table-responsive">
+                  <table class="data-table" id="posItemsTable">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Item Details</th>
+                        <th>Purity</th>
+                        <th>Gross Wt</th>
+                        <th>Stone Wt</th>
+                        <th>Net Wt</th>
+                        <th>Valuation</th>
+                        <th>Eligible Loan</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody id="posItemsTbody">
+                      <tr>
+                        <td colspan="9" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">
+                          No items added yet. Enter weight and click "+ Add Item" above.
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- STEP 3: VAULT & PACKET ALLOCATION -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title" data-i18n="vault_packet_allocation">3. Vault & Packet Allocation (பாக்கெட் எண்)</h3>
+              </div>
+              <div class="card-body">
+                <div class="grid-3">
+                  <div class="form-group">
+                    <label class="form-label" data-i18n="vault_location">Vault Room</label>
+                    <select id="posVaultLocation" class="form-select">
+                      <option value="Vault A">Vault A (Main Safe)</option>
+                      <option value="Vault B">Vault B (Auxiliary Safe)</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" data-i18n="locker_tray">Locker & Tray</label>
+                    <input type="text" id="posLockerTray" class="form-input" value="Locker 03 • Tray 12" />
+                  </div>
+
+                  <div class="form-group">
+                    <label class="form-label" data-i18n="packet_number">Packet No / Tag *</label>
+                    <input type="text" id="posPacketId" class="form-input" value="PKT-0089" required />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: FINANCIAL SUMMARY & LOAN TERMS -->
+          <div>
+            <div class="card" style="position:sticky; top:80px; border-top:4px solid var(--gold-600);">
+              <div class="card-header">
+                <h3 class="card-title">Loan Terms Summary</h3>
+              </div>
+              <div class="card-body">
+                
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                  
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Total Net Weight:</span>
+                    <strong style="font-size:15px; color:var(--gold-900);" id="sumNetWeight">0.000 g</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Total Market Value:</span>
+                    <strong style="font-size:15px;" id="sumMarketValue">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px; padding-bottom:var(--space-2); border-bottom:1px solid var(--border-subtle);">
+                    <span class="text-muted">Eligible Loan (75%):</span>
+                    <strong style="font-size:15px; color:var(--success-main);" id="sumEligibleLoan">₹ 0</strong>
+                  </div>
+
+                  <!-- Approved Loan Amount Input -->
+                  <div class="form-group" style="margin:var(--space-2) 0 0 0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="approved_loan">Approved Loan Amount (₹) *</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="posApprovedLoan" class="form-input" style="font-size:18px; font-weight:900; color:var(--slate-900);" placeholder="0" />
+                    </div>
+                  </div>
+
+                  <!-- Monthly Interest Terms -->
+                  <div class="grid-2" style="margin-top:var(--space-2);">
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:11px;">Monthly Int %</label>
+                      <input type="number" step="0.1" id="posInterestRate" class="form-input" value="1.0" />
+                    </div>
+
+                    <div class="form-group" style="margin:0;">
+                      <label class="form-label" style="font-size:11px;">Monthly Int (₹)</label>
+                      <input type="text" id="posInterestAmount" class="form-input" readonly style="background:#F1F5F9; font-weight:800; color:var(--gold-900);" value="₹ 0" />
+                    </div>
+                  </div>
+
+                  <div style="font-size:11px; color:var(--slate-500); margin-top:var(--space-2);">
+                    Statutory Tenure: <strong>12 Months</strong> (1 Year) &bull; Mode: <strong>CASH Disbursed</strong>
+                  </div>
+
+                  <!-- High LTV Override Checkbox -->
+                  <div style="margin-top:var(--space-2); padding-top:var(--space-2); border-top:1px dashed var(--slate-300);">
+                    <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+                      <input type="checkbox" id="posAllowLtvOverride" />
+                      <span>Allow High-LTV Admin Override</span>
+                    </label>
+                  </div>
+
+                  <div style="margin-top:var(--space-4);">
+                    <button type="button" class="btn btn-primary" id="posMainSubmitBtn" style="width:100%; padding:14px; font-size:15px; justify-content:center;">
+                      <span data-i18n="generate_ticket">Approve & Issue Pawn Ticket</span>
+                    </button>
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- STICKY BOTTOM ACTION SUMMARY BAR (For Fast Counter Touch Operations) -->
+        <div class="sticky-pos-bar">
+          <div style="display:flex; align-items:center; gap:var(--space-4);">
+            <div>
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Total Net Gold</div>
+              <div style="font-size:16px; font-weight:900; color:var(--gold-400);" id="stickyNetWeight">0.000 g</div>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Loan Principal</div>
+              <div style="font-size:18px; font-weight:900; color:#FFFFFF;" id="stickyLoanAmount">₹ 0</div>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Monthly Interest</div>
+              <div style="font-size:15px; font-weight:800; color:var(--gold-300);" id="stickyMonthlyInt">₹ 0 / mo</div>
+            </div>
+          </div>
+
+          <button type="button" class="btn btn-primary" id="stickySubmitBtn" style="padding:10px 24px; font-size:14px;">
+            <span>Approve & Issue Pawn Ticket &rarr;</span>
+          </button>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: PRINTABLE BILINGUAL PAWN TICKET (Form F Standard)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="pawnTicketModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title">Official Pawn Ticket &bull; Form F Statutory Document</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('pawnTicketModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0; background:#FFF;" id="pawnTicketContainer">
+        <!-- Rendered dynamically via PledgePosManager -->
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('pawnTicketModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨 Print Official Ticket</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activeRatesSnapshot = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('new_pledge');
+
+      // Initialize live rate snapshot
+      activeRatesSnapshot = window.rateManager.getRatesForPledge();
+      document.getElementById('posStamped22k').textContent = `₹ ${activeRatesSnapshot.gold22k.toLocaleString('en-IN')}.00 / g`;
+      document.getElementById('posStampedSilver').textContent = `₹ ${activeRatesSnapshot.silver.toFixed(2)} / g`;
+
+      // Check for URL query parameter customerId
+      const urlParams = new URLSearchParams(window.location.search);
+      const preCustId = urlParams.get('customerId');
+      if (preCustId) {
+        selectCustomerById(preCustId);
+      }
+
+      bindPosEvents();
+    });
+
+    function bindPosEvents() {
+      // Weight input live calculation
+      const grossInput = document.getElementById('itemGross');
+      const stoneInput = document.getElementById('itemStone');
+      const netInput = document.getElementById('itemNet');
+
+      const updateItemNet = () => {
+        const gross = parseFloat(grossInput.value) || 0;
+        const stone = parseFloat(stoneInput.value) || 0;
+        netInput.value = Math.max(0, gross - stone).toFixed(3);
+      };
+
+      grossInput.addEventListener('input', updateItemNet);
+      stoneInput.addEventListener('input', updateItemNet);
+
+      // Add Item to Table
+      document.getElementById('posAddItemBtn').addEventListener('click', () => {
+        const gross = parseFloat(grossInput.value) || 0;
+        const stone = parseFloat(stoneInput.value) || 0;
+
+        if (gross <= 0) {
+          UI.showToast('Please enter a valid Gross Weight > 0', 'warning');
+          grossInput.focus();
+          return;
+        }
+
+        if (stone > gross) {
+          UI.showToast('Stone weight cannot exceed Gross Weight', 'error');
+          return;
+        }
+
+        const category = document.getElementById('itemCategory').value;
+        const itemType = document.getElementById('itemType').value;
+        const purity = document.getElementById('itemPurity').value;
+        const description = document.getElementById('itemDesc').value.trim() || `${purity} ${itemType}`;
+
+        window.pledgePosManager.addItem({
+          category,
+          itemType,
+          purity,
+          description,
+          grossWeight: gross,
+          stoneWeight: stone
+        }, activeRatesSnapshot.gold24k, activeRatesSnapshot.gold22k, activeRatesSnapshot.silver);
+
+        // Reset inputs
+        grossInput.value = '';
+        stoneInput.value = '0.000';
+        netInput.value = '0.000';
+        document.getElementById('itemDesc').value = '';
+
+        renderItemsTable();
+        updateTotalsDisplay();
+      });
+
+      // Approved Loan amount manual change
+      const approvedInput = document.getElementById('posApprovedLoan');
+      approvedInput.addEventListener('input', () => {
+        updateTotalsDisplay(approvedInput.value);
+      });
+
+      // Interest Rate change
+      document.getElementById('posInterestRate').addEventListener('input', (e) => {
+        window.pledgePosManager.monthlyInterestRate = parseFloat(e.target.value) || 1.0;
+        updateTotalsDisplay(approvedInput.value);
+      });
+
+      // Customer Auto-complete Search
+      const custSearchInput = document.getElementById('posCustSearch');
+      const suggestionsBox = document.getElementById('posCustSuggestions');
+
+      custSearchInput.addEventListener('input', () => {
+        const q = custSearchInput.value.trim();
+        if (q.length < 1) {
+          suggestionsBox.style.display = 'none';
+          return;
+        }
+
+        const res = window.customerManager.search({ query: q, pageSize: 5 });
+        if (res.items.length === 0) {
+          suggestionsBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No matching customers found</div>`;
+        } else {
+          suggestionsBox.innerHTML = res.items.map(c => `
+            <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectCustomerById('${c.customerId}')">
+              <div>
+                <strong>${c.nameEn}</strong> <span style="color:var(--gold-700); font-size:12px;">(${c.nameTa || ''})</span>
+                <div style="font-size:11px; color:var(--slate-500);">${c.customerId} &bull; 📞 ${c.mobile} &bull; ${c.townVillage}</div>
+              </div>
+              <span class="badge badge-outline">Select &rarr;</span>
+            </div>
+          `).join('');
+        }
+        suggestionsBox.style.display = 'block';
+      });
+
+      // Change Customer
+      document.getElementById('posChangeCustBtn').addEventListener('click', () => {
+        window.pledgePosManager.selectedCustomer = null;
+        document.getElementById('posSelectedCustCard').style.display = 'none';
+        custSearchInput.value = '';
+        custSearchInput.parentElement.style.display = 'block';
+        custSearchInput.focus();
+      });
+
+      // Quick Add Customer Button
+      document.getElementById('posQuickAddCustBtn').addEventListener('click', () => {
+        window.location.href = 'customers.html';
+      });
+
+      // Submit POS Handlers (Main & Sticky Bar)
+      document.getElementById('posMainSubmitBtn').addEventListener('click', handlePosSubmit);
+      document.getElementById('stickySubmitBtn').addEventListener('click', handlePosSubmit);
+    }
+
+    function selectCustomerById(custId) {
+      const c = window.customerManager.getCustomerById(custId);
+      if (!c) return;
+
+      window.pledgePosManager.selectedCustomer = c;
+      document.getElementById('posCustSuggestions').style.display = 'none';
+      document.getElementById('posCustSearch').parentElement.style.display = 'none';
+
+      document.getElementById('posCustDisplayName').textContent = `${c.nameEn} (${c.nameTa || ''})`;
+      document.getElementById('posCustDisplayId').textContent = c.customerId;
+      document.getElementById('posCustDisplayMobile').textContent = c.mobile;
+      document.getElementById('posCustDisplayTown').textContent = `${c.townVillage} (${c.district})`;
+      document.getElementById('posSelectedCustCard').style.display = 'block';
+    }
+
+    function renderItemsTable() {
+      const tbody = document.getElementById('posItemsTbody');
+      const items = window.pledgePosManager.items;
+      document.getElementById('posItemCountBadge').textContent = `${items.length} Items Added`;
+
+      if (items.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">
+              No items added yet. Enter weight and click "+ Add Item" above.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = items.map((it, idx) => `
+        <tr>
+          <td>${idx + 1}</td>
+          <td>
+            <strong>${it.itemType}</strong>
+            <div style="font-size:11px; color:var(--slate-500);">${it.description}</div>
+          </td>
+          <td><span class="badge badge-gold">${it.purity}</span></td>
+          <td class="cell-mono">${it.grossWeight.toFixed(3)} g</td>
+          <td class="cell-mono">${it.stoneWeight.toFixed(3)} g</td>
+          <td class="cell-mono text-gold" style="font-weight:800;">${it.netWeight.toFixed(3)} g</td>
+          <td>₹ ${it.estimatedValue.toLocaleString('en-IN')}</td>
+          <td class="cell-primary text-success">₹ ${it.eligibleLoan.toLocaleString('en-IN')}</td>
+          <td>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="removePosItem(${idx})" title="Remove Item" style="color:var(--danger-main);">&#10005;</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function removePosItem(index) {
+      window.pledgePosManager.removeItem(index);
+      renderItemsTable();
+      updateTotalsDisplay();
+    }
+
+    function updateTotalsDisplay(approvedOverride = null) {
+      const totals = window.pledgePosManager.getAggregateTotals(approvedOverride);
+
+      document.getElementById('sumNetWeight').textContent = `${totals.totalNetWeight.toFixed(3)} g`;
+      document.getElementById('sumMarketValue').textContent = `₹ ${totals.totalEstimatedValue.toLocaleString('en-IN')}`;
+      document.getElementById('sumEligibleLoan').textContent = `₹ ${totals.totalEligibleLoan.toLocaleString('en-IN')}`;
+      
+      const approvedInput = document.getElementById('posApprovedLoan');
+      if (approvedOverride === null) {
+        approvedInput.value = totals.totalEligibleLoan;
+      }
+
+      const intAmt = Math.round((totals.approvedLoan * totals.monthlyInterestRate) / 100);
+      document.getElementById('posInterestAmount').value = `₹ ${intAmt.toLocaleString('en-IN')}`;
+
+      // Sticky Bar
+      document.getElementById('stickyNetWeight').textContent = `${totals.totalNetWeight.toFixed(3)} g`;
+      document.getElementById('stickyLoanAmount').textContent = `₹ ${totals.approvedLoan.toLocaleString('en-IN')}`;
+      document.getElementById('stickyMonthlyInt').textContent = `₹ ${intAmt.toLocaleString('en-IN')} / mo`;
+    }
+
+    async function handlePosSubmit() {
+      const cust = window.pledgePosManager.selectedCustomer;
+      if (!cust) {
+        UI.showToast('Please select a customer first', 'warning');
+        return;
+      }
+
+      const items = window.pledgePosManager.items;
+      if (items.length === 0) {
+        UI.showToast('Please add at least one jewellery item', 'warning');
+        return;
+      }
+
+      const approvedLoan = parseFloat(document.getElementById('posApprovedLoan').value) || 0;
+      const allowLtvOverride = document.getElementById('posAllowLtvOverride').checked;
+      const totals = window.pledgePosManager.getAggregateTotals(approvedLoan);
+
+      const mainBtn = document.getElementById('posMainSubmitBtn');
+      const stickyBtn = document.getElementById('stickySubmitBtn');
+      mainBtn.disabled = true;
+      stickyBtn.disabled = true;
+      mainBtn.textContent = 'Saving Transaction...';
+      stickyBtn.textContent = 'Saving...';
+
+      const payload = {
+        customerId: cust.customerId,
+        items,
+        totalGrossWeight: totals.totalGrossWeight,
+        totalStoneWeight: totals.totalStoneWeight,
+        totalNetWeight: totals.totalNetWeight,
+        rateGold24k: activeRatesSnapshot.gold24k,
+        rateGold22k: activeRatesSnapshot.gold22k,
+        rateSilver: activeRatesSnapshot.silver,
+        totalEstimatedValue: totals.totalEstimatedValue,
+        totalEligibleLoan: totals.totalEligibleLoan,
+        loanAmount: approvedLoan,
+        monthlyInterestRate: totals.monthlyInterestRate,
+        monthlyInterestAmount: totals.monthlyInterestAmount,
+        vaultLocation: document.getElementById('posVaultLocation').value,
+        packetId: document.getElementById('posPacketId').value,
+        lockerTray: document.getElementById('posLockerTray').value,
+        allowLtvOverride
+      };
+
+      const res = await window.pledgePosManager.submitPledge(payload);
+
+      if (res.success) {
+        mainBtn.textContent = 'Pawn Ticket Generated!';
+        stickyBtn.textContent = 'Ticket Generated!';
+        UI.showToast(`Pawn Ticket ${res.ticketNo} generated successfully!`, 'success');
+
+        // Render printable ticket in modal
+        const ticketHtml = window.pledgePosManager.generatePawnTicketHtml(res.pledge, cust);
+        document.getElementById('pawnTicketContainer').innerHTML = ticketHtml;
+        UI.openModal('pawnTicketModal');
+
+        // Reset POS Form
+        window.pledgePosManager.resetPos();
+        renderItemsTable();
+        updateTotalsDisplay();
+      } else {
+        UI.showToast(res.message, 'error');
+        mainBtn.disabled = false;
+        stickyBtn.disabled = false;
+        mainBtn.textContent = 'Approve & Issue Pawn Ticket';
+        stickyBtn.textContent = 'Approve & Issue Pawn Ticket →';
+      }
+    }
+  </script>
+</body>
+</html>

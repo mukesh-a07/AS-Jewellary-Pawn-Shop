@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Customer 360° Profile &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Top Back Link -->
+        <div style="margin-bottom:var(--space-3);">
+          <a href="customers.html" style="font-size:var(--font-size-xs); color:var(--slate-500); display:inline-flex; align-items:center; gap:4px;">
+            &larr; Back to Customers Directory (வாடிக்கையாளர் பட்டியல்)
+          </a>
+        </div>
+
+        <!-- ==========================================================================
+             CUSTOMER 360° COCKPIT HEADER CARD
+             ========================================================================== -->
+        <div class="card" style="margin-bottom:var(--space-5); border-top:4px solid var(--gold-500);">
+          <div class="card-body">
+            
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
+              
+              <!-- Customer Profile Info -->
+              <div style="display:flex; gap:var(--space-4); align-items:center;">
+                <div style="width:68px; height:68px; border-radius:var(--radius-full); background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-size:var(--font-size-2xl); font-weight:800; border:2px solid var(--gold-300);" id="custAvatarCircle">
+                  RM
+                </div>
+                <div>
+                  <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
+                    <h2 style="font-size:var(--font-size-xl); font-weight:800;" id="cust360NameEn">R. Murugan</h2>
+                    <span style="font-size:var(--font-size-md); color:var(--gold-700); font-weight:700;" id="cust360NameTa">(ஆர். முருகன்)</span>
+                    <span class="badge badge-success" id="cust360KycBadge">✓ Verified KYC</span>
+                  </div>
+                  
+                  <div style="font-size:var(--font-size-xs); color:var(--slate-600); margin-top:4px; display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+                    <span><strong style="color:var(--slate-900);">ID:</strong> <span class="cell-mono" id="cust360Id">CUS-2026-000184</span></span>
+                    <span>&bull;</span>
+                    <span><strong style="color:var(--slate-900);">Mobile:</strong> <a href="tel:9876543210" id="cust360MobileLink" style="font-weight:700; color:var(--slate-900);">98765 43210</a></span>
+                    <span>&bull;</span>
+                    <span id="cust360Town">Madurai Town (மதுரை)</span>
+                    <span>&bull;</span>
+                    <span class="text-muted" id="cust360CreatedDate">Customer since: 12-Jan-2024</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fast Action Buttons Bar -->
+              <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+                <a href="#" id="actionNewPledgeBtn" class="btn btn-primary">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+                  <span data-i18n="new_pledge">+ New Pledge (அடகு)</span>
+                </a>
+
+                <a href="#" id="actionCollectPaymentBtn" class="btn btn-secondary">
+                  <span data-i18n="collect_payment">Collect Payment</span>
+                </a>
+
+                <button type="button" class="btn btn-outline" id="actionEditProfileBtn">
+                  <span>&#9998; Edit Profile</span>
+                </button>
+              </div>
+
+            </div>
+
+            <!-- Financial Metrics Ribbon (Customer 360 Financial Health) -->
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(180px, 1fr)); gap:var(--space-3); margin-top:var(--space-5); padding-top:var(--space-4); border-top:1px solid var(--border-subtle);">
+              
+              <div>
+                <div class="stat-label">Active Outstanding</div>
+                <div style="font-size:var(--font-size-xl); font-weight:900; color:var(--slate-900);" id="metricOutstanding">₹ 1,85,000</div>
+                <div style="font-size:11px; color:var(--slate-500);" id="metricPledgesCount">3 Active Pawn Tickets</div>
+              </div>
+
+              <div>
+                <div class="stat-label">Pending Accrued Interest</div>
+                <div style="font-size:var(--font-size-xl); font-weight:800; color:var(--danger-main);" id="metricInterest">₹ 18,500</div>
+                <div style="font-size:11px; color:var(--slate-500);">Calculated to current date</div>
+              </div>
+
+              <div>
+                <div class="stat-label">Total Gold in Vault</div>
+                <div style="font-size:var(--font-size-xl); font-weight:800; color:var(--gold-800);" id="metricGoldWeight">48.250 g</div>
+                <div style="font-size:11px; color:var(--slate-500);">Total Net Weight (22K)</div>
+              </div>
+
+              <div>
+                <div class="stat-label">Lifetime History</div>
+                <div style="font-size:var(--font-size-lg); font-weight:800; color:var(--slate-900);" id="metricLifetimeLoan">₹ 4,82,000</div>
+                <div style="font-size:11px; color:var(--success-main);" id="metricLifetimeRedeemed">₹ 2,97,000 Redeemed (61%)</div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ==========================================================================
+             360° PROFILE TABS
+             ========================================================================== -->
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchCustomerTab('tabOverview')">1. Overview (முழு விவரம்)</button>
+          <button class="tab-btn" onclick="switchCustomerTab('tabPledges')" id="tabPledgesBtn">2. Pledges (அடகுகள்)</button>
+          <button class="tab-btn" onclick="switchCustomerTab('tabPayments')">3. Payments Ledger (பணம் செலுத்தியவை)</button>
+          <button class="tab-btn" onclick="switchCustomerTab('tabDocuments')">4. KYC & Documents (ஆவணங்கள்)</button>
+          <button class="tab-btn" onclick="switchCustomerTab('tabReminders')">5. Reminders & WhatsApp</button>
+          <button class="tab-btn" onclick="switchCustomerTab('tabNotes')">6. Internal Notes & Risk</button>
+        </div>
+
+        <!-- TAB 1: OVERVIEW -->
+        <div id="tabOverview" class="tab-pane">
+          <div class="grid-2">
+            
+            <!-- Personal & Contact Information Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">Personal & Contact Profile</h3>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="data-table" style="border:none;">
+                  <tbody>
+                    <tr>
+                      <td style="width:40%; font-weight:600; color:var(--slate-500);">Full Name (English):</td>
+                      <td id="ovCustNameEn" class="cell-primary">R. Murugan</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">பெயர் (தமிழ்):</td>
+                      <td id="ovCustNameTa" style="color:var(--gold-800); font-weight:700;">ஆர். முருகன்</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Father / Husband:</td>
+                      <td id="ovFatherHusband">M. Ramanathan</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Date of Birth & Gender:</td>
+                      <td id="ovDobGender">14-May-1982 (Male / 44 yrs)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Occupation:</td>
+                      <td id="ovOccupation">Trader / Business (வணிகர்)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Primary Mobile:</td>
+                      <td>
+                        <a href="tel:9876543210" id="ovMobile" class="cell-mono cell-primary">98765 43210</a>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Alternate Mobile:</td>
+                      <td id="ovAltMobile" class="cell-mono">98421 99887</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Email Address:</td>
+                      <td id="ovEmail">murugan.r82@gmail.com</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- KYC Proof & Address Card -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">KYC Identity & Residential Address</h3>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <table class="data-table" style="border:none;">
+                  <tbody>
+                    <tr>
+                      <td style="width:40%; font-weight:600; color:var(--slate-500);">KYC ID Proof Type:</td>
+                      <td id="ovIdType" style="font-weight:700;">Aadhaar Card (ஆதார்)</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">ID Proof Number:</td>
+                      <td>
+                        <span id="ovIdNumberMasked" class="cell-mono" style="font-weight:700;">XXXX-XXXX-4589</span>
+                        <button type="button" class="btn btn-ghost btn-sm" id="toggleUnmaskIdBtn" style="padding:0 4px; font-size:11px; margin-left:4px;">[View Full]</button>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Residential Address:</td>
+                      <td id="ovAddress">14/2, North Car Street, Madurai - 625001</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Village / Town / Taluk:</td>
+                      <td id="ovTownTaluk">Madurai Town &bull; Madurai North</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">District & State:</td>
+                      <td id="ovDistrictState">Madurai, Tamil Nadu - 625001</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Active Vault Location:</td>
+                      <td id="ovVaultLocation" style="color:var(--gold-800); font-weight:700;">Vault A &bull; Locker 03 &bull; Tray 12 &bull; Packet 0087</td>
+                    </tr>
+                    <tr>
+                      <td style="font-weight:600; color:var(--slate-500);">Credit Repayment Risk:</td>
+                      <td><span class="badge badge-success">Grade A &bull; Low Risk (98% On-Time)</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- TAB 2: PLEDGES (Real-time Pawn Tickets Under Customer) -->
+        <div id="tabPledges" class="tab-pane" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Pledged Jewellery Tickets Portfolio</h3>
+              <a href="#" id="tabActionNewPledge" class="btn btn-primary btn-sm">+ New Pawn Ticket</a>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Ticket No</th>
+                    <th>Pledge Date</th>
+                    <th>Maturity</th>
+                    <th>Pledged Jewellery Items</th>
+                    <th>Net Wt</th>
+                    <th>Loan Principal</th>
+                    <th>Accrued Interest</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="custPledgesTableBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 3: PAYMENTS LEDGER -->
+        <div id="tabPayments" class="tab-pane" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Payments & Interest Collection History</h3>
+            </div>
+            <div class="table-responsive">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Receipt No</th>
+                    <th>Ticket Ref</th>
+                    <th>Date & Time</th>
+                    <th>Amount Paid</th>
+                    <th>Principal Settled</th>
+                    <th>Interest Settled</th>
+                    <th>Payment Mode</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="custPaymentsTableBody">
+                  <!-- Injected via JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 4: KYC & DOCUMENTS -->
+        <div id="tabDocuments" class="tab-pane" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
+            <h3 style="font-size:var(--font-size-md); font-weight:800;">Uploaded Customer Verification Documents</h3>
+            <button class="btn btn-primary btn-sm" onclick="UI.openModal('uploadCustDocModal')">
+              <span>+ Upload New Document</span>
+            </button>
+          </div>
+
+          <div class="grid-4" id="custDocsGrid">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- TAB 5: REMINDERS & WHATSAPP -->
+        <div id="tabReminders" class="tab-pane" style="display:none;">
+          <div class="card" style="margin-bottom:var(--space-4);">
+            <div class="card-header">
+              <h3 class="card-title">Direct WhatsApp Notice Dispatcher (வாட்ஸ்அப் அறிவிப்பு)</h3>
+              <button class="btn btn-success btn-sm" id="dispatchWhatsAppBtn">
+                <span>📱 Send WhatsApp Reminder</span>
+              </button>
+            </div>
+            <div class="card-body">
+              <div style="background:var(--gold-50); border:1px solid var(--gold-200); padding:var(--space-4); border-radius:var(--radius-md);">
+                <div style="font-weight:800; font-size:var(--font-size-sm); margin-bottom:var(--space-2);" id="waPreviewTitle">
+                  வணக்கம் R. Murugan அவர்களுக்கு,
+                </div>
+                <div style="font-size:var(--font-size-sm); color:var(--slate-800); line-height:1.6;" id="waPreviewBody">
+                  AS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.<br/>
+                  மொத்த நிலுவை கடன்: <strong>₹ 1,85,000</strong> &bull; நடப்பு வட்டி: <strong>₹ 18,500</strong>.<br/>
+                  கடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.<br/>
+                  தொடர்புக்கு: <strong>AS Jewellar, Madurai. Ph: 0452-2345678</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAB 6: INTERNAL NOTES & RISK LOG -->
+        <div id="tabNotes" class="tab-pane" style="display:none;">
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Counter Staff Internal Remarks & Relationship Notes</h3>
+            </div>
+            <div class="card-body">
+              <div style="background:var(--slate-50); border-left:4px solid var(--gold-500); padding:var(--space-4); border-radius:var(--radius-sm); margin-bottom:var(--space-4);">
+                <div style="font-size:12px; font-weight:700; color:var(--slate-500); margin-bottom:4px;">
+                  Recorded on: 30-Aug-2026 10:30 AM by Admin
+                </div>
+                <p style="font-size:var(--font-size-sm); color:var(--slate-800); line-height:1.5;" id="custInternalNotes">
+                  Regular prompt payer. High-value jewellery customer. Prefers Tamil notices.
+                </p>
+              </div>
+
+              <form id="addNoteForm">
+                <div class="form-group">
+                  <label class="form-label" for="newNoteText">Add New Staff Note (புதிய குறிப்பு சேர்)</label>
+                  <textarea id="newNoteText" class="form-textarea" rows="3" placeholder="Enter operational notes or credit observations..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-secondary btn-sm">Save Note</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Upload Document Modal -->
+  <div class="modal-backdrop" id="uploadCustDocModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">Upload Customer KYC Document</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('uploadCustDocModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <form id="uploadCustDocForm">
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Document Category</label>
+            <select id="uploadDocCategory" class="form-select">
+              <option value="AADHAAR">Aadhaar Card Front / Back</option>
+              <option value="VOTER_ID">Voter ID</option>
+              <option value="PHOTO">Customer Photo</option>
+              <option value="SIGNATURE">Signature Specimen</option>
+              <option value="THUMB">Thumb Impression</option>
+              <option value="JEWELLERY_PHOTO">Jewellery Item Photo</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Select File / Capture Photo</label>
+            <input type="file" id="uploadDocFile" class="form-input" accept="image/*,application/pdf" required />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('uploadCustDocModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Upload Document</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let currentCustomer = null;
+    let isIdUnmasked = false;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('customer');
+
+      // Get Customer ID from URL
+      const urlParams = new URLSearchParams(window.location.search);
+      const custId = urlParams.get('id') || 'CUS-2026-000184';
+
+      loadCustomerProfile(custId);
+    });
+
+    function loadCustomerProfile(customerId) {
+      const bundle = window.customerManager.getCustomer360(customerId);
+      if (!bundle || !bundle.profile) {
+        UI.showToast(`Customer ID ${customerId} not found`, 'error');
+        return;
+      }
+
+      currentCustomer = bundle.profile;
+      const c = bundle.profile;
+
+      // 1. Header Population
+      const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+      document.getElementById('custAvatarCircle').textContent = initials;
+      document.getElementById('cust360NameEn').textContent = c.nameEn;
+      document.getElementById('cust360NameTa').textContent = c.nameTa ? `(${c.nameTa})` : '';
+      document.getElementById('cust360Id').textContent = c.customerId;
+      document.getElementById('cust360MobileLink').textContent = c.mobile;
+      document.getElementById('cust360MobileLink').href = `tel:${c.mobile}`;
+      document.getElementById('cust360Town').textContent = `${c.townVillage || c.district} (${c.district})`;
+      document.getElementById('cust360CreatedDate').textContent = `Customer since: ${window.Validation.formatDate(c.createdAt)}`;
+
+      // KYC Badge
+      const kycEl = document.getElementById('cust360KycBadge');
+      if (c.kycStatus === 'VERIFIED') {
+        kycEl.className = 'badge badge-success';
+        kycEl.textContent = '✓ Verified KYC';
+      } else {
+        kycEl.className = 'badge badge-warning';
+        kycEl.textContent = '⚠ KYC Pending';
+      }
+
+      // Fast Actions
+      document.getElementById('actionNewPledgeBtn').href = `new-pledge.html?customerId=${c.customerId}`;
+      document.getElementById('actionCollectPaymentBtn').href = `payments.html?customerId=${c.customerId}`;
+      document.getElementById('tabActionNewPledge').href = `new-pledge.html?customerId=${c.customerId}`;
+
+      // Edit Profile
+      document.getElementById('actionEditProfileBtn').onclick = () => {
+        window.location.href = `customers.html?edit=${c.customerId}`;
+      };
+
+      // Financial Metrics Ribbon
+      document.getElementById('metricOutstanding').textContent = window.Validation.formatINR(c.totalOutstanding || 0);
+      document.getElementById('metricPledgesCount').textContent = `${c.activePledgesCount || 0} Active Pawn Tickets`;
+      document.getElementById('metricInterest').textContent = window.Validation.formatINR(c.pendingInterest || 0);
+      document.getElementById('metricGoldWeight').textContent = window.Validation.formatWeight(c.totalGoldWeight || 0);
+      document.getElementById('metricLifetimeLoan').textContent = window.Validation.formatINR(c.lifetimeLoanTotal || 0);
+      document.getElementById('metricLifetimeRedeemed').textContent = `${window.Validation.formatINR(c.lifetimeRedeemedTotal || 0)} Redeemed`;
+
+      // 2. Tab 1 Overview Population
+      document.getElementById('ovCustNameEn').textContent = c.nameEn;
+      document.getElementById('ovCustNameTa').textContent = c.nameTa || '-';
+      document.getElementById('ovFatherHusband').textContent = c.fatherHusbandName || '-';
+      document.getElementById('ovDobGender').textContent = `${c.dob ? window.Validation.formatDate(c.dob) : '-'} (${c.gender || 'MALE'})`;
+      document.getElementById('ovOccupation').textContent = c.occupation || 'General';
+      document.getElementById('ovMobile').textContent = c.mobile;
+      document.getElementById('ovAltMobile').textContent = c.altMobile || '-';
+      document.getElementById('ovEmail').textContent = c.email || '-';
+      document.getElementById('ovIdType').textContent = `${c.idType}`;
+      
+      const maskedId = window.customerManager.maskIdNumber(c.idType, c.idNumber);
+      document.getElementById('ovIdNumberMasked').textContent = maskedId;
+
+      document.getElementById('toggleUnmaskIdBtn').onclick = () => {
+        isIdUnmasked = !isIdUnmasked;
+        document.getElementById('ovIdNumberMasked').textContent = isIdUnmasked ? c.idNumber : maskedId;
+        document.getElementById('toggleUnmaskIdBtn').textContent = isIdUnmasked ? '[Mask]' : '[View Full]';
+      };
+
+      document.getElementById('ovAddress').textContent = c.address;
+      document.getElementById('ovTownTaluk').textContent = `${c.townVillage} &bull; ${c.taluk || c.district}`;
+      document.getElementById('ovDistrictState').textContent = `${c.district}, ${c.state || 'Tamil Nadu'} - ${c.pincode || ''}`;
+      document.getElementById('ovVaultLocation').innerHTML = c.vaultPlacement || '-';
+      document.getElementById('custInternalNotes').textContent = c.notes || 'No notes on file.';
+
+      // 3. Tab 2 Pledges Population
+      const pledgesTbody = document.getElementById('custPledgesTableBody');
+      document.getElementById('tabPledgesBtn').textContent = `2. Pledges (${bundle.pledges.length})`;
+
+      if (bundle.pledges.length === 0) {
+        pledgesTbody.innerHTML = `<tr><td colspan="9" style="text-align:center;">No pledges found</td></tr>`;
+      } else {
+        pledgesTbody.innerHTML = bundle.pledges.map(p => {
+          const statusBadge = p.status === 'ACTIVE'
+            ? `<span class="badge badge-active">ACTIVE</span>`
+            : (p.status === 'DUE' ? `<span class="badge badge-warning">DUE</span>` : `<span class="badge badge-redeemed">REDEEMED</span>`);
+          
+          return `
+            <tr>
+              <td class="cell-mono cell-primary">
+                <a href="pledges.html?ticket=${p.ticketNo}">${p.ticketNo}</a>
+              </td>
+              <td>${window.Validation.formatDate(p.pledgeDate)}</td>
+              <td>${window.Validation.formatDate(p.maturityDate)}</td>
+              <td>${p.itemsDescription}</td>
+              <td class="cell-mono">${window.Validation.formatWeight(p.netWeight)}</td>
+              <td class="cell-primary">${window.Validation.formatINR(p.loanAmount)}</td>
+              <td style="color:var(--gold-800); font-weight:700;">${window.Validation.formatINR(p.accruedInterest)}</td>
+              <td>${statusBadge}</td>
+              <td>
+                <div style="display:flex; gap:var(--space-1);">
+                  <a href="pledges.html?ticket=${p.ticketNo}" class="btn btn-outline btn-sm">Ticket</a>
+                  <a href="payments.html?ticket=${p.ticketNo}" class="btn btn-secondary btn-sm">Pay</a>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // 4. Tab 3 Payments Population
+      const paymentsTbody = document.getElementById('custPaymentsTableBody');
+      paymentsTbody.innerHTML = bundle.payments.map(pay => {
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">${pay.receiptNo}</td>
+            <td class="cell-mono">${pay.ticketNo}</td>
+            <td>${pay.date}</td>
+            <td class="cell-primary text-success">${window.Validation.formatINR(pay.amount)}</td>
+            <td class="cell-mono">${window.Validation.formatINR(pay.principalSettled)}</td>
+            <td class="cell-mono text-gold">${window.Validation.formatINR(pay.interestSettled)}</td>
+            <td><span class="badge badge-success">${pay.paymentMode}</span></td>
+            <td>
+              <button class="btn btn-outline btn-sm" onclick="UI.showToast('Printing receipt...', 'info')">Receipt</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      // 5. Tab 4 Documents Grid Population
+      const docsGrid = document.getElementById('custDocsGrid');
+      docsGrid.innerHTML = bundle.documents.map(doc => {
+        return `
+          <div class="card" style="text-align:center; padding:var(--space-4);">
+            <div style="font-weight:700; font-size:var(--font-size-xs); margin-bottom:var(--space-2);">${doc.docTitle}</div>
+            <div style="width:90px; height:90px; border-radius:var(--radius-md); background:var(--slate-100); margin:0 auto var(--space-3); display:flex; align-items:center; justify-content:center; color:var(--slate-500);">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+            </div>
+            <div class="cell-mono text-muted" style="font-size:11px; margin-bottom:var(--space-2);">${doc.fileName}</div>
+            <span class="badge badge-success">✓ ${doc.status}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 6. Tab 5 WhatsApp Reminders Trigger
+      document.getElementById('dispatchWhatsAppBtn').onclick = () => {
+        const msg = `வணக்கம் ${c.nameEn} அவர்களுக்கு,\n\nAS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.\n\nமொத்த நிலுவை கடன்: ₹ ${c.totalOutstanding.toLocaleString('en-IN')}\nநிலுவை வட்டி: ₹ ${c.pendingInterest.toLocaleString('en-IN')}\n\nகடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.\n\nதொடர்புக்கு:\nAS Jewellar Pawn Shop, Madurai.\nதொலைபேசி: 0452-2345678`;
+        window.open(`https://wa.me/91${c.mobile}?text=${encodeURIComponent(msg)}`, '_blank');
+        UI.showToast(`WhatsApp reminder opened for ${c.nameEn}`, 'success');
+      };
+
+      // 7. Tab 6 Add Note
+      document.getElementById('addNoteForm').onsubmit = (e) => {
+        e.preventDefault();
+        const note = document.getElementById('newNoteText').value.trim();
+        if (note) {
+          c.notes = `${note} (Added on ${new Date().toLocaleDateString()}) \n\n${c.notes || ''}`;
+          document.getElementById('custInternalNotes').textContent = c.notes;
+          document.getElementById('newNoteText').value = '';
+          window.customerManager.updateCustomer(c.customerId, { notes: c.notes });
+          UI.showToast('Note added to customer profile!', 'success');
+        }
+      };
+
+      // 8. Upload Doc Form
+      document.getElementById('uploadCustDocForm').onsubmit = (e) => {
+        e.preventDefault();
+        UI.showLoading('Uploading customer document to Google Drive...');
+        setTimeout(() => {
+          UI.hideLoading();
+          UI.showToast('Document uploaded successfully!', 'success');
+          UI.closeModal('uploadCustDocModal');
+        }, 800);
+      };
+    }
+
+    function switchCustomerTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(p => p.style.display = 'none');
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      const target = document.getElementById(tabId);
+      if (target) target.style.display = 'block';
+      event.target.classList.add('active');
+    }
+  </script>
+</body>
+</html>

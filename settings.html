@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Settings & Offline Sync Inspector &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="settings">Settings & System Management (அமைப்புகள்)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Configure shop profile, API endpoint, print settings, and inspect IndexedDB offline sync queue.</p>
+          </div>
+
+          <div style="display:flex; gap:var(--space-2);">
+            <button type="button" class="btn btn-primary" id="saveAllSettingsBtn">Save Settings</button>
+          </div>
+        </div>
+
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--space-5); margin-bottom:var(--space-5);">
+          
+          <!-- Shop Profile -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Shop Information & Licencing</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Pawn Broker Trade Name</label>
+                <input type="text" id="cfgShopName" class="form-input" value="AS Jewellar Pawn Shop" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Tamil Trade Name</label>
+                <input type="text" id="cfgShopNameTa" class="form-input" value="ஏ.எஸ் ஜூவல்லர்ஸ்" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Pawnbroker Licence Number</label>
+                <input type="text" id="cfgLicenceNo" class="form-input" value="PB/MDU/2026/042" />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Shop Address & Phone</label>
+                <input type="text" id="cfgAddress" class="form-input" value="124, South Masi Street, Madurai - 625001" />
+              </div>
+            </div>
+          </div>
+
+          <!-- API & Cloud Sync Settings -->
+          <div class="card">
+            <div class="card-header">
+              <h3 class="card-title">Google Apps Script API Endpoint</h3>
+            </div>
+            <div class="card-body">
+              <div class="form-group">
+                <label class="form-label">Backend Deployment Web App URL</label>
+                <input type="url" id="cfgApiEndpoint" class="form-input cell-mono" placeholder="https://script.google.com/macros/s/.../exec" />
+                <span class="form-help">Enter your deployed Google Apps Script URL.</span>
+              </div>
+
+              <div class="form-group">
+                <label class="form-label">Device Identifier</label>
+                <input type="text" id="cfgDeviceId" class="form-input cell-mono" readonly style="background:#F1F5F9;" />
+              </div>
+
+              <div style="margin-top:var(--space-4); display:flex; gap:var(--space-2);">
+                <button type="button" class="btn btn-outline btn-sm" id="testApiConnBtn">Test API Connection</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ==========================================================================
+             OFFLINE QUEUE & BACKGROUND SYNC INSPECTOR
+             ========================================================================== -->
+        <div class="card" style="border-top:4px solid var(--gold-500);">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-3);">
+            <div>
+              <h3 class="card-title">IndexedDB Offline Sync Queue & Inspector</h3>
+              <p class="text-muted" style="font-size:11.5px; margin-top:2px;">View transactions queued during offline mode, track idempotency tokens, and resolve conflicts.</p>
+            </div>
+
+            <div style="display:flex; gap:var(--space-2);">
+              <button type="button" class="btn btn-primary btn-sm" id="manualSyncBtn">
+                <span>🔄 Sync Queue Now</span>
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="clearSyncedBtn">
+                <span>🗑 Clear Synced</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Queue Status Cards -->
+          <div class="card-body" style="border-bottom:1px solid var(--border-subtle); padding:var(--space-3) var(--space-4);">
+            <div class="grid-5" style="margin:0;">
+              <div style="background:#FEF3C7; border:1px solid #FDE047; border-radius:var(--radius-md); padding:8px 12px; text-align:center;">
+                <div style="font-size:11px; font-weight:bold; color:#854D0E;">PENDING</div>
+                <div style="font-size:18px; font-weight:900; color:#78350F;" id="qCountPending">0</div>
+              </div>
+
+              <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:8px 12px; text-align:center;">
+                <div style="font-size:11px; font-weight:bold; color:#1E40AF;">SYNCING</div>
+                <div style="font-size:18px; font-weight:900; color:#1E3A8A;" id="qCountSyncing">0</div>
+              </div>
+
+              <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:var(--radius-md); padding:8px 12px; text-align:center;">
+                <div style="font-size:11px; font-weight:bold; color:#166534;">SYNCED</div>
+                <div style="font-size:18px; font-weight:900; color:#14532D;" id="qCountSynced">0</div>
+              </div>
+
+              <div style="background:#FEF2F2; border:1px solid #FCA5A5; border-radius:var(--radius-md); padding:8px 12px; text-align:center;">
+                <div style="font-size:11px; font-weight:bold; color:#991B1B;">FAILED</div>
+                <div style="font-size:18px; font-weight:900; color:#7F1D1D;" id="qCountFailed">0</div>
+              </div>
+
+              <div style="background:#FAF5FF; border:1px solid #E9D5FF; border-radius:var(--radius-md); padding:8px 12px; text-align:center;">
+                <div style="font-size:11px; font-weight:bold; color:#6B21A8;">CONFLICTS</div>
+                <div style="font-size:18px; font-weight:900; color:#581C87;" id="qCountConflict">0</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Queue Table -->
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Local TX ID</th>
+                  <th>Type</th>
+                  <th>Created Time</th>
+                  <th>Idempotency Token</th>
+                  <th>Retries</th>
+                  <th>Sync Status</th>
+                  <th>Server Ref / Error</th>
+                </tr>
+              </thead>
+              <tbody id="queueTableBody">
+                <!-- Rendered Dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/cash.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('settings');
+      loadSettingsUI();
+      refreshQueueUI();
+      bindSettingsEvents();
+    });
+
+    function loadSettingsUI() {
+      document.getElementById('cfgApiEndpoint').value = window.api.endpoint;
+      document.getElementById('cfgDeviceId').value = window.offlineQueue.deviceId;
+    }
+
+    async function refreshQueueUI() {
+      const stats = await window.offlineQueue.getQueueStats();
+      document.getElementById('qCountPending').textContent = stats.pending;
+      document.getElementById('qCountSyncing').textContent = stats.syncing;
+      document.getElementById('qCountSynced').textContent = stats.synced;
+      document.getElementById('qCountFailed').textContent = stats.failed;
+      document.getElementById('qCountConflict').textContent = stats.conflict;
+
+      const items = await window.offlineQueue.getAllQueue();
+      const tbody = document.getElementById('queueTableBody');
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No offline transactions currently in queue. All data is synchronized.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        let badge = `<span class="badge badge-warning">PENDING</span>`;
+        if (item.syncStatus === 'SYNCING') badge = `<span class="badge badge-primary">SYNCING</span>`;
+        else if (item.syncStatus === 'SYNCED') badge = `<span class="badge badge-success">SYNCED</span>`;
+        else if (item.syncStatus === 'FAILED') badge = `<span class="badge badge-danger">FAILED</span>`;
+        else if (item.syncStatus === 'CONFLICT') badge = `<span class="badge" style="background:#581C87; color:#FFF;">CONFLICT</span>`;
+
+        return `
+          <tr>
+            <td class="cell-mono font-bold">${item.localTxId}</td>
+            <td><span class="badge badge-outline">${item.type}</span></td>
+            <td style="font-size:12px;">${item.createdTime.replace('T', ' ').slice(0, 19)}</td>
+            <td class="cell-mono" style="font-size:11px;">${item.idempotencyKey}</td>
+            <td class="cell-mono">${item.retryCount || 0}</td>
+            <td>${badge}</td>
+            <td style="font-size:11.5px; color:var(--slate-700);">
+              ${item.serverTxId ? `<strong class="text-success">${item.serverTxId}</strong>` : (item.errorMessage ? `<span class="text-danger">${item.errorMessage}</span>` : '-')}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindSettingsEvents() {
+      // Manual Sync
+      document.getElementById('manualSyncBtn').addEventListener('click', async () => {
+        UI.showToast('Starting background sync...', 'info');
+        const res = await window.offlineQueue.syncQueue();
+        refreshQueueUI();
+        UI.showToast(`Sync completed: ${res.syncedCount || 0} Synced, ${res.failedCount || 0} Failed`, 'success');
+      });
+
+      // Clear Synced
+      document.getElementById('clearSyncedBtn').addEventListener('click', async () => {
+        await window.offlineQueue.clearSynced();
+        refreshQueueUI();
+        UI.showToast('Cleared synced items from local queue', 'success');
+      });
+
+      // Save Settings
+      document.getElementById('saveAllSettingsBtn').addEventListener('click', () => {
+        const newEndpoint = document.getElementById('cfgApiEndpoint').value.trim();
+        if (newEndpoint) {
+          window.api.setEndpoint(newEndpoint);
+        }
+        UI.showToast('Settings saved successfully', 'success');
+      });
+
+      // Test API
+      document.getElementById('testApiConnBtn').addEventListener('click', async () => {
+        UI.showToast('Testing API connection...', 'info');
+        const res = await window.api.get('health');
+        if (res && res.success) {
+          UI.showToast(`API Connected: ${res.message || 'Online'}`, 'success');
+        } else {
+          UI.showToast(`Connection failed: ${res.message}`, 'error');
+        }
+      });
+
+      window.addEventListener('offlineQueueChanged', () => refreshQueueUI());
+      window.addEventListener('syncStatusChanged', () => refreshQueueUI());
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Pledge Redemption &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .redemption-grid {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      gap: var(--space-5);
+      margin-bottom: var(--space-6);
+    }
+    @media (max-width: 900px) {
+      .redemption-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    @media print {
+      body * {
+        visibility: hidden;
+      }
+      #redemptionReceiptModal, #redemptionReceiptModal * {
+        visibility: visible;
+      }
+      #redemptionReceiptModal {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        background: #FFF;
+      }
+      .modal-header, .modal-footer, .tab-bar {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="redemption_title">Pledge Redemption & Jewellery Release (அடகு மீட்பு)</h2>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">10-Step verified payoff settlement, physical jewellery inspection, and safe article delivery note.</p>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2);">
+            <a href="pledges.html" class="btn btn-outline">View All Pledges &rarr;</a>
+          </div>
+        </div>
+
+        <div class="redemption-grid">
+          
+          <!-- LEFT COLUMN: 4-Stage Redemption Wizard -->
+          <div style="display:flex; flex-direction:column; gap:var(--space-4);">
+            
+            <!-- STAGE 1: TICKET LOOKUP & CUSTOMER VERIFICATION -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header">
+                <h3 class="card-title">1. Lookup & Borrower Verification (வாடிக்கையாளர் சரிபார்ப்பு)</h3>
+              </div>
+              <div class="card-body">
+                <div class="search-box" style="margin-bottom:var(--space-3);">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                  <input type="text" id="redTicketSearch" class="form-input" placeholder="Type Ticket No (e.g. PLG-2026-002340), Mobile, or Customer Name..." autocomplete="off" />
+                  <div id="redTicketSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                    <!-- Auto-complete -->
+                  </div>
+                </div>
+
+                <!-- Selected Ticket Summary -->
+                <div id="redSelectedBanner" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-3);">
+                  <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div>
+                      <div style="font-weight:900; font-size:var(--font-size-md); color:var(--slate-900);">
+                        <span class="cell-mono" id="redDisplayTicketNo">PLG-2026-002340</span> &bull; <span id="redDisplayCustName">P. Lakshmi</span>
+                      </div>
+                      <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
+                        📞 <span id="redDisplayMobile">98421 98765</span> &bull; 📍 Vault Packet: <strong style="color:var(--gold-900);" id="redDisplayPacket">PKT-0042 (Vault A)</strong>
+                      </div>
+                    </div>
+                    <button type="button" class="btn btn-ghost btn-sm" id="redChangeTicketBtn">Change</button>
+                  </div>
+                </div>
+
+                <!-- KYC Verification Checkbox -->
+                <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md); padding:var(--space-3);">
+                  <label style="display:flex; align-items:center; gap:8px; font-weight:700; font-size:13px; color:#78350F; cursor:pointer;">
+                    <input type="checkbox" id="redCustVerifiedCheck" style="width:18px; height:18px;" />
+                    <span data-i18n="cust_verification_check">✓ I have verified borrower identity and KYC credentials at the counter</span>
+                  </label>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- STAGE 2: PHYSICAL JEWELLERY HANDOVER CHECKLIST -->
+            <div class="card" id="redItemsCard" style="border-top:3px solid var(--primary-main);">
+              <div class="card-header">
+                <h3 class="card-title" data-i18n="item_release_checklist">2. Physical Articles Inspection & Release Checklist</h3>
+              </div>
+              <div class="card-body">
+                
+                <div class="table-responsive" style="margin-bottom:var(--space-4);">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Pledged Item Description</th>
+                        <th>Purity</th>
+                        <th>Gross Wt</th>
+                        <th>Net Wt</th>
+                        <th>Vault Packet</th>
+                      </tr>
+                    </thead>
+                    <tbody id="redItemsTbody">
+                      <!-- Rendered dynamically -->
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style="background:#F0FDF4; border:1px solid #86EFAC; border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-4);">
+                  <label style="display:flex; align-items:flex-start; gap:8px; font-weight:700; font-size:12.5px; color:#166534; cursor:pointer;">
+                    <input type="checkbox" id="redItemsHandoverCheck" style="width:18px; height:18px; margin-top:2px;" />
+                    <span data-i18n="item_handover_cert">✓ I certify that all pledged articles have been inspected, weighed, and handed over to the borrower in good condition.</span>
+                  </label>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Payment Mode for Payoff</label>
+                    <select id="redPaymentMode" class="form-select">
+                      <option value="CASH" selected>Cash (ரொக்கம்)</option>
+                      <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
+                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                    </select>
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Redemption Remarks / Notes</label>
+                    <input type="text" id="redNotesInput" class="form-input" placeholder="e.g. Delivered in good condition" />
+                  </div>
+                </div>
+
+                <button type="button" class="btn btn-primary" id="redSubmitBtn" style="width:100%; padding:14px; font-size:15px; justify-content:center;">
+                  <span data-i18n="redeem_pledge_btn">Confirm Release & Complete Redemption</span>
+                </button>
+
+              </div>
+            </div>
+
+          </div>
+
+          <!-- RIGHT COLUMN: FINANCIAL SETTLEMENT BREAKDOWN -->
+          <div>
+            <div class="card" style="position:sticky; top:80px; border-top:4px solid var(--success-main);">
+              <div class="card-header">
+                <h3 class="card-title">Full Payoff Settlement</h3>
+              </div>
+              <div class="card-body">
+                
+                <div style="display:flex; flex-direction:column; gap:var(--space-3);">
+                  
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Principal Loan Balance:</span>
+                    <strong style="font-size:15px;" id="redSidePrincipal">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Days Elapsed:</span>
+                    <strong id="redSideDays">0 Days</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Final Accrued Interest:</span>
+                    <strong style="font-size:14px; color:var(--gold-900);" id="redSideInterest">₹ 0</strong>
+                  </div>
+
+                  <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md); padding:10px 12px; margin-top:var(--space-2); text-align:center;">
+                    <div style="font-size:11px; text-transform:uppercase; color:#92400E; font-weight:bold;">Total Payoff Amount</div>
+                    <div style="font-size:22px; font-weight:900; color:#78350F;" id="redSideTotalDue">₹ 0</div>
+                  </div>
+
+                  <div style="background:#F1F5F9; border-radius:var(--radius-md); padding:8px 12px; margin-top:var(--space-2); font-size:11.5px; color:var(--slate-600);">
+                    🔒 <strong>Financial History Lock:</strong> Once redeemed, this ticket will be marked closed and immutable. The vault packet will be freed.
+                  </div>
+
+                </div>
+
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 3. REDEMPTIONS HISTORY LEDGER -->
+        <div class="card">
+          <div class="card-header">
+            <h3 class="card-title">Pledge Redemptions Ledger</h3>
+            <span class="badge badge-success" id="redCountBadge">0 Redemptions</span>
+          </div>
+
+          <div class="table-responsive">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Redemption ID</th>
+                  <th>Date</th>
+                  <th>Ticket No</th>
+                  <th>Customer</th>
+                  <th>Principal Paid</th>
+                  <th>Interest Paid</th>
+                  <th>Total Payoff</th>
+                  <th>Freed Packet</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="redemptionsTableBody">
+                <!-- Dynamically Rendered -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: PRINTABLE REDEMPTION RECEIPT (A4 & 80mm Dual Layouts)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="redemptionReceiptModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="redModalTitle">Pledge Redemption & Release Note</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('redemptionReceiptModal')">&times;</button>
+      </div>
+
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="redTabA4Btn" onclick="switchRedFormat('A4')">
+          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
+        </button>
+        <button type="button" class="tab-btn" id="redTabThermalBtn" onclick="switchRedFormat('THERMAL')">
+          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
+        </button>
+      </div>
+
+      <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="redRenderContainer">
+        <!-- Rendered dynamically via BillingManager -->
+      </div>
+
+      <div class="modal-footer" style="background:#FFF;">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('redemptionReceiptModal')">Close</button>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+          <span>🖨 Print Official Release Document</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let activePledgeForRedemption = null;
+    let activeRedRecordForModal = null;
+    let activeRedFormat = 'A4';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('pageTitleText').textContent = window.t('redemption');
+      renderRedemptionsTable();
+      bindRedemptionEvents();
+
+      // Check URL query parameter ?ticket=...
+      const urlParams = new URLSearchParams(window.location.search);
+      const ticketParam = urlParams.get('ticket');
+      if (ticketParam) {
+        selectPledgeForRedemption(ticketParam);
+      } else if (window.pledgePosManager.pledges.length > 0) {
+        const firstActive = window.pledgePosManager.pledges.find(p => p.status === 'ACTIVE' || p.status === 'DUE') || window.pledgePosManager.pledges[0];
+        selectPledgeForRedemption(firstActive.ticketNo);
+      }
+    });
+
+    function selectPledgeForRedemption(ticketNo) {
+      const p = window.pledgePosManager.pledges.find(item => item.ticketNo === ticketNo);
+      if (!p) return;
+
+      activePledgeForRedemption = p;
+      const cust = window.customerManager.getCustomerById(p.customerId);
+
+      document.getElementById('redSelectedBanner').style.display = 'block';
+      document.getElementById('redTicketSearch').parentElement.style.display = 'none';
+      document.getElementById('redTicketSuggestions').style.display = 'none';
+
+      document.getElementById('redDisplayTicketNo').textContent = p.ticketNo;
+      document.getElementById('redDisplayCustName').textContent = cust ? `${cust.nameEn} (${cust.nameTa || ''})` : p.customerId;
+      document.getElementById('redDisplayMobile').textContent = cust ? cust.mobile : '';
+      document.getElementById('redDisplayPacket').textContent = `${p.packetId} (${p.vaultLocation})`;
+
+      // Calculate Accrual
+      const accrual = window.paymentManager.calculateInterestAccrual(p);
+
+      document.getElementById('redSidePrincipal').textContent = `₹ ${accrual.principal.toLocaleString('en-IN')}`;
+      document.getElementById('redSideDays').textContent = `${accrual.daysElapsed} Days (${accrual.monthsElapsed} Mo)`;
+      document.getElementById('redSideInterest').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
+      document.getElementById('redSideTotalDue').textContent = `₹ ${accrual.totalAmountDue.toLocaleString('en-IN')}`;
+
+      // Render Items in Checklist
+      const tbody = document.getElementById('redItemsTbody');
+      if (p.items && p.items.length > 0) {
+        tbody.innerHTML = p.items.map((it, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td><strong>${it.itemType}</strong><br/><span style="font-size:10px; color:var(--slate-500);">${it.description}</span></td>
+            <td><span class="badge badge-gold">${it.purity}</span></td>
+            <td class="cell-mono">${Number(it.grossWeight).toFixed(3)} g</td>
+            <td class="cell-mono text-gold" style="font-weight:bold;">${Number(it.netWeight).toFixed(3)} g</td>
+            <td class="cell-mono" style="font-size:11px;">${p.packetId}</td>
+          </tr>
+        `).join('');
+      } else {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Jewellery Article Packet (${p.packetId})</td></tr>`;
+      }
+    }
+
+    function bindRedemptionEvents() {
+      // Auto-complete Search
+      const searchInput = document.getElementById('redTicketSearch');
+      const suggBox = document.getElementById('redTicketSuggestions');
+
+      searchInput.addEventListener('input', () => {
+        const q = searchInput.value.toLowerCase().trim();
+        if (q.length < 1) {
+          suggBox.style.display = 'none';
+          return;
+        }
+
+        const matches = window.pledgePosManager.pledges.filter(p => {
+          if (p.status === 'REDEEMED' || p.status === 'RENEWED') return false;
+          const cust = window.customerManager.getCustomerById(p.customerId);
+          const custName = cust ? cust.nameEn.toLowerCase() : '';
+          const custMob = cust ? cust.mobile : '';
+          return p.ticketNo.toLowerCase().includes(q) || custName.includes(q) || custMob.includes(q) || p.packetId.toLowerCase().includes(q);
+        });
+
+        if (matches.length === 0) {
+          suggBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No active redeemable pledges found</div>`;
+        } else {
+          suggBox.innerHTML = matches.slice(0, 5).map(p => {
+            const cust = window.customerManager.getCustomerById(p.customerId);
+            return `
+              <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectPledgeForRedemption('${p.ticketNo}')">
+                <div>
+                  <strong>${p.ticketNo}</strong> &bull; <span style="font-size:12px; color:var(--slate-700);">${cust ? cust.nameEn : p.customerId}</span>
+                  <div style="font-size:11px; color:var(--slate-500);">Principal: ₹${Number(p.loanAmount).toLocaleString('en-IN')} &bull; Packet: ${p.packetId}</div>
+                </div>
+                <span class="badge badge-outline">Select &rarr;</span>
+              </div>
+            `;
+          }).join('');
+        }
+        suggBox.style.display = 'block';
+      });
+
+      // Change Ticket
+      document.getElementById('redChangeTicketBtn').addEventListener('click', () => {
+        activePledgeForRedemption = null;
+        document.getElementById('redSelectedBanner').style.display = 'none';
+        searchInput.parentElement.style.display = 'block';
+        searchInput.value = '';
+        searchInput.focus();
+      });
+
+      // Submit Redemption
+      document.getElementById('redSubmitBtn').addEventListener('click', handleRedemptionSubmit);
+    }
+
+    async function handleRedemptionSubmit() {
+      if (!activePledgeForRedemption) {
+        UI.showToast('Please select an active pledge first', 'warning');
+        return;
+      }
+
+      const custVerified = document.getElementById('redCustVerifiedCheck').checked;
+      if (!custVerified) {
+        UI.showToast('Borrower KYC verification checkbox is required', 'error');
+        document.getElementById('redCustVerifiedCheck').focus();
+        return;
+      }
+
+      const itemsHanded = document.getElementById('redItemsHandoverCheck').checked;
+      if (!itemsHanded) {
+        UI.showToast('Physical article handover confirmation is required', 'error');
+        document.getElementById('redItemsHandoverCheck').focus();
+        return;
+      }
+
+      const mode = document.getElementById('redPaymentMode').value;
+      const notes = document.getElementById('redNotesInput').value.trim();
+
+      const btn = document.getElementById('redSubmitBtn');
+      btn.disabled = true;
+      btn.textContent = 'Processing Redemption & Release...';
+
+      const res = await window.renewalRedemptionManager.redeemPledge(activePledgeForRedemption.ticketNo, {
+        customerVerified: true,
+        itemsHandedOver: true,
+        paymentMode: mode,
+        notes: notes || 'Full loan redeemed and articles released'
+      });
+
+      if (res.success) {
+        btn.textContent = 'Pledge Redeemed!';
+        UI.showToast(window.t('redemption_success_msg'), 'success');
+
+        renderRedemptionsTable();
+        openRedemptionReceiptModal(res.redemptionRecord, res.pledge, 'A4');
+
+        btn.disabled = false;
+        btn.textContent = 'Confirm Release & Complete Redemption';
+      } else {
+        UI.showToast(res.message, 'error');
+        btn.disabled = false;
+        btn.textContent = 'Confirm Release & Complete Redemption';
+      }
+    }
+
+    function renderRedemptionsTable() {
+      const list = [...window.renewalRedemptionManager.redemptions];
+      document.getElementById('redCountBadge').textContent = `${list.length} Redemptions`;
+      const tbody = document.getElementById('redemptionsTableBody');
+
+      if (list.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No redemptions recorded yet</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = list.map(r => {
+        const cust = window.customerManager.getCustomerById(r.customerId);
+        const custName = cust ? cust.nameEn : r.customerId;
+
+        return `
+          <tr>
+            <td class="cell-mono cell-primary">${r.redemptionId}</td>
+            <td>${r.redemptionDate}</td>
+            <td class="cell-mono">${r.ticketNo}</td>
+            <td>${custName}</td>
+            <td class="cell-mono">₹ ${Number(r.principalSettled).toLocaleString('en-IN')}</td>
+            <td class="cell-mono text-gold">₹ ${Number(r.interestSettled).toLocaleString('en-IN')}</td>
+            <td class="cell-primary text-success" style="font-weight:900;">₹ ${Number(r.totalSettlement).toLocaleString('en-IN')}</td>
+            <td class="cell-mono"><span class="badge badge-success">VACANT (${r.packetId})</span></td>
+            <td><span class="badge badge-active">REDEEMED</span></td>
+            <td>
+              <button type="button" class="btn btn-outline btn-sm" onclick="previewRedemptionRow('${r.redemptionId}')">📄 View Release Note</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function previewRedemptionRow(redemptionId) {
+      const r = window.renewalRedemptionManager.redemptions.find(it => it.redemptionId === redemptionId);
+      if (!r) return;
+      const pledge = window.pledgePosManager.pledges.find(it => it.ticketNo === r.ticketNo) || { ticketNo: r.ticketNo, customerId: r.customerId, loanAmount: r.principalSettled };
+      openRedemptionReceiptModal(r, pledge, 'A4');
+    }
+
+    function openRedemptionReceiptModal(redemptionRecord, pledge, format = 'A4') {
+      activeRedRecordForModal = { redemptionRecord, pledge };
+      activeRedFormat = format;
+      document.getElementById('redModalTitle').textContent = `Redemption Release Note &bull; ${redemptionRecord.redemptionId}`;
+
+      switchRedFormat(format);
+      UI.openModal('redemptionReceiptModal');
+    }
+
+    function switchRedFormat(format) {
+      activeRedFormat = format;
+      const a4Btn = document.getElementById('redTabA4Btn');
+      const thermalBtn = document.getElementById('redTabThermalBtn');
+
+      if (format === 'A4') {
+        a4Btn.classList.add('active');
+        thermalBtn.classList.remove('active');
+      } else {
+        a4Btn.classList.remove('active');
+        thermalBtn.classList.add('active');
+      }
+
+      if (activeRedRecordForModal) {
+        const { redemptionRecord, pledge } = activeRedRecordForModal;
+        const cust = window.customerManager.getCustomerById(redemptionRecord.customerId);
+        const docHtml = window.billingManager.renderRedemptionReceipt(redemptionRecord, pledge, cust, format, false);
+        document.getElementById('redRenderContainer').innerHTML = docHtml;
+      }
+    }
+  </script>
+</body>
+</html>
