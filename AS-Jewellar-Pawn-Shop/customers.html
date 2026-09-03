@@ -241,7 +241,7 @@
       </div>
 
       <form id="newCustomerForm">
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 140px); overflow-y: auto;">
           
           <!-- Live Duplicate Detection Warning Banner -->
           <div id="duplicateWarningBanner" class="alert alert-danger" style="display:none; flex-direction:column; gap:4px;">
@@ -405,10 +405,12 @@
 
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')" data-i18n="cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="saveCustomerSubmitBtn" data-i18n="save_customer">
-            Save Customer Profile (சேமி)
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border-top:1px solid var(--border-subtle); padding:var(--space-3) var(--space-6);">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')">
+            <span data-i18n="cancel">Cancel (ரத்து)</span>
+          </button>
+          <button type="submit" class="btn btn-primary btn-lg" id="saveCustomerSubmitBtn" style="font-weight:800; min-width:220px; box-shadow:0 4px 12px rgba(212,175,55,0.3);">
+            <span data-i18n="save_customer">✓ Register Customer (பதிவு செய்)</span>
           </button>
         </div>
       </form>
@@ -428,7 +430,7 @@
       </div>
       <form id="editCustomerForm">
         <input type="hidden" id="editCustId" />
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 140px); overflow-y: auto;">
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label" for="editCustNameEn">Full Name (English) *</label>

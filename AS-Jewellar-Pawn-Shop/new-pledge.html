@@ -420,7 +420,191 @@
     </div>
   </div>
 
-  <!-- Core Foundation Scripts -->
+  <!-- ==========================================================================
+       MODAL: REGISTER NEW CUSTOMER (Direct in-POS Quick Registration)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="newCustomerModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="add_customer">+ Register New Customer (புதிய வாடிக்கையாளர்)</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('newCustomerModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <form id="newCustomerForm">
+        <div class="modal-body" style="max-height: calc(90vh - 140px); overflow-y: auto;">
+          
+          <!-- Live Duplicate Detection Warning Banner -->
+          <div id="duplicateWarningBanner" class="alert alert-danger" style="display:none; flex-direction:column; gap:4px;">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+              <strong data-i18n="duplicate_warning_title">Possible Duplicate Customer Detected!</strong>
+            </div>
+            <div style="font-size:12px;" id="duplicateWarningText">A customer with this mobile number already exists in the system.</div>
+          </div>
+
+          <!-- Form Fields Grid -->
+          <div class="grid-2">
+            
+            <div class="form-group">
+              <label class="form-label" for="newCustNameEn">
+                <span data-i18n="customer_name">Full Name (English)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustNameEn" class="form-input" placeholder="e.g. R. Murugan" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustNameTa">
+                <span data-i18n="tamil_name">வாடிக்கையாளர் பெயர் (தமிழ்)</span>
+                <span class="text-muted">(Optional)</span>
+              </label>
+              <input type="text" id="newCustNameTa" class="form-input" placeholder="எ.கா. ஆர். முருகன்" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustFatherHusband">
+                <span data-i18n="father_husband_name">Father / Husband Name</span>
+              </label>
+              <input type="text" id="newCustFatherHusband" class="form-input" placeholder="e.g. M. Ramanathan" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustDob">
+                <span data-i18n="dob">Date of Birth</span>
+              </label>
+              <input type="date" id="newCustDob" class="form-input" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustGender">
+                <span data-i18n="gender">Gender (பாலினம்)</span>
+              </label>
+              <select id="newCustGender" class="form-select">
+                <option value="MALE">Male (ஆண்)</option>
+                <option value="FEMALE">Female (பெண்)</option>
+                <option value="OTHER">Other (மற்றவை)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustOccupation">
+                <span data-i18n="occupation">Occupation (தொழில்)</span>
+              </label>
+              <input type="text" id="newCustOccupation" class="form-input" placeholder="e.g. Business / Agriculture / Service" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustMobile">
+                <span data-i18n="mobile_number">Primary Mobile (கைபேசி எண்)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="tel" id="newCustMobile" class="form-input" placeholder="10-digit mobile" maxlength="10" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustAltMobile">
+                <span data-i18n="alt_mobile">Alternate Mobile</span>
+              </label>
+              <input type="tel" id="newCustAltMobile" class="form-input" placeholder="Alternate phone" maxlength="10" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustEmail">
+                <span data-i18n="email">Email Address</span>
+              </label>
+              <input type="email" id="newCustEmail" class="form-input" placeholder="customer@example.com" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustIdType">
+                <span data-i18n="id_type">KYC ID Proof Type</span>
+                <span class="required">*</span>
+              </label>
+              <select id="newCustIdType" class="form-select" required>
+                <option value="AADHAAR">Aadhaar Card (ஆதார்)</option>
+                <option value="VOTER_ID">Voter ID (வாக்காளர் அட்டை)</option>
+                <option value="RATION_CARD">Smart Ration Card (குடும்ப அட்டை)</option>
+                <option value="DRIVING_LICENCE">Driving Licence (ஓட்டுநர் உரிமம்)</option>
+                <option value="PAN">PAN Card</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustIdNumber">
+                <span data-i18n="id_number">ID Proof Number</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustIdNumber" class="form-input" placeholder="e.g. 8945-2314-4589" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustTown">
+                <span data-i18n="town_village">Town / Village (ஊர் / கிராமம்)</span>
+                <span class="required">*</span>
+              </label>
+              <input type="text" id="newCustTown" class="form-input" placeholder="e.g. Madurai" required />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustTaluk">
+                <span data-i18n="taluk">Taluk (வட்டம்)</span>
+              </label>
+              <input type="text" id="newCustTaluk" class="form-input" placeholder="e.g. Madurai North" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustDistrict">
+                <span data-i18n="district">District (மாவட்டம்)</span>
+              </label>
+              <input type="text" id="newCustDistrict" class="form-input" value="Madurai" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustPincode">
+                <span data-i18n="pincode">PIN Code</span>
+              </label>
+              <input type="text" id="newCustPincode" class="form-input" placeholder="625001" maxlength="6" />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="newCustState">
+                <span data-i18n="state">State (மாநிலம்)</span>
+              </label>
+              <input type="text" id="newCustState" class="form-input" value="Tamil Nadu" />
+            </div>
+
+          </div>
+
+          <div class="form-group" style="margin-top:var(--space-2);">
+            <label class="form-label" for="newCustAddress">
+              <span data-i18n="address">Full Address / Street (முழு முகவரி)</span>
+              <span class="required">*</span>
+            </label>
+            <textarea id="newCustAddress" class="form-textarea" rows="2" placeholder="Door No, Street Name, Landmark..." required></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="newCustNotes">
+              <span data-i18n="notes">Internal Counter Remarks / Notes (உள் குறிப்புகள்)</span>
+            </label>
+            <textarea id="newCustNotes" class="form-textarea" rows="2" placeholder="Customer relationship remarks, credit behavior, etc."></textarea>
+          </div>
+
+        </div>
+
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border-top:1px solid var(--border-subtle); padding:var(--space-3) var(--space-6);">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')">
+            <span data-i18n="cancel">Cancel (ரத்து)</span>
+          </button>
+          <button type="submit" class="btn btn-primary btn-lg" id="saveCustomerSubmitBtn" style="font-weight:800; min-width:220px; box-shadow:0 4px 12px rgba(212,175,55,0.3);">
+            <span data-i18n="save_customer">✓ Register Customer (பதிவு செய்)</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
   <script src="js/i18n.js"></script>
   <script src="js/auth.js"></script>
   <script src="js/offline.js"></script>
@@ -557,9 +741,90 @@
         custSearchInput.focus();
       });
 
-      // Quick Add Customer Button
+      // Quick Add Customer Button (Open Modal directly in POS)
       document.getElementById('posQuickAddCustBtn').addEventListener('click', () => {
-        window.location.href = 'customers.html';
+        document.getElementById('newCustomerForm').reset();
+        document.getElementById('duplicateWarningBanner').style.display = 'none';
+        UI.openModal('newCustomerModal');
+      });
+
+      // Quick Customer Form Duplicate Check
+      const quickMobileInput = document.getElementById('newCustMobile');
+      const quickNameInput = document.getElementById('newCustNameEn');
+
+      const runQuickDupCheck = () => {
+        const mob = quickMobileInput.value.trim();
+        const nm = quickNameInput.value.trim();
+        const banner = document.getElementById('duplicateWarningBanner');
+        const txt = document.getElementById('duplicateWarningText');
+
+        if (mob.length >= 10 || nm.length >= 3) {
+          const dup = window.customerManager.checkDuplicate(mob, nm);
+          if (dup.isDuplicate) {
+            txt.textContent = dup.message;
+            banner.style.display = 'flex';
+          } else {
+            banner.style.display = 'none';
+          }
+        } else {
+          banner.style.display = 'none';
+        }
+      };
+
+      quickMobileInput.addEventListener('input', runQuickDupCheck);
+      quickNameInput.addEventListener('input', runQuickDupCheck);
+
+      // Handle Quick Customer Registration in POS
+      document.getElementById('newCustomerForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const mobile = quickMobileInput.value.trim();
+        if (!window.Validation.isValidMobile(mobile)) {
+          UI.showToast('Please enter a valid 10-digit mobile number', 'error');
+          return;
+        }
+
+        const nameEn = quickNameInput.value.trim();
+        const address = document.getElementById('newCustAddress').value.trim();
+        const townVillage = document.getElementById('newCustTown').value.trim();
+        const idNumber = document.getElementById('newCustIdNumber').value.trim();
+
+        if (!nameEn || !address || !townVillage || !idNumber) {
+          UI.showToast('Please fill all required customer fields', 'warning');
+          return;
+        }
+
+        UI.showLoading('Registering customer...');
+        const payload = {
+          nameEn,
+          nameTa: document.getElementById('newCustNameTa').value.trim(),
+          fatherHusbandName: document.getElementById('newCustFatherHusband').value.trim(),
+          dob: document.getElementById('newCustDob').value,
+          gender: document.getElementById('newCustGender').value,
+          occupation: document.getElementById('newCustOccupation').value.trim(),
+          mobile,
+          altMobile: document.getElementById('newCustAltMobile').value.trim(),
+          email: document.getElementById('newCustEmail').value.trim(),
+          address,
+          townVillage,
+          taluk: document.getElementById('newCustTaluk').value.trim(),
+          district: document.getElementById('newCustDistrict').value.trim(),
+          state: document.getElementById('newCustState').value.trim(),
+          pincode: document.getElementById('newCustPincode').value.trim(),
+          idType: document.getElementById('newCustIdType').value,
+          idNumber,
+          notes: document.getElementById('newCustNotes').value.trim()
+        };
+
+        const res = await window.customerManager.createCustomer(payload);
+        UI.hideLoading();
+
+        if (res.success) {
+          UI.showToast(`Customer ${res.customer.nameEn} registered!`, 'success');
+          UI.closeModal('newCustomerModal');
+          selectCustomerById(res.customer.customerId);
+        } else {
+          UI.showToast(res.message || 'Failed to save customer', 'error');
+        }
       });
 
       // Submit POS Handlers (Main & Sticky Bar)

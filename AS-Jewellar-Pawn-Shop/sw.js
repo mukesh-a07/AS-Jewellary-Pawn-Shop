@@ -4,7 +4,7 @@
  * Provides Cache-First offline shell and Network-First dynamic asset strategies.
  */
 
-const CACHE_NAME = 'as-jewellar-v3';
+const CACHE_NAME = 'as-jewellar-v5';
 
 const PRECACHE_ASSETS = [
   './',
