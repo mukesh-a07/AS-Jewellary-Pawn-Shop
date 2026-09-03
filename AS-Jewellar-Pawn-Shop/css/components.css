@@ -533,23 +533,24 @@
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background-color: rgba(15, 23, 42, 0.6);
-  backdrop-filter: blur(2px);
-  z-index: 90;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  z-index: 900;
   display: none;
   align-items: center;
   justify-content: center;
-  padding: var(--space-4);
+  padding: 20px;
+  overflow-y: auto;
 }
 
 .modal-backdrop.open {
-  display: flex;
+  display: flex !important;
 }
 
 .modal-dialog {
   background-color: #FFFFFF;
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
   width: 100%;
   max-width: 580px;
   max-height: 90vh;
@@ -557,10 +558,23 @@
   flex-direction: column;
   overflow: hidden;
   animation: modalPop 200ms ease-out;
+  margin: auto;
+  position: relative;
 }
 
-.modal-dialog.modal-lg { max-width: 840px; }
+.modal-dialog.modal-lg { max-width: 860px; }
 .modal-dialog.modal-sm { max-width: 420px; }
+
+.modal-dialog > form,
+.modal-dialog form {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+}
 
 @keyframes modalPop {
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
@@ -573,6 +587,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-shrink: 0;
+  background-color: #FFFFFF;
+  z-index: 2;
 }
 
 .modal-title {
@@ -588,6 +605,10 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  cursor: pointer;
+  background: transparent;
+  border: none;
 }
 
 .modal-close-btn:hover {
@@ -597,18 +618,41 @@
 
 .modal-body {
   padding: var(--space-6);
-  overflow-y: auto;
-  flex: 1;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(90vh - 140px) !important;
+  overscroll-behavior: contain;
+}
+
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+.modal-body::-webkit-scrollbar-track {
+  background: var(--slate-100);
+  border-radius: var(--radius-full);
+}
+.modal-body::-webkit-scrollbar-thumb {
+  background: var(--slate-300);
+  border-radius: var(--radius-full);
+}
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: var(--gold-500);
 }
 
 .modal-footer {
   padding: var(--space-4) var(--space-6);
   border-top: 1px solid var(--border-subtle);
-  background-color: var(--slate-50);
+  background-color: #F8FAFC;
   display: flex;
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-3);
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 /* ==========================================================================
