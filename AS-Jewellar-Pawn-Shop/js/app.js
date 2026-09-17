@@ -73,16 +73,10 @@ class AppController {
   getSidebarHTML() {
     return `
       <div class="sidebar-header">
-        <svg width="34" height="34" viewBox="0 0 80 80" fill="none">
-          <rect x="0" y="0" width="80" height="80" rx="16" fill="#0F172A" />
-          <path d="M40 16 L62 32 L40 68 L18 32 Z" fill="none" stroke="#D4AF37" stroke-width="4" stroke-linejoin="round" />
-          <path d="M18 32 L62 32" stroke="#D4AF37" stroke-width="3" />
-          <path d="M40 16 L40 68" stroke="#D4AF37" stroke-width="3" />
-          <circle cx="40" cy="42" r="8" fill="#D4AF37" />
-        </svg>
+        <img src="assets/branding/as-jewellar-mark.svg" alt="AS Pawn Shop" class="sidebar-brand-img" style="width:36px; height:36px; border-radius:8px; object-fit:contain; filter:drop-shadow(0 2px 4px rgba(0,0,0,0.3));" />
         <div class="sidebar-brand-text">
-          <span class="brand-title">AS JEWELLAR</span>
-          <span class="brand-subtitle">PAWN SHOP &bull; அடகு</span>
+          <span class="brand-title" style="letter-spacing:0.8px;">AS PAWN SHOP</span>
+          <span class="brand-subtitle">AS JEWELLAR &bull; அடகு</span>
         </div>
       </div>
 
@@ -124,6 +118,11 @@ class AppController {
           <span data-i18n="renewal">Renewal</span>
         </a>
 
+        <a href="vault.html" class="nav-item" data-page="vault.html">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></span>
+          <span data-i18n="vault">Vault & Packets</span>
+        </a>
+
         <div class="nav-section-title" data-i18n="alerts">MANAGEMENT</div>
 
         <a href="reminders.html" class="nav-item" data-page="reminders.html">
@@ -145,6 +144,11 @@ class AppController {
         <a href="reports.html" class="nav-item" data-page="reports.html">
           <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
           <span data-i18n="reports">Reports & Ledger</span>
+        </a>
+
+        <a href="data-health.html" class="nav-item" data-page="data-health.html">
+          <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg></span>
+          <span data-i18n="data_health">Data Health &amp; Backups</span>
         </a>
 
         <a href="settings.html" class="nav-item" data-page="settings.html">

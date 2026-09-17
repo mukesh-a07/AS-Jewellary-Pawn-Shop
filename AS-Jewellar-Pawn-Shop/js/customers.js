@@ -10,34 +10,88 @@ class CustomerManager {
     this.recentKey = 'as_jewellar_recent_customers';
     this.customers = this.loadInitialCustomers();
     this.searchCache = new Map();
+
+    if (typeof window !== 'undefined' && typeof navigator !== 'undefined' && navigator.onLine) {
+      setTimeout(() => this.syncWithBackend(), 100);
+    }
   }
 
   /**
-   * Debounce Helper for High-Speed Counter Inputs (250ms)
+   * Synchronize Customers with Google Sheets Backend
    */
-  debounce(func, wait = 250) {
-    let timeout;
-    return (...args) => {
-      clearTimeout(timeout);
-      timeout = setTimeout(() => func.apply(this, args), wait);
-    };
-  }
+  async syncWithBackend() {
+    if (typeof window === 'undefined' || !window.api || (typeof navigator !== 'undefined' && !navigator.onLine)) {
+      return this.customers;
+    }
 
+    try {
+      const res = await window.api.get('listCustomers');
+      if (res && res.success && Array.isArray(res.data) && res.data.length > 0) {
+        const remoteList = res.data.map(item => ({
+          customerId: item.customerId || item.customer_id || item.id,
+          nameEn: item.nameEn || item.name_en || item.customer_name || item.name || '',
+          nameTa: item.nameTa || item.name_ta || item.tamil_name || '',
+          fatherHusbandName: item.fatherHusbandName || item.father_husband_name || '',
+          gender: item.gender || 'MALE',
+          occupation: item.occupation || '',
+          mobile: String(item.mobile || item.mobile_no || item.phone || '').trim(),
+          altMobile: String(item.altMobile || item.alt_mobile || '').trim(),
+          email: item.email || '',
+          address: item.address || item.street_address || '',
+          townVillage: item.townVillage || item.town_village || item.village || item.district || 'Tenkasi',
+          taluk: item.taluk || '',
+          district: item.district || 'Tenkasi',
+          state: item.state || 'Tamil Nadu',
+          pincode: String(item.pincode || item.pin_code || '').trim(),
+          idType: item.idType || item.id_type || 'AADHAAR',
+          idNumber: String(item.idNumber || item.id_number || item.aadhaarNo || item.aadhaar_no || '').trim(),
+          photoUrl: item.photoUrl || item.photo_url || '',
+          aadhaarDocUrl: item.aadhaarDocUrl || item.aadhaar_doc_url || '',
+          kycStatus: item.kycStatus || item.kyc_status || 'VERIFIED',
+          notes: item.notes || '',
+          status: item.status || 'ACTIVE',
+          createdAt: item.createdAt || item.created_at || new Date().toISOString(),
+          activePledgesCount: item.activePledgesCount || 0,
+          totalOutstanding: item.totalOutstanding || item.totalActiveLoan || 0
+        }));
+
+        const merged = [...remoteList];
+        this.customers.forEach(localCust => {
+          if (!merged.some(r => r.customerId === localCust.customerId || (localCust.mobile && r.mobile === localCust.mobile))) {
+            merged.push(localCust);
+          }
+        });
+
+        this.customers = merged;
+        try {
+          localStorage.setItem(this.storageKey, JSON.stringify(this.customers));
+        } catch (e) {}
+
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('customersSynced', { detail: this.customers }));
+        }
+        return this.customers;
+      }
+    } catch (e) {
+      console.warn('Backend customer sync notice:', e);
+    }
+    return this.customers;
+  }
 
   loadInitialCustomers() {
     try {
       const stored = localStorage.getItem(this.storageKey);
       if (stored) {
-        return JSON.parse(stored);
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       }
     } catch (e) {
       console.warn('Could not parse stored customers', e);
     }
 
-    // ✅ PRODUCTION: No seed data. Start with empty customer list.
-    // Admin registers customers at the counter as they arrive.
     const emptyStart = [];
-    this.saveCustomers(emptyStart);
     return emptyStart;
   }
 
@@ -47,6 +101,12 @@ class CustomerManager {
       localStorage.setItem(this.storageKey, JSON.stringify(customersList));
     } catch (e) {
       console.warn('Failed to persist customers to localStorage', e);
+    }
+    // Mirror to IndexedDB customersStore
+    if (typeof window !== 'undefined' && window.offlineDB && typeof window.offlineDB.putRecord === 'function') {
+      customersList.forEach(c => {
+        window.offlineDB.putRecord('customersStore', c).catch(e => console.warn(e));
+      });
     }
   }
 
@@ -208,6 +268,15 @@ class CustomerManager {
     return cust || null;
   }
 
+  getCustomer(customerId) {
+    return this.getCustomerById(customerId);
+  }
+
+  searchCustomers(queryStr = '') {
+    const res = this.search({ query: queryStr, pageSize: 50 });
+    return res.items || [];
+  }
+
   /**
    * Get Customer 360° Profile bundle (with simulated / live sub-records)
    */
@@ -219,10 +288,10 @@ class CustomerManager {
     const allPledges = (window.pledgePosManager && window.pledgePosManager.pledges) || [];
     const pledges = allPledges.filter(p => p.customerId === customerId);
 
-    const allPayments = (window.paymentManager && window.paymentManager.payments) || [];
+    const allPayments = (window.paymentManager && window.paymentManager.payments) || (window.paymentsManager && window.paymentsManager.payments) || [];
     const payments = allPayments.filter(p => p.customerId === customerId);
 
-    const allDocs = (window.documentManager && window.documentManager.documents) || [];
+    const allDocs = (window.documentManager && window.documentManager.documents) || (window.documentScannerManager && window.documentScannerManager.documents) || [];
     const documents = allDocs.filter(d => d.customerId === customerId);
 
     let reminders = [];
@@ -242,54 +311,91 @@ class CustomerManager {
   /**
    * Create New Customer
    */
+  /**
+   * Create New Customer
+   */
   async createCustomer(customerData) {
-    const year = new Date().getFullYear();
-    const seq = (this.customers.length + 1).toString().padStart(6, '0');
-    const newId = `CUS-${year}-${seq}`;
-
-    const newCustomer = {
-      customerId: newId,
-      nameEn: customerData.nameEn.trim(),
-      nameTa: (customerData.nameTa || '').trim(),
-      fatherHusbandName: (customerData.fatherHusbandName || '').trim(),
-      dob: customerData.dob || '',
-      gender: customerData.gender || 'MALE',
-      occupation: (customerData.occupation || '').trim(),
-      mobile: customerData.mobile.trim(),
-      altMobile: (customerData.altMobile || '').trim(),
-      email: (customerData.email || '').trim(),
-      address: customerData.address.trim(),
-      townVillage: customerData.townVillage.trim(),
-      taluk: (customerData.taluk || '').trim(),
-      district: customerData.district || 'Madurai',
-      state: customerData.state || 'Tamil Nadu',
-      pincode: (customerData.pincode || '').trim(),
-      idType: customerData.idType || 'AADHAAR',
-      idNumber: customerData.idNumber.trim(),
-      kycStatus: customerData.kycStatus || 'VERIFIED',
-      notes: (customerData.notes || '').trim(),
-      status: 'ACTIVE',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      activePledgesCount: 0,
-      totalOutstanding: 0,
-      pendingInterest: 0,
-      totalGoldWeight: 0,
-      lifetimeLoanTotal: 0,
-      lifetimeRedeemedTotal: 0,
-      vaultPlacement: '-'
-    };
-
-    this.customers.unshift(newCustomer);
-    this.saveCustomers(this.customers);
-    this.addRecentCustomer(newId);
-
-    // Sync with remote API if online
-    if (window.api && typeof window.api.post === 'function') {
-      window.api.post('createCustomer', newCustomer).catch(e => console.warn('API background save', e));
+    if (this.isSubmitting) {
+      return { success: false, message: 'Customer registration is already in progress. Please wait...' };
     }
 
-    return { success: true, customer: newCustomer };
+    this.isSubmitting = true;
+
+    try {
+      const year = new Date().getFullYear();
+      const seq = (this.customers.length + 1).toString().padStart(6, '0');
+      const newId = `CUS-${year}-${seq}`;
+      const uniqueSuffix = Math.random().toString(36).substr(2, 6).toUpperCase();
+      const idempotencyKey = customerData.idempotencyKey || `IDEMP-CUS-${Date.now()}-${uniqueSuffix}`;
+      const localTxId = `LOCAL-CUS-${Date.now()}-${uniqueSuffix}`;
+
+      const newCustomer = {
+        customerId: newId,
+        localTxId,
+        idempotencyKey,
+        nameEn: customerData.nameEn.trim(),
+        nameTa: (customerData.nameTa || '').trim(),
+        fatherHusbandName: (customerData.fatherHusbandName || '').trim(),
+        dob: customerData.dob || '',
+        gender: customerData.gender || 'MALE',
+        occupation: (customerData.occupation || '').trim(),
+        mobile: customerData.mobile.trim(),
+        altMobile: (customerData.altMobile || '').trim(),
+        email: (customerData.email || '').trim(),
+        address: customerData.address.trim(),
+        townVillage: customerData.townVillage.trim(),
+        taluk: (customerData.taluk || '').trim(),
+        district: customerData.district || 'Madurai',
+        state: customerData.state || 'Tamil Nadu',
+        pincode: (customerData.pincode || '').trim(),
+        idType: customerData.idType || 'AADHAAR',
+        idNumber: customerData.idNumber.trim(),
+        kycStatus: customerData.kycStatus || 'VERIFIED',
+        notes: (customerData.notes || '').trim(),
+        status: 'ACTIVE',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        activePledgesCount: 0,
+        totalOutstanding: 0,
+        pendingInterest: 0,
+        totalGoldWeight: 0,
+        lifetimeLoanTotal: 0,
+        lifetimeRedeemedTotal: 0,
+        vaultPlacement: '-'
+      };
+
+      this.customers.unshift(newCustomer);
+      this.saveCustomers(this.customers);
+      this.addRecentCustomer(newId);
+
+      // Save / Queue via API Client
+      let apiResult = null;
+      if (typeof window !== 'undefined' && window.api && typeof window.api.post === 'function') {
+        apiResult = await window.api.post('createCustomer', newCustomer).catch(e => {
+          console.warn('API customer save notice', e);
+          return null;
+        });
+      }
+
+      const isOffline = (typeof navigator !== 'undefined' && !navigator.onLine) || (apiResult && apiResult.offlineQueued);
+      const message = isOffline
+        ? 'Customer saved locally in Offline Queue (Status: PENDING - Awaiting Cloud Sync)'
+        : 'Customer registered successfully';
+
+      this.isSubmitting = false;
+      return {
+        success: true,
+        customer: newCustomer,
+        offlineQueued: Boolean(isOffline),
+        syncStatus: isOffline ? 'PENDING' : 'SYNCED',
+        localTxId,
+        idempotencyKey,
+        message
+      };
+    } catch (err) {
+      this.isSubmitting = false;
+      return { success: false, message: err.message };
+    }
   }
 
   /**
@@ -309,13 +415,28 @@ class CustomerManager {
 
     this.saveCustomers(this.customers);
 
-    if (window.api && typeof window.api.post === 'function') {
+    if (typeof window !== 'undefined' && window.api && typeof window.api.post === 'function') {
       window.api.post('updateCustomer', { customerId, ...updatedFields }).catch(e => console.warn(e));
     }
 
-    return { success: true, customer: this.customers[index] };
+    const isOffline = typeof navigator !== 'undefined' && !navigator.onLine;
+    return {
+      success: true,
+      customer: this.customers[index],
+      offlineQueued: isOffline,
+      syncStatus: isOffline ? 'PENDING' : 'SYNCED'
+    };
   }
 }
 
 // Global CustomerManager Instance
-window.customerManager = new CustomerManager();
+if (typeof window !== 'undefined') {
+  window.customerManager = new CustomerManager();
+  window.CustomerManager = CustomerManager;
+}
+if (typeof global !== 'undefined') {
+  global.CustomerManager = CustomerManager;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CustomerManager };
+}

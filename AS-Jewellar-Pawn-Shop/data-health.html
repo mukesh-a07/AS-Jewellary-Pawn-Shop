@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Data Health & Reliability &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0F172A" />
+  <link rel="stylesheet" href="css/base.css" />
+  <link rel="stylesheet" href="css/layout.css" />
+  <link rel="stylesheet" href="css/components.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .health-kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: var(--space-4);
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .health-score-badge {
+      font-size: 32px;
+      font-weight: 900;
+      line-height: 1;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .score-optimal { color: #16A34A; }
+    .score-good { color: #2563EB; }
+    .score-warning { color: #D97706; }
+    .score-critical { color: #DC2626; }
+    .tab-btn {
+      padding: 10px 18px;
+      font-weight: 700;
+      font-size: 13.5px;
+      border: none;
+      background: transparent;
+      color: var(--slate-600);
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn.active {
+      color: var(--gold-600);
+      border-bottom-color: var(--gold-500);
+      background: rgba(202, 138, 4, 0.04);
+    }
+    .tab-pane {
+      display: none;
+    }
+    .tab-pane.active {
+      display: block;
+    }
+    .severity-pill {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .sev-critical { background: #FEE2E2; color: #991B1B; border: 1px solid #FCA5A5; }
+    .sev-warning { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+    .sev-info { background: #E0F2FE; color: #075985; border: 1px solid #BAE6FD; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div class="main-wrapper">
+      <main class="content-body">
+        
+        <!-- Header -->
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
+          <div>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="data_health">Data Health &amp; Reliability (தர பரிசோதனை &amp; நம்பகத்தன்மை)</h2>
+              <span class="badge badge-primary" style="font-size:11px;">ADMIN ONLY</span>
+            </div>
+            <p class="text-muted" style="font-size:var(--font-size-xs);">Database integrity analysis, automated backups, 15-event audit trail, and non-destructive anomaly repairs.</p>
+          </div>
+
+          <!-- Quick Action Bar -->
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button type="button" class="btn btn-primary btn-sm" id="runScanBtn">
+              <span>⚡ Run Full Integrity Scan</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="loadSampleDataHealthBtn" style="border-color:var(--gold-500); color:var(--gold-600); font-weight:700;">
+              <span>📥 Load Sample Dataset</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="manualBackupBtn">
+              <span>💾 Create Cloud Backup</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="exportLocalBtn">
+              <span>📥 Export Local JSON</span>
+            </button>
+            <button type="button" class="btn btn-outline btn-sm" id="exportCloudBtn">
+              <span>☁️ Cloud DB Dump</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- System Overview KPI Grid -->
+        <div class="grid-4" style="margin-bottom:var(--space-5);">
+          
+          <!-- Health Score -->
+          <div class="health-kpi-card" style="border-top:4px solid #16A34A;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">System Health Score</span>
+              <span class="badge badge-success" id="healthGradeBadge">OPTIMAL</span>
+            </div>
+            <div style="margin:var(--space-2) 0;">
+              <div class="health-score-badge score-optimal" id="healthScoreValue">100<span style="font-size:16px; color:var(--slate-400);">/100</span></div>
+              <div style="font-size:11.5px; color:var(--slate-600); margin-top:4px;" id="healthScoreDesc">All relational constraints &amp; balances verified</div>
+            </div>
+            <div style="font-size:11px; color:var(--slate-400);" id="lastScanTime">Last scan: Just now</div>
+          </div>
+
+          <!-- Backup Status -->
+          <div class="health-kpi-card" style="border-top:4px solid var(--gold-500);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Database Backup</span>
+              <span class="badge badge-success" id="backupStatusBadge">HEALTHY</span>
+            </div>
+            <div style="margin:var(--space-2) 0;">
+              <div style="font-size:16px; font-weight:800; color:var(--slate-900);" id="lastBackupTime">Today 23:00 IST</div>
+              <div style="font-size:11.5px; color:var(--slate-600); margin-top:2px;" id="backupScheduleDesc">Daily auto-snapshot at 23:00 IST</div>
+            </div>
+            <div style="font-size:11px; color:var(--slate-500); display:flex; justify-content:space-between;">
+              <span id="backupCountLabel">0 cloud backups</span>
+              <a href="#" id="setupDailyTriggerLink" style="color:var(--gold-600); font-weight:bold; text-decoration:none;">Set Trigger</a>
+            </div>
+          </div>
+
+          <!-- Total Records -->
+          <div class="health-kpi-card" style="border-top:4px solid var(--primary-main);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Database Volume</span>
+              <span class="badge badge-outline" id="sheetsCountBadge">11 SHEETS</span>
+            </div>
+            <div style="margin:var(--space-2) 0;">
+              <div style="font-size:24px; font-weight:800; color:var(--slate-900);" id="totalRecordsCount">-</div>
+              <div style="font-size:11.5px; color:var(--slate-600); margin-top:2px;">Across Customers, Pledges, Ledger &amp; Logs</div>
+            </div>
+            <div style="font-size:11px; color:var(--slate-400);">Immutable financial history preserved</div>
+          </div>
+
+          <!-- Active Anomalies -->
+          <div class="health-kpi-card" style="border-top:4px solid #DC2626;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span style="font-size:12px; font-weight:700; color:var(--slate-500); text-transform:uppercase;">Detected Anomalies</span>
+              <span class="badge badge-danger" id="anomaliesBadge">0 ISSUES</span>
+            </div>
+            <div style="margin:var(--space-2) 0;">
+              <div style="font-size:24px; font-weight:800; color:#DC2626;" id="anomaliesCount">0</div>
+              <div style="font-size:11.5px; color:var(--slate-600); margin-top:2px;" id="anomaliesBreakdown">0 Critical &bull; 0 Warnings</div>
+            </div>
+            <div style="font-size:11px; color:var(--slate-400);">Admin confirmation required for repairs</div>
+          </div>
+
+        </div>
+
+        <!-- Navigation Tabs -->
+        <div style="background:var(--surface); border:1px solid var(--border-subtle); border-radius:var(--radius-lg); overflow:hidden; margin-bottom:var(--space-5);">
+          
+          <div style="display:flex; border-bottom:1px solid var(--border-subtle); background:#F8FAFC; overflow-x:auto;">
+            <button type="button" class="tab-btn active" data-tab="tabAnomalies">
+              <span>🚨 Anomalies &amp; Integrity</span>
+              <span class="badge badge-danger" id="tabAnomaliesBadge" style="display:none;">0</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tabAudit">
+              <span>📜 Audit Log Trail (15 Events)</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tabBackups">
+              <span>🛡️ Backups &amp; Snapshots</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tabSync">
+              <span>🔄 Sync Queue &amp; Idempotency</span>
+            </button>
+            <button type="button" class="tab-btn" data-tab="tabEntities">
+              <span>📊 Database Entities Breakdown</span>
+            </button>
+          </div>
+
+          <!-- TAB 1: ANOMALIES & INTEGRITY -->
+          <div class="tab-pane active" id="tabAnomalies" style="padding:var(--space-4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); flex-wrap:wrap; gap:var(--space-2);">
+              <div>
+                <h3 style="font-size:15px; font-weight:800;">Integrity Diagnostics &amp; Discrepancies</h3>
+                <p class="text-muted" style="font-size:12px;">Scans for missing customers, pledge items, orphan payments, balance mismatches, and duplicates.</p>
+              </div>
+              <div style="display:flex; gap:var(--space-2);">
+                <select id="anomalyFilterSelect" class="form-select" style="font-size:12px; padding:4px 10px;">
+                  <option value="ALL">All Severities</option>
+                  <option value="CRITICAL">Critical Only</option>
+                  <option value="WARNING">Warnings Only</option>
+                  <option value="INFO">Informational Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:12.5px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="width:100px;">Severity</th>
+                    <th style="width:180px;">Anomaly Type</th>
+                    <th style="width:140px;">Entity Target</th>
+                    <th>Discrepancy Description</th>
+                    <th style="width:150px;">Detected Time</th>
+                    <th style="width:130px; text-align:center;">Action</th>
+                  </tr>
+                </thead>
+                <tbody id="anomaliesTableBody">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">
+                      Click "Run Full Integrity Scan" to inspect database relations.
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 2: AUDIT LOG TRAIL -->
+          <div class="tab-pane" id="tabAudit" style="padding:var(--space-4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); flex-wrap:wrap; gap:var(--space-2);">
+              <div>
+                <h3 style="font-size:15px; font-weight:800;">Tamper-Evident System Audit Trail</h3>
+                <p class="text-muted" style="font-size:12px;">Tracks all 15 audit events: logins, pledges, payments, renewals, rate overrides, reprints, backups, and repairs.</p>
+              </div>
+              <button type="button" class="btn btn-outline btn-sm" id="refreshAuditBtn">🔄 Refresh Logs</button>
+            </div>
+
+            <!-- Audit Filter Toolbar -->
+            <div class="grid-4" style="margin-bottom:var(--space-3); background:#F8FAFC; padding:10px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);">
+              <div>
+                <label class="form-label" style="font-size:11px; margin-bottom:2px;">Event Action</label>
+                <select id="auditFilterAction" class="form-select" style="font-size:12px; padding:4px 8px;">
+                  <option value="">All 15 Event Types</option>
+                  <option value="LOGIN">LOGIN</option>
+                  <option value="LOGOUT">LOGOUT</option>
+                  <option value="CUSTOMER_CREATE_EDIT">CUSTOMER_CREATE_EDIT</option>
+                  <option value="DOCUMENT_UPLOAD">DOCUMENT_UPLOAD_DELETE_ARCHIVE</option>
+                  <option value="PLEDGE_CREATE">PLEDGE_CREATE</option>
+                  <option value="PLEDGE_CORRECTION">PLEDGE_CORRECTION</option>
+                  <option value="PAYMENT_RECORD">PAYMENT_RECORD</option>
+                  <option value="RENEWAL_RECORD">RENEWAL_RECORD</option>
+                  <option value="REDEMPTION_RECORD">REDEMPTION_RECORD</option>
+                  <option value="RATE_UPDATE">RATE_UPDATE</option>
+                  <option value="MANUAL_RATE_OVERRIDE">MANUAL_RATE_OVERRIDE</option>
+                  <option value="FEE_CONFIG_CHANGE">FEE_CONFIG_CHANGE</option>
+                  <option value="RECEIPT_REPRINT">RECEIPT_REPRINT</option>
+                  <option value="SETTINGS_CHANGE">SETTINGS_CHANGE</option>
+                  <option value="BACKUP_CREATE">BACKUP_CREATE</option>
+                  <option value="REPAIR_ANOMALY">REPAIR_ANOMALY</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:11px; margin-bottom:2px;">Entity Type</label>
+                <select id="auditFilterEntity" class="form-select" style="font-size:12px; padding:4px 8px;">
+                  <option value="">All Entities</option>
+                  <option value="AUTH">AUTH</option>
+                  <option value="CUSTOMER">CUSTOMER</option>
+                  <option value="PLEDGE">PLEDGE</option>
+                  <option value="PAYMENT">PAYMENT</option>
+                  <option value="VAULT">VAULT</option>
+                  <option value="RATES">RATES</option>
+                  <option value="BACKUP">BACKUP</option>
+                  <option value="INTEGRITY">INTEGRITY</option>
+                  <option value="CASH_LEDGER">CASH_LEDGER</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:11px; margin-bottom:2px;">Search Keyword / ID</label>
+                <input type="text" id="auditFilterSearch" class="form-input" placeholder="Ticket, User, ID..." style="font-size:12px; padding:4px 8px;" />
+              </div>
+
+              <div>
+                <label class="form-label" style="font-size:11px; margin-bottom:2px;">Result Limit</label>
+                <select id="auditFilterLimit" class="form-select" style="font-size:12px; padding:4px 8px;">
+                  <option value="50">50 records</option>
+                  <option value="100" selected>100 records</option>
+                  <option value="250">250 records</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Audit Table -->
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:12px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="width:140px;">Log ID</th>
+                    <th style="width:150px;">Timestamp</th>
+                    <th style="width:180px;">Action Event</th>
+                    <th style="width:120px;">Entity Target</th>
+                    <th style="width:120px;">Operator</th>
+                    <th>Audit Details &amp; Payload Context</th>
+                  </tr>
+                </thead>
+                <tbody id="auditTableBody">
+                  <tr>
+                    <td colspan="6" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">
+                      Loading audit logs...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 3: BACKUPS & SNAPSHOTS -->
+          <div class="tab-pane" id="tabBackups" style="padding:var(--space-4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); flex-wrap:wrap; gap:var(--space-2);">
+              <div>
+                <h3 style="font-size:15px; font-weight:800;">Cloud Snapshots &amp; Backup Archive</h3>
+                <p class="text-muted" style="font-size:12px;">Timestamped backup files saved to Google Drive and local client storage.</p>
+              </div>
+              <div style="display:flex; gap:var(--space-2);">
+                <button type="button" class="btn btn-primary btn-sm" id="btnTabCreateBackup">💾 Create Snapshot Now</button>
+                <button type="button" class="btn btn-outline btn-sm" id="btnTabSetupTrigger">⏰ Setup Daily 23:00 Trigger</button>
+              </div>
+            </div>
+
+            <!-- Backup Status Card -->
+            <div style="background:#F8FAFC; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-3) var(--space-4); margin-bottom:var(--space-4);">
+              <div class="grid-3">
+                <div>
+                  <span style="font-size:11px; font-weight:bold; color:var(--slate-500);">AUTOMATED SCHEDULE</span>
+                  <div style="font-weight:800; font-size:14px; color:var(--slate-800);" id="autoScheduleStatus">Daily at 23:00 IST</div>
+                </div>
+                <div>
+                  <span style="font-size:11px; font-weight:bold; color:var(--slate-500);">DRIVE ARCHIVE DESTINATION</span>
+                  <div style="font-weight:800; font-size:14px; color:var(--slate-800);">AS_Jewellar_Vault / Backups /</div>
+                </div>
+                <div>
+                  <span style="font-size:11px; font-weight:bold; color:var(--slate-500);">LAST FAILURE RECORD</span>
+                  <div style="font-weight:800; font-size:14px; color:#16A34A;" id="lastFailureText">None (All Backups Healthy)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backup History Table -->
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:12px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="width:130px;">Backup ID</th>
+                    <th style="width:150px;">Timestamp</th>
+                    <th style="width:110px;">Type</th>
+                    <th style="width:100px;">Status</th>
+                    <th>File Name / Google Drive Link</th>
+                    <th style="width:90px;">Size</th>
+                    <th style="width:120px;">Triggered By</th>
+                  </tr>
+                </thead>
+                <tbody id="backupsTableBody">
+                  <tr>
+                    <td colspan="7" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">
+                      Loading backup archive history...
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 4: SYNC QUEUE & IDEMPOTENCY -->
+          <div class="tab-pane" id="tabSync" style="padding:var(--space-4);">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-3); flex-wrap:wrap; gap:var(--space-2);">
+              <div>
+                <h3 style="font-size:15px; font-weight:800;">IndexedDB Offline Queue &amp; Idempotency Monitor</h3>
+                <p class="text-muted" style="font-size:12px;">Validates offline transaction tokens to prevent duplicate payment or pledge execution.</p>
+              </div>
+              <div style="display:flex; gap:var(--space-2);">
+                <button type="button" class="btn btn-primary btn-sm" id="btnTabSyncNow">🔄 Force Sync Queue</button>
+                <button type="button" class="btn btn-outline btn-sm" id="btnTabClearSynced">🗑 Clear Synced Items</button>
+              </div>
+            </div>
+
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:12px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="width:140px;">Local TX ID</th>
+                    <th style="width:160px;">Action Type</th>
+                    <th style="width:150px;">Created Time</th>
+                    <th>Idempotency Token</th>
+                    <th style="width:80px;">Retries</th>
+                    <th style="width:100px;">Status</th>
+                    <th>Server Ref / Error</th>
+                  </tr>
+                </thead>
+                <tbody id="syncQueueTableBody">
+                  <!-- Rendered dynamically -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- TAB 5: DATABASE ENTITIES BREAKDOWN -->
+          <div class="tab-pane" id="tabEntities" style="padding:var(--space-4);">
+            <div style="margin-bottom:var(--space-4);">
+              <h3 style="font-size:15px; font-weight:800;">Database Schema &amp; Storage Volumes</h3>
+              <p class="text-muted" style="font-size:12px;">Real-time row counts across all 11 relational schema sheets.</p>
+            </div>
+
+            <div class="grid-3" id="entitiesGrid">
+              <!-- Rendered dynamically -->
+            </div>
+          </div>
+
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       ADMIN REVIEW & REPAIR CONFIRMATION MODAL
+       ========================================================================== -->
+  <div class="modal" id="repairModal" style="display:none;">
+    <div class="modal-backdrop" onclick="UI.closeModal('repairModal')"></div>
+    <div class="modal-content" style="max-width:560px;">
+      <div class="modal-header" style="background:#FEF2F2; border-bottom:1px solid #FCA5A5;">
+        <h3 class="modal-title" style="color:#991B1B;">⚠️ Confirm Non-Destructive Data Repair</h3>
+        <button type="button" class="btn-close" onclick="UI.closeModal('repairModal')">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding:var(--space-4);">
+        <p style="font-size:13px; color:var(--slate-700); margin-bottom:var(--space-3);">
+          You are about to execute a manual data integrity repair. <strong>No financial records will be deleted.</strong>
+          An immutable audit entry will be recorded under your administrator credentials.
+        </p>
+
+        <div style="background:#F8FAFC; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:10px 14px; margin-bottom:var(--space-3);">
+          <div style="font-size:11px; font-weight:bold; color:var(--slate-500);">ANOMALY IDENTIFIER</div>
+          <div style="font-size:13px; font-weight:bold; color:var(--slate-800);" id="modalAnomalyId">-</div>
+          
+          <div style="font-size:11px; font-weight:bold; color:var(--slate-500); margin-top:8px;">DISCREPANCY</div>
+          <div style="font-size:12.5px; color:var(--slate-700);" id="modalAnomalyDesc">-</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label font-bold">Select Repair Strategy</label>
+          <select id="modalRepairAction" class="form-select">
+            <!-- Populated dynamically based on anomaly type -->
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label font-bold">Administrator Audit Reason / Notes *</label>
+          <textarea id="modalAdminNotes" class="form-textarea" rows="2" placeholder="Explain the reason for this repair action..." required></textarea>
+        </div>
+
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label font-bold">Admin Password Confirmation *</label>
+          <input type="password" id="modalAdminPassword" class="form-input" placeholder="Enter your admin password to sign this repair" required />
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:flex-end; gap:var(--space-2);">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('repairModal')">Cancel</button>
+        <button type="button" class="btn btn-danger" id="modalConfirmRepairBtn">Confirm &amp; Execute Repair</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Core Foundation Scripts -->
+  <script src="js/i18n.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/offline.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/validation.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/vault.js"></script>
+  <script src="js/cash.js"></script>
+  <script src="js/reports.js"></script>
+  <script src="js/audit.js"></script>
+  <script src="js/dataHealth.js"></script>
+  <script src="js/sampleData.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    let currentAnomalies = [];
+    let selectedAnomaly = null;
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      // 1. Guard route for Administrator only
+      if (!window.auth.requireAdmin()) return;
+
+      document.getElementById('pageTitleText').textContent = window.t ? window.t('data_health') || 'Data Health' : 'Data Health';
+
+      initTabs();
+      bindHealthEvents();
+      await refreshAllHealthData();
+    });
+
+    function initTabs() {
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          const tabId = btn.getAttribute('data-tab');
+          const pane = document.getElementById(tabId);
+          if (pane) pane.classList.add('active');
+
+          if (tabId === 'tabAudit') loadAuditLogsUI();
+          if (tabId === 'tabBackups') loadBackupsUI();
+          if (tabId === 'tabSync') loadSyncQueueUI();
+        });
+      });
+    }
+
+    async function refreshAllHealthData() {
+      await Promise.all([
+        runIntegrityScanUI(),
+        loadBackupsUI(),
+        loadAuditLogsUI(),
+        loadSyncQueueUI()
+      ]);
+    }
+
+    async function runIntegrityScanUI() {
+      UI.showToast('Running comprehensive data integrity scan...', 'info');
+      const res = await window.dataHealthService.runFullIntegrityScan();
+      
+      // Update Health Score
+      const score = res.healthScore;
+      const valEl = document.getElementById('healthScoreValue');
+      valEl.innerHTML = `${score}<span style="font-size:16px; color:var(--slate-400);">/100</span>`;
+      valEl.className = 'health-score-badge ' + (score >= 95 ? 'score-optimal' : (score >= 80 ? 'score-good' : (score >= 60 ? 'score-warning' : 'score-critical')));
+      
+      document.getElementById('healthGradeBadge').textContent = res.healthGrade;
+      document.getElementById('healthGradeBadge').className = 'badge ' + (score >= 95 ? 'badge-success' : (score >= 80 ? 'badge-primary' : 'badge-danger'));
+      
+      document.getElementById('totalRecordsCount').textContent = res.totalRecords.toLocaleString();
+      document.getElementById('anomaliesCount').textContent = res.totalAnomalies;
+      document.getElementById('anomaliesBreakdown').textContent = `${res.severityCounts.critical} Critical • ${res.severityCounts.warning} Warnings • ${res.severityCounts.info} Info`;
+      document.getElementById('anomaliesBadge').textContent = `${res.totalAnomalies} ISSUES`;
+      document.getElementById('anomaliesBadge').className = 'badge ' + (res.totalAnomalies === 0 ? 'badge-success' : (res.severityCounts.critical > 0 ? 'badge-danger' : 'badge-warning'));
+      document.getElementById('lastScanTime').textContent = `Last scan: ${new Date().toLocaleTimeString()}`;
+
+      if (res.totalAnomalies > 0) {
+        document.getElementById('tabAnomaliesBadge').textContent = res.totalAnomalies;
+        document.getElementById('tabAnomaliesBadge').style.display = 'inline-block';
+      } else {
+        document.getElementById('tabAnomaliesBadge').style.display = 'none';
+      }
+
+      currentAnomalies = res.anomalies || [];
+      renderAnomaliesTable(currentAnomalies);
+      renderEntitiesBreakdown(res.recordCounts || {});
+      UI.showToast(`Integrity scan completed: ${res.totalAnomalies} anomalies detected`, res.totalAnomalies === 0 ? 'success' : 'warning');
+    }
+
+    function renderAnomaliesTable(anomalies) {
+      const tbody = document.getElementById('anomaliesTableBody');
+      const filter = document.getElementById('anomalyFilterSelect').value;
+
+      let filtered = anomalies;
+      if (filter !== 'ALL') {
+        filtered = anomalies.filter(a => a.severity === filter);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="6" style="text-align:center; padding:var(--space-6); color:#16A34A; font-weight:bold;">
+              ✓ No integrity anomalies detected. Database is 100% consistent.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(a => {
+        let sevClass = 'sev-info';
+        if (a.severity === 'CRITICAL') sevClass = 'sev-critical';
+        else if (a.severity === 'WARNING') sevClass = 'sev-warning';
+
+        return `
+          <tr>
+            <td><span class="severity-pill ${sevClass}">${a.severity}</span></td>
+            <td><strong class="cell-mono" style="font-size:12px;">${a.type}</strong></td>
+            <td><span class="badge badge-outline">${a.entityType}: ${a.entityId}</span></td>
+            <td style="font-size:12px; color:var(--slate-800);">${a.description}</td>
+            <td style="font-size:11px; color:var(--slate-500);">${a.detectedAt.replace('T', ' ').slice(0, 19)}</td>
+            <td style="text-align:center;">
+              <button type="button" class="btn btn-outline btn-sm" onclick="openRepairDialog('${a.anomalyId}')" style="font-size:11px; padding:3px 8px;">
+                🛠 Review &amp; Repair
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderEntitiesBreakdown(counts) {
+      const grid = document.getElementById('entitiesGrid');
+      const sheetLabels = {
+        customers: 'CUSTOMERS (வாடிக்கையாளர்கள்)',
+        pledges: 'PLEDGES (அடகு ஒப்பந்தங்கள்)',
+        items: 'PLEDGE_ITEMS (நகை விவரங்கள்)',
+        payments: 'PAYMENTS (கட்டண பதிவேடு)',
+        redemptions: 'REDEMPTIONS (மீட்பு பதிவேடு)',
+        renewals: 'RENEWALS (புதுப்பித்தல் பதிவேடு)',
+        vaultPackets: 'VAULT_PACKETS (லாக்கர் பாக்கெட்டுகள்)',
+        cashLedger: 'CASH_LEDGER (ரொக்க பதிவேடு)'
+      };
+
+      grid.innerHTML = Object.keys(counts).map(key => {
+        return `
+          <div style="background:#F8FAFC; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:12px 16px;">
+            <div style="font-size:11.5px; font-weight:bold; color:var(--slate-500); text-transform:uppercase;">${sheetLabels[key] || key}</div>
+            <div style="font-size:22px; font-weight:900; color:var(--slate-900); margin-top:4px;">${counts[key].toLocaleString()} <span style="font-size:12px; color:var(--slate-400); font-weight:normal;">rows</span></div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    async function loadBackupsUI() {
+      const status = await window.dataHealthService.getBackupStatus();
+      if (!status) return;
+
+      const badge = document.getElementById('backupStatusBadge');
+      badge.textContent = status.status || 'ACTIVE';
+      badge.className = 'badge ' + (status.status === 'HEALTHY' ? 'badge-success' : 'badge-warning');
+
+      if (status.lastSuccessfulBackup) {
+        document.getElementById('lastBackupTime').textContent = status.lastSuccessfulBackup.timestamp.replace('T', ' ').slice(0, 16);
+      }
+      if (status.lastFailure) {
+        document.getElementById('lastFailureText').textContent = `${status.lastFailure.timestamp.slice(0, 10)}: ${status.lastFailure.errorMessage}`;
+        document.getElementById('lastFailureText').style.color = '#DC2626';
+      }
+      document.getElementById('backupCountLabel').textContent = `${status.totalBackupsCount || 0} cloud backups`;
+
+      const tbody = document.getElementById('backupsTableBody');
+      const backups = status.recentBackups || [];
+
+      if (backups.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No cloud backup records logged yet. Click "Create Snapshot Now".</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = backups.map(b => {
+        return `
+          <tr>
+            <td class="cell-mono font-bold">${b.backupId}</td>
+            <td style="font-size:11.5px;">${b.timestamp.replace('T', ' ').slice(0, 19)}</td>
+            <td><span class="badge badge-outline">${b.type}</span></td>
+            <td><span class="badge ${b.status === 'SUCCESS' ? 'badge-success' : 'badge-danger'}">${b.status}</span></td>
+            <td>
+              ${b.fileUrl ? `<a href="${b.fileUrl}" target="_blank" style="color:var(--primary-main); font-weight:bold; text-decoration:none;">🔗 ${b.fileName}</a>` : b.fileName}
+            </td>
+            <td class="cell-mono" style="font-size:11px;">${b.fileSize}</td>
+            <td style="font-size:11.5px; color:var(--slate-700);">${b.triggeredBy}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadAuditLogsUI() {
+      const params = {
+        action: document.getElementById('auditFilterAction').value,
+        entityType: document.getElementById('auditFilterEntity').value,
+        search: document.getElementById('auditFilterSearch').value.trim(),
+        limit: parseInt(document.getElementById('auditFilterLimit').value) || 100
+      };
+
+      const res = await window.dataHealthService.getAuditLogs(params);
+      const tbody = document.getElementById('auditTableBody');
+      const logs = res.logs || [];
+
+      if (logs.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">No audit records match the current filter criteria.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => {
+        let detailsFormatted = l.detailsJson;
+        try {
+          const parsed = JSON.parse(l.detailsJson);
+          detailsFormatted = JSON.stringify(parsed);
+        } catch (e) {}
+
+        return `
+          <tr>
+            <td class="cell-mono font-bold" style="font-size:11px;">${l.logId}</td>
+            <td style="font-size:11.5px; color:var(--slate-600);">${l.timestamp.replace('T', ' ').slice(0, 19)}</td>
+            <td><span class="badge badge-primary" style="font-size:11px;">${l.action}</span></td>
+            <td><span class="badge badge-outline">${l.entityType}${l.entityId ? ': ' + l.entityId : ''}</span></td>
+            <td style="font-size:11.5px; font-weight:600;">${l.username}</td>
+            <td style="font-size:11px; font-family:monospace; color:var(--slate-700); word-break:break-all;">
+              ${detailsFormatted}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    async function loadSyncQueueUI() {
+      if (!window.offlineQueue) return;
+      const items = await window.offlineQueue.getAllQueue();
+      const tbody = document.getElementById('syncQueueTableBody');
+
+      if (items.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:var(--space-6); color:var(--slate-400);">All local transactions are synced. Queue is clear.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = items.map(item => {
+        let badge = `<span class="badge badge-warning">PENDING</span>`;
+        if (item.syncStatus === 'SYNCING') badge = `<span class="badge badge-primary">SYNCING</span>`;
+        else if (item.syncStatus === 'SYNCED') badge = `<span class="badge badge-success">SYNCED</span>`;
+        else if (item.syncStatus === 'FAILED') badge = `<span class="badge badge-danger">FAILED</span>`;
+        else if (item.syncStatus === 'CONFLICT') badge = `<span class="badge" style="background:#581C87; color:#FFF;">CONFLICT</span>`;
+
+        return `
+          <tr>
+            <td class="cell-mono font-bold">${item.localTxId}</td>
+            <td><span class="badge badge-outline">${item.type}</span></td>
+            <td style="font-size:11.5px;">${item.createdTime.replace('T', ' ').slice(0, 19)}</td>
+            <td class="cell-mono" style="font-size:11px;">${item.idempotencyKey}</td>
+            <td class="cell-mono">${item.retryCount || 0}</td>
+            <td>${badge}</td>
+            <td style="font-size:11.5px; color:var(--slate-700);">
+              ${item.serverTxId ? `<strong class="text-success">${item.serverTxId}</strong>` : (item.errorMessage ? `<span class="text-danger">${item.errorMessage}</span>` : '-')}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function bindHealthEvents() {
+      document.getElementById('runScanBtn').addEventListener('click', () => runIntegrityScanUI());
+      
+      const loadSampleHealthBtn = document.getElementById('loadSampleDataHealthBtn');
+      if (loadSampleHealthBtn) {
+        loadSampleHealthBtn.addEventListener('click', async () => {
+          if (!window.sampleDataManager) {
+            UI.showToast('SampleDataManager is not loaded', 'error');
+            return;
+          }
+          const confirmed = confirm('Load full production sample dataset into database?\n\nThis populates 5 customers, 6 pledges, 8 items, 4 payments, renewals, redemptions, documents, and cash entries.');
+          if (!confirmed) return;
+          try {
+            UI.showToast('Populating sample dataset...', 'info');
+            const res = await window.sampleDataManager.loadSampleData();
+            if (res.success) {
+              UI.showToast(`Sample dataset loaded successfully (${res.loadedCount} records). Refreshing scan...`, 'success');
+              await refreshAllHealthData();
+            } else {
+              UI.showToast(`Failed: ${res.error}`, 'error');
+            }
+          } catch (err) {
+            UI.showToast(`Error: ${err.message}`, 'error');
+          }
+        });
+      }
+
+      document.getElementById('manualBackupBtn').addEventListener('click', async () => {
+        try {
+          UI.showToast('Creating cloud database backup...', 'info');
+          const res = await window.dataHealthService.createCloudBackup('MANUAL');
+          UI.showToast('Cloud database backup created successfully ✓', 'success');
+          loadBackupsUI();
+        } catch (e) {
+          UI.showToast(e.message, 'error');
+        }
+      });
+      document.getElementById('btnTabCreateBackup').addEventListener('click', async () => {
+        try {
+          UI.showToast('Creating cloud snapshot...', 'info');
+          await window.dataHealthService.createCloudBackup('MANUAL');
+          UI.showToast('Snapshot created successfully ✓', 'success');
+          loadBackupsUI();
+        } catch (e) {
+          UI.showToast(e.message, 'error');
+        }
+      });
+
+      document.getElementById('exportLocalBtn').addEventListener('click', () => {
+        window.dataHealthService.exportLocalBackupJson();
+        UI.showToast('Local JSON backup exported', 'success');
+      });
+
+      document.getElementById('exportCloudBtn').addEventListener('click', async () => {
+        try {
+          UI.showToast('Fetching full cloud database dump...', 'info');
+          await window.dataHealthService.exportCloudBackupJson();
+          UI.showToast('Cloud JSON database downloaded', 'success');
+        } catch (e) {
+          UI.showToast(e.message, 'error');
+        }
+      });
+
+      document.getElementById('setupDailyTriggerLink').addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+          UI.showToast('Establishing automatic daily backup trigger...', 'info');
+          await window.dataHealthService.setupDailyBackupTrigger();
+          UI.showToast('Daily 23:00 IST trigger active ✓', 'success');
+          loadBackupsUI();
+        } catch (err) {
+          UI.showToast(err.message, 'error');
+        }
+      });
+
+      document.getElementById('btnTabSetupTrigger').addEventListener('click', async () => {
+        try {
+          UI.showToast('Establishing automatic daily backup trigger...', 'info');
+          await window.dataHealthService.setupDailyBackupTrigger();
+          UI.showToast('Daily 23:00 IST trigger active ✓', 'success');
+          loadBackupsUI();
+        } catch (err) {
+          UI.showToast(err.message, 'error');
+        }
+      });
+
+      document.getElementById('anomalyFilterSelect').addEventListener('change', () => {
+        renderAnomaliesTable(currentAnomalies);
+      });
+
+      document.getElementById('refreshAuditBtn').addEventListener('click', () => loadAuditLogsUI());
+      document.getElementById('auditFilterAction').addEventListener('change', () => loadAuditLogsUI());
+      document.getElementById('auditFilterEntity').addEventListener('change', () => loadAuditLogsUI());
+      document.getElementById('auditFilterLimit').addEventListener('change', () => loadAuditLogsUI());
+      document.getElementById('auditFilterSearch').addEventListener('input', () => loadAuditLogsUI());
+
+      document.getElementById('btnTabSyncNow').addEventListener('click', async () => {
+        UI.showToast('Triggering queue sync & retry...', 'info');
+        await window.offlineQueue.syncQueue(true);
+        loadSyncQueueUI();
+        UI.showToast('Sync queue processing complete', 'success');
+      });
+
+      document.getElementById('btnTabClearSynced').addEventListener('click', async () => {
+        await window.offlineQueue.clearSynced();
+        loadSyncQueueUI();
+        UI.showToast('Cleared synced items', 'success');
+      });
+
+      // Repair Modal Confirmation Button
+      document.getElementById('modalConfirmRepairBtn').addEventListener('click', async () => {
+        if (!selectedAnomaly) return;
+        const action = document.getElementById('modalRepairAction').value;
+        const adminNotes = document.getElementById('modalAdminNotes').value.trim();
+        const adminPass = document.getElementById('modalAdminPassword').value.trim();
+
+        if (!adminNotes) {
+          UI.showToast('Please enter an audit reason for this repair', 'warning');
+          return;
+        }
+        if (!adminPass) {
+          UI.showToast('Admin password is required to authorize repair', 'warning');
+          return;
+        }
+
+        try {
+          UI.showToast('Executing authorized data repair...', 'info');
+          await window.dataHealthService.repairAnomaly(selectedAnomaly.anomalyId, action, adminNotes, {
+            ticketNo: selectedAnomaly.entityId,
+            customerId: selectedAnomaly.entityId,
+            paymentId: selectedAnomaly.entityId
+          });
+          UI.showToast('Data repair executed successfully ✓', 'success');
+          UI.closeModal('repairModal');
+          runIntegrityScanUI();
+          loadAuditLogsUI();
+        } catch (err) {
+          UI.showToast(err.message, 'error');
+        }
+      });
+    }
+
+    window.openRepairDialog = function(anomalyId) {
+      selectedAnomaly = currentAnomalies.find(a => a.anomalyId === anomalyId);
+      if (!selectedAnomaly) return;
+
+      document.getElementById('modalAnomalyId').textContent = `${selectedAnomaly.anomalyId} (${selectedAnomaly.type})`;
+      document.getElementById('modalAnomalyDesc').textContent = selectedAnomaly.description;
+      document.getElementById('modalAdminNotes').value = '';
+      document.getElementById('modalAdminPassword').value = '';
+
+      const actionSelect = document.getElementById('modalRepairAction');
+      actionSelect.innerHTML = '';
+
+      if (selectedAnomaly.type === 'MISSING_CUSTOMER') {
+        actionSelect.innerHTML = `
+          <option value="CREATE_PLACEHOLDER_CUSTOMER">Create Verified Placeholder Customer (CUS-RECOVERED-...)</option>
+        `;
+      } else if (selectedAnomaly.type === 'PLEDGE_WITHOUT_ITEMS') {
+        actionSelect.innerHTML = `
+          <option value="CREATE_DEFAULT_PLEDGE_ITEM">Reconstruct Default Item Record from Pledge Net Weight</option>
+        `;
+      } else if (selectedAnomaly.type === 'PAYMENT_WITHOUT_PLEDGE') {
+        actionSelect.innerHTML = `
+          <option value="LINK_PAYMENT_TO_PLEDGE">Link Payment to Matching Active Pledge</option>
+        `;
+      } else if (selectedAnomaly.type === 'REDEEMED_PLEDGE_WITH_BALANCE') {
+        actionSelect.innerHTML = `
+          <option value="RECONCILE_REDEMPTION_BALANCE">Reconcile Redemption Status &amp; Zero Balance</option>
+        `;
+      } else {
+        actionSelect.innerHTML = `
+          <option value="RESOLVE_DUPLICATE">Re-Index with Immutable Timestamp Revision Suffix</option>
+        `;
+      }
+
+      UI.openModal('repairModal');
+    };
+  </script>
+</body>
+</html>

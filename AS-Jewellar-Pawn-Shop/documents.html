@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Document Repository &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -147,12 +150,12 @@
   </div>
 
   <!-- ==========================================================================
-       MODAL: UPLOAD DOCUMENT (Dual Tabs: File Upload & Live Camera Capture)
+       MODAL: UPLOAD / SCAN DOCUMENT (Dual Tabs: File/PDF Upload & Live Camera/Scanner)
        ========================================================================== -->
   <div class="modal-backdrop" id="uploadDocModal">
     <div class="modal-dialog modal-lg">
       <div class="modal-header">
-        <h3 class="modal-title" data-i18n="upload_doc">+ Secure Document Upload (ஆவணம் ஏற்று)</h3>
+        <h3 class="modal-title" data-i18n="upload_doc">+ Secure Document Upload & Scanner (ஆவணம் ஏற்று)</h3>
         <button class="modal-close-btn" onclick="closeUploadModal()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
@@ -161,15 +164,15 @@
       <!-- Upload Source Tabs -->
       <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
         <button type="button" class="tab-btn active" id="tabSourceFileBtn" onclick="switchUploadSource('FILE')">
-          📁 1. Upload from Device (கோப்பு ஏற்று)
+          📁 1. Upload File / PDF (கோப்பு ஏற்று)
         </button>
         <button type="button" class="tab-btn" id="tabSourceCameraBtn" onclick="switchUploadSource('CAMERA')">
-          📷 2. Live Camera Capture (கேமரா படம்)
+          📷 2. Scanner Device / Live Camera (ஸ்கேனர் / கேமரா)
         </button>
       </div>
 
       <form id="uploadDocForm">
-        <div class="modal-body">
+        <div class="modal-body" style="max-height:calc(90vh - 140px); overflow-y:auto;">
           
           <!-- Metadata Fields (Common for both File and Camera) -->
           <div class="grid-2" style="margin-bottom:var(--space-4);">
@@ -190,20 +193,22 @@
                 <span class="required">*</span>
               </label>
               <select id="uploadDocType" class="form-select" required>
-                <option value="ID_PROOF" data-i18n="type_id_proof">ID Proof (Aadhaar/Voter)</option>
-                <option value="CUSTOMER_PHOTO" data-i18n="type_customer_photo">Customer Photo</option>
-                <option value="ADDRESS_PROOF" data-i18n="type_address_proof">Address Proof (Ration Card)</option>
-                <option value="PLEDGE_ITEM_PHOTO" data-i18n="type_pledge_photo">Jewellery Item Photo</option>
-                <option value="SIGNATURE" data-i18n="type_signature">Signature Specimen</option>
-                <option value="THUMB" data-i18n="type_thumb">Thumb Impression</option>
-                <option value="PAWN_TICKET_PDF" data-i18n="type_pawn_ticket">Signed Pawn Ticket PDF</option>
-                <option value="OTHER" data-i18n="type_other">Other Supporting Doc</option>
+                <option value="AADHAAR_ID">🪪 Aadhaar Card (ஆதார் அட்டை)</option>
+                <option value="ADDRESS_PROOF">🏠 Address Proof (Ration Card / EB Bill)</option>
+                <option value="CUSTOMER_PHOTO">👤 Customer Photograph (வாடிக்கையாளர் புகைப்படம்)</option>
+                <option value="PAN_CARD">💳 PAN Card (பான் கார்டு)</option>
+                <option value="OTHER_ID">📄 Voter ID / Driving Licence (இதர அடையாள சான்று)</option>
+                <option value="SIGNATURE">✍️ Customer Signature Specimen (கையொப்பம்)</option>
+                <option value="THUMB_IMPRESSION">👍 Thumb Impression (கைரேகை)</option>
+                <option value="PLEDGE_ITEM_PHOTO">💍 Pledged Jewellery Photo (நகை படம்)</option>
+                <option value="PAWN_TICKET_PDF">📑 Signed Pawn Ticket PDF (அடகு சீட்டு)</option>
+                <option value="SUPPORTING_DOC">📁 Supporting Document / Invoice (துணை ஆவணம்)</option>
               </select>
             </div>
 
             <div class="form-group">
               <label class="form-label" for="uploadDocTitle">Document Title / Description *</label>
-              <input type="text" id="uploadDocTitle" class="form-input" placeholder="e.g. Aadhaar Card Front / Back" required />
+              <input type="text" id="uploadDocTitle" class="form-input" placeholder="e.g. Aadhaar Card Front & Back Scan" required />
             </div>
 
             <div class="form-group">
@@ -213,45 +218,78 @@
 
           </div>
 
-          <!-- TAB SOURCE A: FILE PICKER -->
+          <!-- TAB SOURCE A: FILE PICKER & SCANNER PDF -->
           <div id="uploadSourceFilePane">
             <div class="form-group">
-              <label class="form-label">Select File (Max 5MB &bull; JPG, PNG, WEBP, PDF)</label>
+              <label class="form-label">Select Document / Scanner-Generated PDF (Max 15MB &bull; JPG, PNG, WEBP, PDF)</label>
               <input type="file" id="filePickerInput" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf" />
+              <div class="text-muted" style="font-size:11px; margin-top:4px;">
+                Directly attach files from Xerox scanner, mobile gallery, or electronic PDF documents.
+              </div>
             </div>
             
-            <div id="fileSelectedSummary" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3); margin-top:var(--space-2);">
-              <div style="font-weight:700; font-size:13px;" id="selectedFileName">file.pdf</div>
-              <div style="font-size:11px; color:var(--slate-500); margin-top:2px;" id="selectedFileSize">1.2 MB</div>
+            <div id="fileSelectedSummary" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3); margin-top:var(--space-3);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; font-size:13px;" id="selectedFileName">file.pdf</div>
+                  <div style="font-size:11px; color:var(--slate-500); margin-top:2px;" id="selectedFileSize">1.2 MB</div>
+                </div>
+                <div id="fileImageRotateControls" style="display:none; gap:var(--space-2);">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="rotateSelectedFilePreview(-90)" title="Rotate Left">↺ 90°</button>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="rotateSelectedFilePreview(90)" title="Rotate Right">↻ 90°</button>
+                </div>
+              </div>
+
+              <!-- Quick Image Preview for selected image file -->
+              <div id="fileImagePreviewContainer" style="display:none; margin-top:var(--space-3); text-align:center;">
+                <img id="filePreviewImgEl" style="max-height:200px; max-width:100%; border-radius:var(--radius-md); border:1px solid var(--border-subtle); object-fit:contain;" />
+              </div>
             </div>
           </div>
 
-          <!-- TAB SOURCE B: LIVE CAMERA CAPTURE -->
+          <!-- TAB SOURCE B: LIVE CAMERA / SCANNER DEVICE -->
           <div id="uploadSourceCameraPane" style="display:none;">
+            <!-- Device Selection Bar -->
+            <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-3); align-items:center;">
+              <label style="font-size:12px; font-weight:700; color:var(--slate-700); white-space:nowrap;">Device:</label>
+              <select id="cameraDeviceSelect" class="form-select" style="font-size:12px; height:32px; padding:2px 8px;">
+                <option value="DEFAULT">Primary Camera / Counter Webcam</option>
+              </select>
+              <button type="button" class="btn btn-outline btn-sm" id="btnRefreshDevices" title="Refresh Devices">🔄</button>
+            </div>
+
             <div class="camera-viewport">
-              <video id="cameraVideo" autoplay playsinline></video>
+              <video id="cameraVideo" autoplay playsinline muted></video>
               <canvas id="cameraCanvas" style="display:none;"></canvas>
               <div id="cameraPlaceholder" style="color:var(--slate-400); font-size:13px; text-align:center; padding:var(--space-4);">
-                Click "Start Camera" to initialize counter webcam or mobile camera.
+                Click "Start Camera / Scanner" to initialize counter webcam or mobile camera.
               </div>
             </div>
 
-            <div style="display:flex; justify-content:center; gap:var(--space-3); margin-top:var(--space-3);">
-              <button type="button" class="btn btn-secondary btn-sm" id="startCamBtn">▶ Start Camera</button>
-              <button type="button" class="btn btn-primary btn-sm" id="snapPhotoBtn" style="display:none;" data-i18n="snap_photo">📷 Snap Photo</button>
+            <div style="display:flex; justify-content:center; gap:var(--space-3); margin-top:var(--space-3); flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="startCamBtn">▶ Start Camera / Scanner</button>
+              <button type="button" class="btn btn-outline btn-sm" id="switchFacingBtn" style="display:none;">🔄 Switch Cam</button>
+              <button type="button" class="btn btn-primary btn-sm" id="snapPhotoBtn" style="display:none;" data-i18n="snap_photo">📷 Capture Scan</button>
               <button type="button" class="btn btn-outline btn-sm" id="retakePhotoBtn" style="display:none;" data-i18n="retake_photo">🔄 Retake</button>
             </div>
 
+            <!-- Captured Image Review with 90° Rotation Buttons -->
             <div id="cameraCapturedPreview" style="display:none; margin-top:var(--space-3); text-align:center;">
-              <div style="font-size:11px; font-weight:700; color:var(--success-main); margin-bottom:4px;">✓ Photo Captured with Security Timestamp Watermark</div>
-              <img id="capturedImgEl" style="max-height:140px; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" />
+              <div style="font-size:11px; font-weight:700; color:var(--success-main); margin-bottom:6px;">✓ Document Captured with Security Timestamp Watermark</div>
+              <div style="display:inline-block; position:relative;">
+                <img id="capturedImgEl" style="max-height:180px; max-width:100%; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" />
+              </div>
+              <div style="margin-top:var(--space-2); display:flex; justify-content:center; gap:var(--space-2);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="rotateCapturedImage(-90)">↺ Rotate Left (90°)</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="rotateCapturedImage(90)">↻ Rotate Right (90°)</button>
+              </div>
             </div>
           </div>
 
           <!-- Live Upload Progress Bar -->
           <div id="uploadProgressBarContainer" style="display:none; margin-top:var(--space-4);">
             <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
-              <span>Uploading to Google Drive...</span>
+              <span>Uploading to Secure Google Drive...</span>
               <span id="uploadPercentText">65%</span>
             </div>
             <div style="height:6px; background:var(--slate-200); border-radius:var(--radius-full); overflow:hidden;">
@@ -272,6 +310,35 @@
   </div>
 
   <!-- ==========================================================================
+       MODAL: REPLACE DOCUMENT VERSION
+       ========================================================================== -->
+  <div class="modal-backdrop" id="replaceDocModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="replace_doc">Replace Document Version</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('replaceDocModal')">&times;</button>
+      </div>
+      <form id="replaceDocForm">
+        <input type="hidden" id="replaceDocId" />
+        <div class="modal-body">
+          <p class="text-muted" style="font-size:12px; margin-bottom:var(--space-3);" id="replaceDocPrompt">
+            Select a new scan or PDF file to replace the active document version while maintaining historical audit records.
+          </p>
+          <div class="form-group">
+            <label class="form-label">Select Replacement File / PDF *</label>
+            <input type="file" id="replaceFileInput" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf" required />
+            <div class="text-muted" style="font-size:11px; margin-top:4px;">Supported: JPG, PNG, WEBP, PDF &bull; Max 15MB</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('replaceDocModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Document Version</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
        MODAL: SECURE DOCUMENT PREVIEW & METADATA VIEWER
        ========================================================================== -->
   <div class="modal-backdrop" id="previewDocModal">
@@ -285,13 +352,17 @@
       <div class="modal-body" style="padding:0;">
         <div style="display:flex; flex-wrap:wrap;">
           
-          <!-- Document Viewer Pane -->
-          <div style="flex:2; min-width:320px; background:var(--slate-900); padding:var(--space-4); display:flex; align-items:center; justify-content:center; min-height:360px;">
-            <img id="prevDocImg" src="" style="max-width:100%; max-height:360px; object-fit:contain; border-radius:var(--radius-md); display:none;" />
-            <div id="prevDocPdfPlaceholder" style="color:#FFF; text-align:center; display:none;">
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <div style="font-weight:700; margin-top:8px;">PDF Document (Secured View)</div>
-              <div style="font-size:11px; color:var(--slate-400); margin-top:4px;" id="prevDocPdfName">ticket.pdf</div>
+          <!-- Document Viewer Pane (Embedded PDF or Image) -->
+          <div style="flex:2; min-width:320px; background:var(--slate-900); padding:var(--space-4); display:flex; align-items:center; justify-content:center; min-height:420px; position:relative;">
+            <img id="prevDocImg" src="" style="max-width:100%; max-height:420px; object-fit:contain; border-radius:var(--radius-md); display:none;" />
+            <div id="prevDocPdfContainer" style="width:100%; height:420px; display:none;">
+              <object id="prevDocPdfObject" data="" type="application/pdf" style="width:100%; height:100%; border:none; border-radius:var(--radius-md);">
+                <div style="color:#FFF; text-align:center; padding:var(--space-8);">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                  <div style="font-weight:700; margin-top:8px;">PDF Document (Secured View)</div>
+                  <div style="font-size:11px; color:var(--slate-400); margin-top:4px;" id="prevDocPdfName">ticket.pdf</div>
+                </div>
+              </object>
             </div>
           </div>
 
@@ -343,6 +414,12 @@
                 </tr>
               </tbody>
             </table>
+
+            <div style="margin-top:var(--space-4); display:flex; flex-direction:column; gap:var(--space-2);">
+              <button type="button" class="btn btn-outline btn-sm" id="btnPreviewReplaceDoc" style="width:100%;">
+                🔄 Replace Document Version
+              </button>
+            </div>
           </div>
 
         </div>
@@ -390,23 +467,26 @@
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
   <script src="js/documents.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let capturedPhotoDataUrl = null;
     let selectedFileObj = null;
+    let selectedFileDataUrl = null;
     let activePreviewDoc = null;
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pageTitleText').textContent = window.t('documents');
       populateCustomerFilters();
+      populateVideoDevices();
       renderDocumentGrid();
       bindDocEvents();
     });
 
     // Populate customer dropdowns in filter and modal
     function populateCustomerFilters() {
-      const customers = window.customerManager.customers || [];
+      const customers = (window.customerManager && window.customerManager.customers) || [];
       const filterSelect = document.getElementById('docCustomerFilter');
       const uploadSelect = document.getElementById('uploadDocCustomer');
 
@@ -416,6 +496,17 @@
 
       filterSelect.innerHTML = `<option value="ALL">All Customers (அனைத்து வாடிக்கையாளர்கள்)</option>` + optionsHtml;
       uploadSelect.innerHTML = optionsHtml;
+    }
+
+    // Populate available camera / scanner devices
+    async function populateVideoDevices() {
+      const select = document.getElementById('cameraDeviceSelect');
+      if (!select || !window.documentManager) return;
+
+      const devices = await window.documentManager.listVideoDevices();
+      if (devices.length > 0) {
+        select.innerHTML = devices.map(d => `<option value="${d.deviceId}">${d.label}</option>`).join('');
+      }
     }
 
     // Render Document Cards Grid
@@ -437,7 +528,7 @@
           <div class="empty-state" style="grid-column: 1 / -1;">
             <div class="empty-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
             <div class="empty-title" data-i18n="no_records_found">No documents found</div>
-            <div class="empty-text">Upload new KYC identity proofs or adjust search filters.</div>
+            <div class="empty-text">Upload or scan customer KYC identity proofs, photos, or receipts.</div>
           </div>
         `;
         return;
@@ -445,10 +536,11 @@
 
       container.innerHTML = docs.map(doc => {
         const isPdf = doc.mimeType === 'application/pdf';
+        const typeInfo = window.DOCUMENT_TYPES?.[doc.docType];
         const typeBadgeClass = doc.docType.includes('ID') ? 'badge-gold' : (doc.docType.includes('PHOTO') ? 'badge-info' : 'badge-slate');
         const statusBadge = (doc.status === 'VERIFIED') 
           ? `<span class="badge badge-success">✓ VERIFIED</span>`
-          : (doc.status === 'ARCHIVED' ? `<span class="badge badge-danger">ARCHIVED</span>` : `<span class="badge badge-active">ACTIVE</span>`);
+          : (doc.status === 'ARCHIVED' ? `<span class="badge badge-danger">ARCHIVED</span>` : `<span class="badge badge-active">${doc.status}</span>`);
 
         const previewContent = isPdf ? `
           <div style="text-align:center; color:var(--slate-500);">
@@ -470,7 +562,7 @@
             <div style="padding:var(--space-3); flex:1; display:flex; flex-direction:column; justify-content:space-between;">
               <div>
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:4px; margin-bottom:4px;">
-                  <span class="badge ${typeBadgeClass}" style="font-size:10px;">${doc.docType}</span>
+                  <span class="badge ${typeBadgeClass}" style="font-size:10px;">${typeInfo ? typeInfo.icon + ' ' + typeInfo.labelEn : doc.docType}</span>
                   ${statusBadge}
                 </div>
                 
@@ -490,8 +582,9 @@
                 <span style="font-size:11px; color:var(--slate-500);">${doc.fileSizeFormatted} &bull; ${window.Validation.formatDate(doc.uploadedAt)}</span>
                 
                 <div style="display:flex; gap:2px;">
+                  <button class="btn btn-ghost btn-sm" onclick="openReplaceModal('${doc.docId}')" title="Replace Version">🔄</button>
                   <button class="btn btn-ghost btn-sm" onclick="openRenameModal('${doc.docId}')" title="Rename Title">&#9998;</button>
-                  <button class="btn btn-ghost btn-sm" onclick="toggleArchiveDoc('${doc.docId}')" title="Archive / Delete">&#128465;</button>
+                  <button class="btn btn-ghost btn-sm" onclick="toggleArchiveDoc('${doc.docId}')" title="Archive / Soft Delete">&#128465;</button>
                 </div>
               </div>
 
@@ -511,6 +604,7 @@
         document.getElementById('uploadDocForm').reset();
         capturedPhotoDataUrl = null;
         selectedFileObj = null;
+        selectedFileDataUrl = null;
         document.getElementById('fileSelectedSummary').style.display = 'none';
         document.getElementById('cameraCapturedPreview').style.display = 'none';
         switchUploadSource('FILE');
@@ -538,7 +632,39 @@
         if (!document.getElementById('uploadDocTitle').value) {
           document.getElementById('uploadDocTitle').value = file.name.replace(/\.[^/.]+$/, "");
         }
+
+        // Preview Image if not PDF
+        const isImg = file.type.startsWith('image/');
+        const imgControls = document.getElementById('fileImageRotateControls');
+        const imgPrevBox = document.getElementById('fileImagePreviewContainer');
+        const imgEl = document.getElementById('filePreviewImgEl');
+
+        if (isImg) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            selectedFileDataUrl = ev.target.result;
+            imgEl.src = selectedFileDataUrl;
+            imgControls.style.display = 'flex';
+            imgPrevBox.style.display = 'block';
+          };
+          reader.readAsDataURL(file);
+        } else {
+          selectedFileDataUrl = null;
+          imgControls.style.display = 'none';
+          imgPrevBox.style.display = 'none';
+        }
       });
+
+      // Camera Device Selector
+      const devSelect = document.getElementById('cameraDeviceSelect');
+      devSelect.addEventListener('change', async () => {
+        const videoEl = document.getElementById('cameraVideo');
+        if (window.documentManager.cameraStream) {
+          await window.documentManager.startCamera(videoEl, devSelect.value);
+        }
+      });
+
+      document.getElementById('btnRefreshDevices').addEventListener('click', populateVideoDevices);
 
       // Live Camera Buttons
       const videoEl = document.getElementById('cameraVideo');
@@ -546,23 +672,34 @@
       const startCamBtn = document.getElementById('startCamBtn');
       const snapBtn = document.getElementById('snapPhotoBtn');
       const retakeBtn = document.getElementById('retakePhotoBtn');
+      const switchBtn = document.getElementById('switchFacingBtn');
 
       startCamBtn.addEventListener('click', async () => {
         try {
-          UI.showLoading('Starting counter camera...');
-          await window.documentManager.startCamera(videoEl);
+          UI.showLoading('Starting camera / scanner feed...');
+          const selectedDev = devSelect.value !== 'DEFAULT' ? devSelect.value : null;
+          await window.documentManager.startCamera(videoEl, selectedDev);
           UI.hideLoading();
           document.getElementById('cameraPlaceholder').style.display = 'none';
           startCamBtn.style.display = 'none';
           snapBtn.style.display = 'inline-flex';
+          switchBtn.style.display = 'inline-flex';
         } catch (err) {
           UI.hideLoading();
           UI.showToast(err.message, 'error');
         }
       });
 
+      switchBtn.addEventListener('click', async () => {
+        try {
+          await window.documentManager.switchCamera(videoEl);
+        } catch (err) {
+          UI.showToast(err.message, 'warning');
+        }
+      });
+
       snapBtn.addEventListener('click', () => {
-        capturedPhotoDataUrl = window.documentManager.capturePhoto(videoEl, canvasEl);
+        capturedPhotoDataUrl = window.documentManager.capturePhoto(videoEl, canvasEl, { watermark: true });
         document.getElementById('capturedImgEl').src = capturedPhotoDataUrl;
         document.getElementById('cameraCapturedPreview').style.display = 'block';
         snapBtn.style.display = 'none';
@@ -574,7 +711,8 @@
         document.getElementById('cameraCapturedPreview').style.display = 'none';
         retakeBtn.style.display = 'none';
         snapBtn.style.display = 'inline-flex';
-        await window.documentManager.startCamera(videoEl);
+        const selectedDev = devSelect.value !== 'DEFAULT' ? devSelect.value : null;
+        await window.documentManager.startCamera(videoEl, selectedDev);
       });
 
       // Submit Upload Form
@@ -590,7 +728,6 @@
           return;
         }
 
-        // Progress bar simulation
         const progressBox = document.getElementById('uploadProgressBarContainer');
         const progressFill = document.getElementById('uploadProgressFill');
         const progressText = document.getElementById('uploadPercentText');
@@ -602,7 +739,17 @@
           if (pct > 90) pct = 90;
           progressFill.style.width = pct + '%';
           progressText.textContent = pct + '%';
-        }, 150);
+        }, 120);
+
+        let uploadPayload = capturedPhotoDataUrl || selectedFileDataUrl;
+        if (!uploadPayload && selectedFileObj) {
+          // Read as data URL
+          uploadPayload = await new Promise(resolve => {
+            const reader = new FileReader();
+            reader.onload = ev => resolve(ev.target.result);
+            reader.readAsDataURL(selectedFileObj);
+          });
+        }
 
         setTimeout(async () => {
           clearInterval(interval);
@@ -614,23 +761,75 @@
             docType,
             docTitle,
             pledgeId,
-            fileOrDataUrl: capturedPhotoDataUrl || selectedFileObj,
-            originalFilename: selectedFileObj ? selectedFileObj.name : 'Counter_Photo.jpg',
+            fileOrDataUrl: uploadPayload,
+            originalFilename: selectedFileObj ? selectedFileObj.name : `${docType}_Scan.jpg`,
             mimeType: selectedFileObj ? selectedFileObj.type : 'image/jpeg',
-            fileSizeBytes: selectedFileObj ? selectedFileObj.size : 450000
+            fileSizeBytes: selectedFileObj ? selectedFileObj.size : Math.round((uploadPayload.length * 3) / 4)
           });
 
           progressBox.style.display = 'none';
           closeUploadModal();
-          UI.showToast(window.t('upload_success'), 'success');
+          UI.showToast(window.t ? window.t('upload_success') : 'Document uploaded successfully', 'success');
           renderDocumentGrid();
-        }, 600);
+        }, 500);
+      });
+
+      // Replace Document Form
+      document.getElementById('replaceDocForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const docId = document.getElementById('replaceDocId').value;
+        const fileInput = document.getElementById('replaceFileInput');
+        const file = fileInput.files[0];
+        if (!file) return;
+
+        const val = window.documentManager.validateFile(file);
+        if (!val.valid) {
+          UI.showToast(val.message, 'error');
+          return;
+        }
+
+        UI.showLoading('Replacing document version...');
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const res = await window.documentManager.replaceDocument(docId, {
+            fileOrDataUrl: ev.target.result,
+            originalFilename: file.name,
+            mimeType: file.type,
+            fileSizeBytes: file.size
+          });
+
+          UI.hideLoading();
+          UI.closeModal('replaceDocModal');
+          if (res.success) {
+            UI.showToast(window.t ? window.t('replace_success') : 'Document version replaced successfully', 'success');
+            renderDocumentGrid();
+          }
+        };
+        reader.readAsDataURL(file);
       });
 
       // Download Doc Action
       document.getElementById('downloadDocBtn').addEventListener('click', () => {
         if (activePreviewDoc) {
-          UI.showToast(`Initiating secure authorized download for ${activePreviewDoc.storedFilename}...`, 'info');
+          if (activePreviewDoc.previewUrl && activePreviewDoc.previewUrl.startsWith('data:')) {
+            const a = document.createElement('a');
+            a.href = activePreviewDoc.previewUrl;
+            a.download = activePreviewDoc.storedFilename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            UI.showToast(`Downloaded ${activePreviewDoc.storedFilename}`, 'success');
+          } else {
+            UI.showToast(`Authorized download token requested for ${activePreviewDoc.storedFilename}`, 'info');
+          }
+        }
+      });
+
+      // Replace Trigger from Preview
+      document.getElementById('btnPreviewReplaceDoc').addEventListener('click', () => {
+        if (activePreviewDoc) {
+          UI.closeModal('previewDocModal');
+          openReplaceModal(activePreviewDoc.docId);
         }
       });
 
@@ -641,11 +840,27 @@
         const newTitle = document.getElementById('renameDocTitleInput').value.trim();
         const res = await window.documentManager.renameDocument(docId, newTitle);
         if (res.success) {
-          UI.showToast(window.t('rename_success'), 'success');
+          UI.showToast(window.t ? window.t('rename_success') : 'Document title updated', 'success');
           UI.closeModal('renameDocModal');
           renderDocumentGrid();
         }
       });
+    }
+
+    async function rotateCapturedImage(degrees) {
+      if (!capturedPhotoDataUrl) return;
+      UI.showLoading('Rotating image...');
+      capturedPhotoDataUrl = await window.documentManager.rotateImage(capturedPhotoDataUrl, degrees);
+      document.getElementById('capturedImgEl').src = capturedPhotoDataUrl;
+      UI.hideLoading();
+    }
+
+    async function rotateSelectedFilePreview(degrees) {
+      if (!selectedFileDataUrl) return;
+      UI.showLoading('Rotating preview...');
+      selectedFileDataUrl = await window.documentManager.rotateImage(selectedFileDataUrl, degrees);
+      document.getElementById('filePreviewImgEl').src = selectedFileDataUrl;
+      UI.hideLoading();
     }
 
     function switchUploadSource(source) {
@@ -673,6 +888,16 @@
       UI.closeModal('uploadDocModal');
     }
 
+    function openReplaceModal(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+
+      document.getElementById('replaceDocId').value = doc.docId;
+      document.getElementById('replaceDocPrompt').textContent = `Replace active version of "${doc.docTitle}" (${doc.storedFilename}).`;
+      document.getElementById('replaceDocForm').reset();
+      UI.openModal('replaceDocModal');
+    }
+
     function openDocPreview(docId) {
       const doc = window.documentManager.documents.find(d => d.docId === docId);
       if (!doc) return;
@@ -681,14 +906,18 @@
       document.getElementById('prevDocTitle').textContent = doc.docTitle;
       
       const imgEl = document.getElementById('prevDocImg');
-      const pdfBox = document.getElementById('prevDocPdfPlaceholder');
+      const pdfContainer = document.getElementById('prevDocPdfContainer');
+      const pdfObject = document.getElementById('prevDocPdfObject');
 
       if (doc.mimeType === 'application/pdf') {
         imgEl.style.display = 'none';
-        pdfBox.style.display = 'block';
+        pdfContainer.style.display = 'block';
+        if (doc.previewUrl && doc.previewUrl.startsWith('data:')) {
+          pdfObject.data = doc.previewUrl;
+        }
         document.getElementById('prevDocPdfName').textContent = doc.storedFilename;
       } else {
-        pdfBox.style.display = 'none';
+        pdfContainer.style.display = 'none';
         imgEl.style.display = 'block';
         imgEl.src = doc.previewUrl || 'assets/logo/logo.svg';
       }
@@ -718,10 +947,17 @@
     }
 
     async function toggleArchiveDoc(docId) {
-      if (confirm('Are you sure you want to archive / soft-delete this document?')) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+      const isArchiving = doc.status !== 'ARCHIVED';
+      const promptText = isArchiving
+        ? 'Are you sure you want to archive / soft-delete this document?'
+        : 'Restore this archived document back to active status?';
+
+      if (confirm(promptText)) {
         const res = await window.documentManager.archiveDocument(docId);
         if (res.success) {
-          UI.showToast(window.t('archive_success'), 'success');
+          UI.showToast(window.t ? window.t('archive_success') : 'Document status updated', 'success');
           renderDocumentGrid();
         }
       }

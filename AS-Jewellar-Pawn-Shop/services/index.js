@@ -20,3 +20,5 @@ export { default as ReminderService } from '../js/reminders.js';
 export { default as VaultService } from '../js/vault.js';
 export { default as CashService } from '../js/cash.js';
 export { default as ReportService } from '../js/reports.js';
+export { default as AuditService } from '../js/audit.js';
+export { default as DataHealthService } from '../js/dataHealth.js';

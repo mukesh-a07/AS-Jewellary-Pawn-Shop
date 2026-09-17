@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>New Pledge POS &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -31,7 +34,7 @@
       justify-content: space-between;
       align-items: center;
       box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.25);
-      z-index: 1000;
+      z-index: 500;
     }
     /* Loan Terms panel: sticky on desktop */
     .pos-right-panel > .card {
@@ -122,32 +125,35 @@
           <div style="display:flex; flex-direction:column; gap:var(--space-4);">
             
             <!-- STEP 1: CUSTOMER SELECTION -->
-            <div class="card" style="border-top:3px solid var(--gold-500);">
+            <div class="card" style="border-top:3px solid var(--gold-500); position:relative; z-index:40; overflow:visible !important;">
               <div class="card-header">
                 <h3 class="card-title">1. Customer Identification (வாடிக்கையாளர் தேர்வு)</h3>
                 <button type="button" class="btn btn-outline btn-sm" id="posQuickAddCustBtn" data-i18n="quick_register">
                   + Quick Register Customer
                 </button>
               </div>
-              <div class="card-body">
-                <div class="search-box" style="margin-bottom:var(--space-3);">
+              <div class="card-body" style="position:relative; overflow:visible !important;">
+                <div class="search-box" style="margin-bottom:var(--space-3); position:relative;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   <input type="text" id="posCustSearch" class="form-input" placeholder="Type Mobile Number, Customer Name (தமிழ் / EN), or ID..." data-i18n-placeholder="search_cust_help" autocomplete="off" />
-                  <div id="posCustSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                  <div id="posCustSuggestions" class="suggestions-dropdown" style="display:none;">
                     <!-- Auto-complete options injected here -->
                   </div>
                 </div>
 
-                <!-- Selected Customer Card -->
+                <!-- Selected Customer Card with Identity Photo -->
                 <div id="posSelectedCustCard" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3);">
-                  <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                      <div style="font-weight:800; font-size:var(--font-size-md); color:var(--slate-900);" id="posCustDisplayName"></div>
-                      <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
-                        <span class="cell-mono" id="posCustDisplayId"></span> &bull; 📞 <span id="posCustDisplayMobile"></span> &bull; 📍 <span id="posCustDisplayTown"></span>
+                  <div style="display:flex; justify-content:space-between; align-items:center; gap:var(--space-3);">
+                    <div style="display:flex; align-items:center; gap:var(--space-3);">
+                      <div id="posCustPhotoContainer"></div>
+                      <div>
+                        <div style="font-weight:800; font-size:var(--font-size-md); color:var(--slate-900);" id="posCustDisplayName"></div>
+                        <div style="font-size:12px; color:var(--slate-600); margin-top:2px;">
+                          <span class="cell-mono" id="posCustDisplayId"></span> &bull; 📞 <span id="posCustDisplayMobile"></span> &bull; 📍 <span id="posCustDisplayTown"></span>
+                        </div>
                       </div>
                     </div>
-                    <div style="text-align:right;">
+                    <div style="text-align:right; flex-shrink:0;">
                       <span class="badge badge-success" id="posCustKycBadge">✓ KYC Verified</span>
                       <button type="button" class="btn btn-ghost btn-sm" id="posChangeCustBtn" style="margin-left:6px;">Change</button>
                     </div>
@@ -270,29 +276,91 @@
               </div>
             </div>
 
-            <!-- STEP 3: VAULT & PACKET ALLOCATION -->
-            <div class="card">
-              <div class="card-header">
-                <h3 class="card-title" data-i18n="vault_packet_allocation">3. Vault & Packet Allocation (பாக்கெட் எண்)</h3>
+            <!-- STEP 3: ITEM PHOTOGRAPHS & VISUAL COLLATERAL PROOF -->
+            <div class="card" style="border-top:3px solid var(--gold-500);">
+              <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title" data-i18n="item_photographs">3. Item Photographs & Visual Proof (நகை புகைப்படம்)</h3>
+                <span class="badge badge-gold" id="posPhotoCountBadge">0 Photos</span>
               </div>
               <div class="card-body">
-                <div class="grid-3">
-                  <div class="form-group">
-                    <label class="form-label" data-i18n="vault_location">Vault Room</label>
+                <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; margin-bottom:var(--space-3); align-items:center;">
+                  <button type="button" class="btn btn-outline btn-sm" id="posOpenItemCameraBtn" onclick="openPosItemCameraModal()" style="border-color:var(--gold-400); background:var(--gold-50); font-weight:700;">
+                    <span>📷 Live Camera Capture</span>
+                  </button>
+                  <label class="btn btn-outline btn-sm" style="margin:0; cursor:pointer; font-weight:700;">
+                    <span>📁 Upload Image</span>
+                    <input type="file" id="posItemPhotoFileInput" accept="image/*" style="display:none;" onchange="handlePosItemPhotoUpload(event)" />
+                  </label>
+                  <span class="text-muted" style="font-size:11px;">Capture live counter webcam photo or attach files of pledged articles.</span>
+                </div>
+
+                <!-- Attached Photos Thumbnails Container -->
+                <div id="posItemPhotosContainer" style="display:flex; gap:var(--space-3); flex-wrap:wrap; min-height:60px; padding:var(--space-2); background:var(--slate-50); border:1px dashed var(--slate-300); border-radius:var(--radius-md); align-items:center;">
+                  <span style="font-size:12px; color:var(--slate-400); padding:var(--space-2);" id="posNoPhotosPlaceholder">No item photographs attached yet. Click Camera or Upload above.</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 4: VAULT & PACKET ALLOCATION -->
+            <div class="card">
+              <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title" data-i18n="vault_packet_allocation">4. Safe Vault & Packet Allocation (பெட்டகம் & பாக்கெட்)</h3>
+                <span class="badge badge-gold">Physical Safekeeping</span>
+              </div>
+              <div class="card-body">
+                <div class="grid-3" style="margin-bottom:var(--space-3);">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="vault_location">Vault Room (பெட்டக அறை)</label>
                     <select id="posVaultLocation" class="form-select">
-                      <option value="Vault A">Vault A (Main Safe)</option>
+                      <option value="Vault A" selected>Vault A (Main Safe)</option>
                       <option value="Vault B">Vault B (Auxiliary Safe)</option>
                     </select>
                   </div>
 
-                  <div class="form-group">
-                    <label class="form-label" data-i18n="locker_tray">Locker &amp; Tray</label>
-                    <input type="text" id="posLockerTray" class="form-input" placeholder="e.g. Locker 01 • Tray 03" />
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="locker_number">Locker Number (லாக்கர்)</label>
+                    <select id="posLocker" class="form-select">
+                      <option value="Locker 01" selected>Locker 01</option>
+                      <option value="Locker 02">Locker 02</option>
+                      <option value="Locker 03">Locker 03</option>
+                      <option value="Locker 04">Locker 04</option>
+                      <option value="Locker 05">Locker 05</option>
+                      <option value="Locker 06">Locker 06</option>
+                      <option value="Locker 07">Locker 07</option>
+                      <option value="Locker 08">Locker 08</option>
+                      <option value="Locker 09">Locker 09</option>
+                      <option value="Locker 10">Locker 10</option>
+                    </select>
                   </div>
 
-                  <div class="form-group">
-                    <label class="form-label" data-i18n="packet_number">Packet No / Tag *</label>
-                    <input type="text" id="posPacketId" class="form-input" placeholder="e.g. PKT-0001" required />
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="tray_number">Tray Number (தட்டு)</label>
+                    <select id="posTray" class="form-select">
+                      <option value="Tray 01" selected>Tray 01</option>
+                      <option value="Tray 02">Tray 02</option>
+                      <option value="Tray 03">Tray 03</option>
+                      <option value="Tray 04">Tray 04</option>
+                      <option value="Tray 05">Tray 05</option>
+                      <option value="Tray 06">Tray 06</option>
+                      <option value="Tray 07">Tray 07</option>
+                      <option value="Tray 08">Tray 08</option>
+                      <option value="Tray 09">Tray 09</option>
+                      <option value="Tray 10">Tray 10</option>
+                      <option value="Tray 11">Tray 11</option>
+                      <option value="Tray 12">Tray 12</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div class="grid-2">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="packet_number">Packet Number / Tag * (பாக்கெட் எண்)</label>
+                    <input type="text" id="posPacketId" class="form-input" placeholder="e.g. PKT-0001" />
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="location_note">Location Note / Pouch Type (குறிப்பு)</label>
+                    <input type="text" id="posLocationNote" class="form-input" placeholder="e.g. Top shelf, blue velvet pouch with cert" />
                   </div>
                 </div>
               </div>
@@ -300,42 +368,135 @@
 
           </div>
 
-          <!-- RIGHT COLUMN: FINANCIAL SUMMARY & LOAN TERMS -->
+          <!-- RIGHT COLUMN: ADVANCED VALUATION & LOAN TERMS -->
           <div class="pos-right-panel">
             <div class="card" style="border-top:4px solid var(--gold-600);">
-              <div class="card-header">
-                <h3 class="card-title">Loan Terms Summary</h3>
+              <div class="card-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <h3 class="card-title">Valuation &amp; Loan Terms</h3>
+                <span class="badge badge-gold" id="posLtvBadge">75% LTV</span>
               </div>
               <div class="card-body">
                 
                 <div style="display:flex; flex-direction:column; gap:var(--space-3);">
                   
-                  <div style="display:flex; justify-content:space-between; font-size:13px;">
-                    <span class="text-muted">Total Net Weight:</span>
-                    <strong style="font-size:15px; color:var(--gold-900);" id="sumNetWeight">0.000 g</strong>
+                  <!-- WEIGHT SUMMARY -->
+                  <div style="background:#F8FAFC; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 12px; display:flex; justify-content:space-between; font-size:12px;">
+                    <div>
+                      <div class="text-muted" style="font-size:10px; text-transform:uppercase;">Gross Wt</div>
+                      <strong style="font-size:13px;" id="sumGrossWeight">0.000 g</strong>
+                    </div>
+                    <div>
+                      <div class="text-muted" style="font-size:10px; text-transform:uppercase;">Stone / Wax</div>
+                      <strong style="font-size:13px; color:var(--slate-600);" id="sumStoneWeight">0.000 g</strong>
+                    </div>
+                    <div>
+                      <div class="text-muted" style="font-size:10px; text-transform:uppercase;">Net Gold / Silver</div>
+                      <strong style="font-size:14px; color:var(--gold-900);" id="sumNetWeight">0.000 g</strong>
+                    </div>
                   </div>
 
-                  <div style="display:flex; justify-content:space-between; font-size:13px;">
-                    <span class="text-muted">Total Market Value:</span>
-                    <strong style="font-size:15px;" id="sumMarketValue">₹ 0</strong>
+                  <!-- GROSS ESTIMATED VALUE -->
+                  <div style="display:flex; justify-content:space-between; font-size:13px; padding:4px 0;">
+                    <span class="text-muted" data-i18n="gross_estimated_value">Gross Estimated Value:</span>
+                    <strong style="font-size:15px; color:var(--slate-900);" id="sumMarketValue">₹ 0</strong>
                   </div>
 
+                  <!-- FEES BREAKDOWN (Gold Appraiser Fee & Other Configured Fee) -->
+                  <div style="background:#FFFBEB; border:1px solid #FDE68A; border-radius:var(--radius-md); padding:10px 12px; display:flex; flex-direction:column; gap:6px;">
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;">
+                      <span style="color:#92400E; font-weight:700;" data-i18n="gold_appraiser_fee">Gold Appraiser Fee:</span>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span>₹</span>
+                        <input type="number" id="posAppraiserFeeInput" class="form-input form-input-sm" style="width:90px; text-align:right; font-weight:bold; height:28px; padding:2px 6px;" value="150" />
+                      </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:12px;" id="posOtherFeeRow">
+                      <span style="color:#92400E; font-weight:700;" data-i18n="other_configured_fee">Other Configured Fee:</span>
+                      <div style="display:flex; align-items:center; gap:4px;">
+                        <span>₹</span>
+                        <input type="number" id="posOtherFeeInput" class="form-input form-input-sm" style="width:90px; text-align:right; font-weight:bold; height:28px; padding:2px 6px;" value="0" />
+                      </div>
+                    </div>
+
+                    <div style="border-top:1px dashed #F59E0B; padding-top:4px; display:flex; justify-content:space-between; font-size:11.5px; color:#B45309;">
+                      <span>Gross Eligible Value:</span>
+                      <strong id="posGrossEligibleVal">₹ 0</strong>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; font-size:11.5px; color:#DC2626;">
+                      <span>Less Fees (-):</span>
+                      <strong id="posLessFeesVal">₹ 0</strong>
+                    </div>
+
+                    <div style="border-top:1px solid #F59E0B; padding-top:4px; display:flex; justify-content:space-between; font-size:12.5px; color:#78350F; font-weight:800;">
+                      <span data-i18n="net_eligible_value">Net Eligible Value:</span>
+                      <span id="posNetEligibleVal">₹ 0</span>
+                    </div>
+                  </div>
+
+                  <!-- MAXIMUM LOAN -->
                   <div style="display:flex; justify-content:space-between; font-size:13px; padding-bottom:var(--space-2); border-bottom:1px solid var(--border-subtle);">
-                    <span class="text-muted">Eligible Loan (75%):</span>
-                    <strong style="font-size:15px; color:var(--success-main);" id="sumEligibleLoan">₹ 0</strong>
+                    <span class="text-muted"><span data-i18n="max_loan">Maximum Eligible Loan</span> (<span id="posLtvLabel">75%</span>):</span>
+                    <strong style="font-size:16px; color:var(--success-main);" id="sumEligibleLoan">₹ 0</strong>
                   </div>
 
-                  <!-- Approved Loan Amount Input -->
-                  <div class="form-group" style="margin:var(--space-2) 0 0 0;">
-                    <label class="form-label" style="font-weight:800;" data-i18n="approved_loan">Approved Loan Amount (₹) *</label>
+                  <!-- APPROVED LOAN INPUT -->
+                  <div class="form-group" style="margin:var(--space-1) 0 0 0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="approved_pledge_amount">Approved Pledge Amount (₹) *</label>
                     <div class="input-group">
                       <span class="input-addon">₹</span>
                       <input type="number" id="posApprovedLoan" class="form-input" style="font-size:18px; font-weight:900; color:var(--slate-900);" placeholder="0" />
                     </div>
                   </div>
 
+                  <!-- APPROVED LOAN DISBURSEMENT TYPE / PAYMENT MODE -->
+                  <div style="background:#F8FAFC; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 12px; margin-top:var(--space-1);">
+                    <div class="form-group" style="margin:0 0 6px 0;">
+                      <label class="form-label" style="font-size:11px; font-weight:800; color:var(--slate-700);" data-i18n="disbursement_payment_type">Disbursement Payment Type / Mode *</label>
+                      <select id="posDisbursementModeSelect" class="form-select form-select-sm" style="font-size:12px; height:32px; font-weight:700;">
+                        <!-- Populated dynamically via PaymentMethodManager.getActiveMethods() -->
+                        <option value="CASH" selected>💵 Cash (ரொக்கம்)</option>
+                        <option value="UPI">📱 UPI (GPay / PhonePe / Paytm)</option>
+                        <option value="BANK_TRANSFER">🏦 Bank Transfer (IMPS / NEFT)</option>
+                        <option value="CARD">💳 Card (Debit / Credit POS)</option>
+                        <option value="OTHER">📑 Other (Cheque / DD / Special)</option>
+                      </select>
+                    </div>
+
+                    <!-- Optional / Required Reference Number / UTR / Cheque based on payment method -->
+                    <div id="posDisbursementRefGroup" class="form-group" style="margin:0; display:none;">
+                      <label class="form-label" style="font-size:11px;" id="posDisbursementRefLabel">
+                        <span data-i18n="reference_number">Disbursement Ref / UTR / Cheque No</span>
+                        <span id="posDisbursementRefRequired" class="required" style="display:none; color:var(--danger-main); font-weight:bold;">*</span>
+                      </label>
+                      <input type="text" id="posDisbursementRefInput" class="form-input form-input-sm" style="font-size:12px; height:30px;" placeholder="e.g. UTR / IMPS / Cheque No" />
+                      <div id="posDisbursementRefHelp" style="font-size:10px; color:var(--slate-500); margin-top:2px;"></div>
+                    </div>
+                  </div>
+
+                  <!-- FEE COLLECTION METHOD & NET DISBURSEMENT -->
+                  <div style="background:#F0FDF4; border:1px solid #BBF7D0; border-radius:var(--radius-md); padding:10px 12px;">
+                    <div class="form-group" style="margin:0 0 6px 0;">
+                      <label class="form-label" style="font-size:11px; font-weight:700; color:#166534;" data-i18n="fee_deduction_mode">Fee Collection Method</label>
+                      <select id="posFeeModeSelect" class="form-select form-select-sm" style="font-size:12px; height:32px;">
+                        <option value="DEDUCT_FROM_DISBURSEMENT" selected data-i18n="deduct_from_disbursement">Deduct from Loan Disbursement</option>
+                        <option value="COLLECT_SEPARATELY" data-i18n="collect_separately">Collect Separately at Counter</option>
+                      </select>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px dashed #86EFAC; padding-top:6px; margin-top:4px;">
+                      <span style="font-size:12px; font-weight:700; color:#14532D;" id="posNetDisbursedLabel" data-i18n="net_disbursed_amount">Net Amount Disbursed:</span>
+                      <strong style="font-size:18px; font-weight:900; color:#15803D;" id="posNetDisbursedCash">₹ 0</strong>
+                    </div>
+                    <div style="font-size:10.5px; color:#166534; margin-top:2px;" id="posFeeHandlingExplanation">
+                      * Fees will be deducted from loan handed/transferred to borrower.
+                    </div>
+                  </div>
+
                   <!-- Monthly Interest Terms -->
-                  <div class="grid-2" style="margin-top:var(--space-2);">
+                  <div class="grid-2" style="margin-top:var(--space-1);">
                     <div class="form-group" style="margin:0;">
                       <label class="form-label" style="font-size:11px;">Monthly Int %</label>
                       <input type="number" step="0.1" id="posInterestRate" class="form-input" value="1.0" />
@@ -347,19 +508,19 @@
                     </div>
                   </div>
 
-                  <div style="font-size:11px; color:var(--slate-500); margin-top:var(--space-2);">
-                    Statutory Tenure: <strong>12 Months</strong> (1 Year) &bull; Mode: <strong>CASH Disbursed</strong>
+                  <div style="font-size:11px; color:var(--slate-500); margin-top:var(--space-1);">
+                    Statutory Tenure: <strong>12 Months</strong> (1 Year) &bull; Mode: <strong id="posTenureModeDisplay" style="color:var(--gold-800);">💵 CASH Disbursed</strong>
                   </div>
 
                   <!-- High LTV Override Checkbox -->
-                  <div style="margin-top:var(--space-2); padding-top:var(--space-2); border-top:1px dashed var(--slate-300);">
+                  <div style="margin-top:var(--space-1); padding-top:var(--space-2); border-top:1px dashed var(--slate-300);">
                     <label style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
                       <input type="checkbox" id="posAllowLtvOverride" />
                       <span>Allow High-LTV Admin Override</span>
                     </label>
                   </div>
 
-                  <div style="margin-top:var(--space-4);">
+                  <div style="margin-top:var(--space-3);">
                     <button type="button" class="btn btn-primary" id="posMainSubmitBtn" style="width:100%; padding:14px; font-size:15px; justify-content:center;">
                       <span data-i18n="generate_ticket">Approve & Issue Pawn Ticket</span>
                     </button>
@@ -381,8 +542,16 @@
               <div style="font-size:16px; font-weight:900; color:var(--gold-400);" id="stickyNetWeight">0.000 g</div>
             </div>
             <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
-              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Loan Principal</div>
-              <div style="font-size:18px; font-weight:900; color:#FFFFFF;" id="stickyLoanAmount">₹ 0</div>
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Approved Loan</div>
+              <div style="font-size:17px; font-weight:900; color:#FFFFFF;" id="stickyLoanAmount">₹ 0</div>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Disbursement Mode</div>
+              <div style="font-size:14px; font-weight:800; color:#38BDF8;" id="stickyDisbursementMode">💵 Cash</div>
+            </div>
+            <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
+              <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Net Disbursed</div>
+              <div style="font-size:18px; font-weight:900; color:#4ADE80;" id="stickyNetDisbursed">₹ 0</div>
             </div>
             <div style="border-left:1px solid var(--slate-700); padding-left:var(--space-3);">
               <div style="font-size:10px; color:var(--slate-400); text-transform:uppercase;">Monthly Interest</div>
@@ -405,17 +574,83 @@
   <div class="modal-backdrop" id="pawnTicketModal">
     <div class="modal-dialog modal-lg">
       <div class="modal-header">
-        <h3 class="modal-title">Official Pawn Ticket &bull; Form F Statutory Document</h3>
+        <h3 class="modal-title" id="posTicketModalTitle">Official Pawn Ticket &bull; Form F Statutory Document</h3>
         <button class="modal-close-btn" onclick="UI.closeModal('pawnTicketModal')">&times;</button>
       </div>
-      <div class="modal-body" style="padding:0; background:#FFF;" id="pawnTicketContainer">
-        <!-- Rendered dynamically via PledgePosManager -->
+
+      <!-- Format & Language Controls Toolbar -->
+      <div class="doc-modal-toolbar">
+        <div class="doc-format-toggle">
+          <button type="button" class="doc-toggle-btn active" id="posTabFormatA4Btn" onclick="switchPosTicketFormat('A4')">
+            📄 Standard A4
+          </button>
+          <button type="button" class="doc-toggle-btn" id="posTabFormatThermalBtn" onclick="switchPosTicketFormat('THERMAL')">
+            🧾 80mm Thermal
+          </button>
+        </div>
+
+        <div class="doc-lang-toggle">
+          <button type="button" class="doc-toggle-btn active" id="posLangBilingualBtn" onclick="switchPosTicketLanguage('BILINGUAL')">
+            EN + தமிழ்
+          </button>
+          <button type="button" class="doc-toggle-btn" id="posLangEnBtn" onclick="switchPosTicketLanguage('EN')">
+            English
+          </button>
+          <button type="button" class="doc-toggle-btn" id="posLangTaBtn" onclick="switchPosTicketLanguage('TA')">
+            தமிழ்
+          </button>
+        </div>
       </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-outline" onclick="UI.closeModal('pawnTicketModal')">Close</button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-          <span>🖨 Print Official Ticket</span>
-        </button>
+
+      <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; flex:1 1 auto; min-height:0; overflow-y:auto;" id="pawnTicketContainer">
+        <!-- Rendered dynamically via BillingManager -->
+      </div>
+
+      <div class="modal-footer" style="background:#FFF; padding:var(--space-3) var(--space-4); position:sticky; bottom:0; z-index:10; border-top:1px solid var(--border-subtle);">
+        <div class="doc-action-bar" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; width:100%;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="UI.closeModal('pawnTicketModal')">Close</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handlePosCopyDetails()" title="Copy Details">
+            <span>📋 Copy Details</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handlePosWhatsAppShare()" title="Share on WhatsApp">
+            <span style="color:#16A34A; font-weight:bold;">📱 WhatsApp</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handlePosWebShare()" title="Share Document">
+            <span>📤 Share</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="handlePosReprintDoc()">
+            <span>🔄 Reprint</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" title="Print / PDF">
+            <span>🖨 Print / PDF</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: ITEM PHOTO CAMERA CAPTURE
+       ========================================================================== -->
+  <div class="modal-backdrop" id="posItemPhotoCameraModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title">📷 Capture Jewellery Item Photograph</h3>
+        <button type="button" class="modal-close-btn" onclick="closePosItemCameraModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:var(--space-4);">
+        <div class="camera-viewport" style="width:100%; height:260px; background:#000; border-radius:var(--radius-md); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center;">
+          <video id="posItemCamVideo" autoplay playsinline muted style="width:100%; height:100%; object-fit:cover;"></video>
+          <canvas id="posItemCamCanvas" style="display:none;"></canvas>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:var(--space-3);">
+          <button type="button" class="btn btn-outline btn-sm" onclick="togglePosItemCameraFacing()">
+            <span>🔄 Switch Cam</span>
+          </button>
+          <button type="button" class="btn btn-primary" onclick="snapPosItemPhoto()">
+            <span>📷 Snap Photo</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -613,29 +848,122 @@
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
   <script src="js/rates.js"></script>
+  <script src="js/financialCalculator.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/billing.js"></script>
   <script src="js/pledgePos.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let activeRatesSnapshot = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('pageTitleText').textContent = window.t('new_pledge');
 
       // Initialize live rate snapshot
       activeRatesSnapshot = window.rateManager.getRatesForPledge();
-      document.getElementById('posStamped22k').textContent = `₹ ${activeRatesSnapshot.gold22k.toLocaleString('en-IN')}.00 / g`;
-      document.getElementById('posStampedSilver').textContent = `₹ ${activeRatesSnapshot.silver.toFixed(2)} / g`;
+      document.getElementById('posStamped22k').textContent = `₹ ${Number(activeRatesSnapshot.gold22k).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / g`;
+      document.getElementById('posStampedSilver').textContent = `₹ ${Number(activeRatesSnapshot.silver).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} / g`;
 
       // Check for URL query parameter customerId
       const urlParams = new URLSearchParams(window.location.search);
       const preCustId = urlParams.get('customerId');
       if (preCustId) {
+        if (window.customerManager && !window.customerManager.getCustomerById(preCustId)) {
+          await window.customerManager.syncWithBackend();
+        }
         selectCustomerById(preCustId);
+      } else if (window.customerManager && typeof window.customerManager.syncWithBackend === 'function') {
+        window.customerManager.syncWithBackend();
       }
 
+      populateDisbursementModes();
       bindPosEvents();
+      updateTotalsDisplay(null, true);
     });
+
+    window.addEventListener('customersSynced', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const preCustId = urlParams.get('customerId');
+      if (preCustId && !window.pledgePosManager.selectedCustomer) {
+        selectCustomerById(preCustId);
+      }
+    });
+
+    function populateDisbursementModes() {
+      const select = document.getElementById('posDisbursementModeSelect');
+      if (!select) return;
+
+      if (window.PaymentMethodManager && typeof window.PaymentMethodManager.getActiveMethods === 'function') {
+        const activeMethods = window.PaymentMethodManager.getActiveMethods();
+        select.innerHTML = activeMethods.map(m => {
+          const icon = m.icon || '💳';
+          const labelEn = m.labelEn || m.nameEn || m.id;
+          const labelTa = m.labelTa || m.nameTa ? ` (${m.labelTa || m.nameTa})` : '';
+          return `<option value="${m.id}" ${m.id === 'CASH' ? 'selected' : ''}>${icon} ${labelEn}${labelTa}</option>`;
+        }).join('');
+      }
+
+      handleDisbursementModeChange();
+    }
+
+    function handleDisbursementModeChange() {
+      const select = document.getElementById('posDisbursementModeSelect');
+      const mode = select ? select.value : 'CASH';
+      const refGroup = document.getElementById('posDisbursementRefGroup');
+      const refRequired = document.getElementById('posDisbursementRefRequired');
+      const refInput = document.getElementById('posDisbursementRefInput');
+      const refHelp = document.getElementById('posDisbursementRefHelp');
+      const stickyMode = document.getElementById('stickyDisbursementMode');
+      const tenureMode = document.getElementById('posTenureModeDisplay');
+
+      const method = (window.PaymentMethodManager && typeof window.PaymentMethodManager.getMethod === 'function')
+        ? window.PaymentMethodManager.getMethod(mode)
+        : { id: mode, labelEn: mode, nameEn: mode, refRule: (mode === 'BANK_TRANSFER' ? 'REQUIRED' : 'OPTIONAL'), icon: '💳' };
+
+      const icon = method.icon || '💳';
+      const name = method.labelEn || method.nameEn || mode;
+
+      // Update sticky bar & tenure text
+      if (stickyMode) {
+        stickyMode.textContent = `${icon} ${name}`;
+      }
+      if (tenureMode) {
+        tenureMode.textContent = `${icon} ${name.toUpperCase()} Disbursed`;
+      }
+
+      // Handle Reference Group visibility & rules
+      if (mode === 'CASH') {
+        if (refGroup) refGroup.style.display = 'none';
+        if (refRequired) refRequired.style.display = 'none';
+        if (refInput) refInput.required = false;
+      } else {
+        if (refGroup) refGroup.style.display = 'block';
+        if (method.refRule === 'REQUIRED') {
+          if (refRequired) refRequired.style.display = 'inline';
+          if (refInput) {
+            refInput.required = true;
+            refInput.placeholder = 'Mandatory Reference / UTR / Cheque No';
+          }
+          if (refHelp) refHelp.textContent = '* Reference / UTR number is mandatory for reconciliation.';
+        } else if (method.refRule === 'RECOMMENDED') {
+          if (refRequired) refRequired.style.display = 'none';
+          if (refInput) {
+            refInput.required = false;
+            refInput.placeholder = 'e.g. UPI Ref / UTR / Transaction ID (Recommended)';
+          }
+          if (refHelp) refHelp.textContent = 'Reference / UTR number recommended for instant audit.';
+        } else {
+          if (refRequired) refRequired.style.display = 'none';
+          if (refInput) {
+            refInput.required = false;
+            refInput.placeholder = 'Optional Reference / Slip No';
+          }
+          if (refHelp) refHelp.textContent = '';
+        }
+      }
+    }
 
     function bindPosEvents() {
       // Weight input live calculation
@@ -692,44 +1020,91 @@
         updateTotalsDisplay();
       });
 
-      // Approved Loan amount manual change
+      // Fee inputs listeners
       const approvedInput = document.getElementById('posApprovedLoan');
-      approvedInput.addEventListener('input', () => {
-        updateTotalsDisplay(approvedInput.value);
+
+      document.getElementById('posAppraiserFeeInput').addEventListener('input', () => {
+        updateTotalsDisplay(approvedInput.value || null);
+      });
+      document.getElementById('posOtherFeeInput').addEventListener('input', () => {
+        updateTotalsDisplay(approvedInput.value || null);
+      });
+      document.getElementById('posFeeModeSelect').addEventListener('change', () => {
+        updateTotalsDisplay(approvedInput.value || null);
       });
 
-      // Interest Rate change
+      // Disbursement Mode change listener
+      document.getElementById('posDisbursementModeSelect').addEventListener('change', () => {
+        handleDisbursementModeChange();
+        updateTotalsDisplay(approvedInput.value || null);
+      });
+
+      // Approved Loan amount manual change
+      approvedInput.addEventListener('input', () => {
+        updateTotalsDisplay(approvedInput.value || '0');
+      });
+
+      // Interest Rate live auto-calculation
       document.getElementById('posInterestRate').addEventListener('input', (e) => {
-        window.pledgePosManager.monthlyInterestRate = parseFloat(e.target.value) || 1.0;
-        updateTotalsDisplay(approvedInput.value);
+        const rate = parseFloat(e.target.value) || 1.0;
+        window.pledgePosManager.monthlyInterestRate = rate;
+        updateTotalsDisplay(approvedInput.value || null);
       });
 
       // Customer Auto-complete Search
       const custSearchInput = document.getElementById('posCustSearch');
       const suggestionsBox = document.getElementById('posCustSuggestions');
 
-      custSearchInput.addEventListener('input', () => {
+      const renderCustSuggestions = () => {
         const q = custSearchInput.value.trim();
         if (q.length < 1) {
           suggestionsBox.style.display = 'none';
           return;
         }
 
-        const res = window.customerManager.search({ query: q, pageSize: 5 });
+        const res = window.customerManager.search({ query: q, pageSize: 8 });
         if (res.items.length === 0) {
-          suggestionsBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No matching customers found</div>`;
+          suggestionsBox.innerHTML = `<div style="padding:14px; text-align:center; font-size:12px; color:var(--slate-500);">No matching customers found</div>`;
         } else {
-          suggestionsBox.innerHTML = res.items.map(c => `
-            <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectCustomerById('${c.customerId}')">
-              <div>
-                <strong>${c.nameEn}</strong> <span style="color:var(--gold-700); font-size:12px;">(${c.nameTa || ''})</span>
-                <div style="font-size:11px; color:var(--slate-500);">${c.customerId} &bull; 📞 ${c.mobile} &bull; ${c.townVillage}</div>
+          suggestionsBox.innerHTML = res.items.map(c => {
+            const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(c.customerId);
+            const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+            const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+            const avatarHtml = photoUrl
+              ? `<img src="${photoUrl}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1.5px solid var(--gold-400); flex-shrink:0;" alt="${c.nameEn}" />`
+              : `<div style="width:36px; height:36px; border-radius:50%; background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0; border:1px solid var(--gold-300);">${initials}</div>`;
+
+            return `
+              <div class="cust-suggestion-item" onclick="selectCustomerById('${c.customerId}')">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  ${avatarHtml}
+                  <div>
+                    <div style="font-weight:700; font-size:13.5px; color:var(--slate-900);">
+                      ${c.nameEn} ${c.nameTa ? `<span style="color:var(--gold-700); font-size:12px; font-weight:600;">(${c.nameTa})</span>` : ''}
+                    </div>
+                    <div style="font-size:11.5px; color:var(--slate-500); margin-top:2px;">
+                      <span class="cell-mono" style="font-size:11px; background:var(--slate-100); padding:1px 5px; border-radius:3px; font-weight:700;">${c.customerId}</span> &bull; 📞 ${c.mobile} &bull; 📍 ${c.townVillage || ''}
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-outline btn-sm" style="border-color:var(--gold-500); color:var(--gold-800); background:var(--gold-50); font-weight:700; pointer-events:none;">Select &rarr;</button>
               </div>
-              <span class="badge badge-outline">Select &rarr;</span>
-            </div>
-          `).join('');
+            `;
+          }).join('');
         }
         suggestionsBox.style.display = 'block';
+      };
+
+      custSearchInput.addEventListener('input', renderCustSuggestions);
+      custSearchInput.addEventListener('focus', () => {
+        if (custSearchInput.value.trim().length >= 1) renderCustSuggestions();
+      });
+
+      // Close customer suggestions on click outside
+      document.addEventListener('click', (e) => {
+        if (!custSearchInput.contains(e.target) && !suggestionsBox.contains(e.target)) {
+          suggestionsBox.style.display = 'none';
+        }
       });
 
       // Change Customer
@@ -840,6 +1215,17 @@
       document.getElementById('posCustSuggestions').style.display = 'none';
       document.getElementById('posCustSearch').parentElement.style.display = 'none';
 
+      // Render Photo Thumbnail or Initials Avatar
+      const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(c.customerId);
+      const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+      const photoContainer = document.getElementById('posCustPhotoContainer');
+      if (photoUrl) {
+        photoContainer.innerHTML = `<img src="${photoUrl}" style="width:44px; height:44px; border-radius:50%; object-fit:cover; border:2px solid var(--gold-400);" alt="${c.nameEn}" />`;
+      } else {
+        const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        photoContainer.innerHTML = `<div style="width:44px; height:44px; border-radius:50%; background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:14px; border:1px solid var(--gold-300);">${initials}</div>`;
+      }
+
       document.getElementById('posCustDisplayName').textContent = `${c.nameEn} (${c.nameTa || ''})`;
       document.getElementById('posCustDisplayId').textContent = c.customerId;
       document.getElementById('posCustDisplayMobile').textContent = c.mobile;
@@ -886,28 +1272,80 @@
     function removePosItem(index) {
       window.pledgePosManager.removeItem(index);
       renderItemsTable();
-      updateTotalsDisplay();
+      updateTotalsDisplay(null, true);
     }
 
-    function updateTotalsDisplay(approvedOverride = null) {
-      const totals = window.pledgePosManager.getAggregateTotals(approvedOverride);
+    function updateTotalsDisplay(approvedOverride = null, forceSyncApproved = false) {
+      const appraiserFeeVal = document.getElementById('posAppraiserFeeInput').value;
+      const otherFeeVal = document.getElementById('posOtherFeeInput').value;
+      const feeMode = document.getElementById('posFeeModeSelect').value;
+      const ltvPercent = parseFloat(localStorage.getItem('as_jewellar_ltv_percent')) || 75;
+      const interestRateInput = document.getElementById('posInterestRate');
+      const monthlyRate = parseFloat(interestRateInput ? interestRateInput.value : '1.0') || 1.0;
+      window.pledgePosManager.monthlyInterestRate = monthlyRate;
 
-      document.getElementById('sumNetWeight').textContent = `${totals.totalNetWeight.toFixed(3)} g`;
-      document.getElementById('sumMarketValue').textContent = `₹ ${totals.totalEstimatedValue.toLocaleString('en-IN')}`;
-      document.getElementById('sumEligibleLoan').textContent = `₹ ${totals.totalEligibleLoan.toLocaleString('en-IN')}`;
+      document.getElementById('posLtvBadge').textContent = `${ltvPercent}% LTV`;
+      document.getElementById('posLtvLabel').textContent = `${ltvPercent}%`;
+
+      const totals = window.pledgePosManager.getAggregateTotals({
+        appraiserFeeOverride: appraiserFeeVal,
+        otherFeeOverride: otherFeeVal,
+        feeDeductionMode: feeMode,
+        ltvPercent,
+        approvedLoanOverride: approvedOverride,
+        monthlyInterestRate: monthlyRate
+      });
+
+      const grossEstimatedValue = totals.grossEstimatedValue || totals.totalEstimatedValue || 0;
+      const totalFees = totals.totalFees || totals.lessFees || 0;
+      const grossEligibleValue = totals.grossEligibleValue || grossEstimatedValue;
+      const netEligibleValue = totals.netEligibleValue !== undefined ? totals.netEligibleValue : Math.max(0, grossEligibleValue - totalFees);
+      const eligibleLoan = totals.eligibleLoan || totals.maxLoan || Math.round(netEligibleValue * (ltvPercent / 100));
+
+      document.getElementById('sumGrossWeight').textContent = `${(totals.totalGrossWeight || 0).toFixed(3)} g`;
+      document.getElementById('sumStoneWeight').textContent = `${(totals.totalStoneWeight || 0).toFixed(3)} g`;
+      document.getElementById('sumNetWeight').textContent = `${(totals.totalNetWeight || 0).toFixed(3)} g`;
+      
+      document.getElementById('sumMarketValue').textContent = `₹ ${grossEstimatedValue.toLocaleString('en-IN')}`;
+      document.getElementById('posGrossEligibleVal').textContent = `₹ ${grossEligibleValue.toLocaleString('en-IN')}`;
+      document.getElementById('posLessFeesVal').textContent = `₹ ${totalFees.toLocaleString('en-IN')}`;
+      document.getElementById('posNetEligibleVal').textContent = `₹ ${netEligibleValue.toLocaleString('en-IN')}`;
+      document.getElementById('sumEligibleLoan').textContent = `₹ ${eligibleLoan.toLocaleString('en-IN')}`;
       
       const approvedInput = document.getElementById('posApprovedLoan');
-      if (approvedOverride === null) {
-        approvedInput.value = totals.totalEligibleLoan;
+      const hasExplicitPositiveOverride = (approvedOverride !== null && approvedOverride !== undefined && String(approvedOverride).trim() !== '' && parseFloat(approvedOverride) > 0);
+
+      if (forceSyncApproved || approvedOverride === null || !approvedInput.value || parseFloat(approvedInput.value) <= 0) {
+        approvedInput.value = eligibleLoan || 0;
       }
 
-      const intAmt = Math.round((totals.approvedLoan * totals.monthlyInterestRate) / 100);
+      const activeApproved = hasExplicitPositiveOverride
+        ? parseFloat(approvedOverride)
+        : (parseFloat(approvedInput.value) || totals.approvedLoan || eligibleLoan || 0);
+
+      let netDisbursed = activeApproved;
+      if (totals.feeDeductionMode === 'DEDUCT_FROM_DISBURSEMENT') {
+        netDisbursed = Math.max(0, activeApproved - totalFees);
+      }
+      document.getElementById('posNetDisbursedCash').textContent = `₹ ${netDisbursed.toLocaleString('en-IN')}`;
+
+      const explanationEl = document.getElementById('posFeeHandlingExplanation');
+      if (totals.feeDeductionMode === 'DEDUCT_FROM_DISBURSEMENT') {
+        explanationEl.textContent = `* Total Fees (₹${totalFees.toLocaleString('en-IN')}) will be deducted from loan handed/transferred to borrower.`;
+      } else {
+        explanationEl.textContent = `* Total Fees (₹${totalFees.toLocaleString('en-IN')}) will be collected separately at counter.`;
+      }
+
+      const intAmt = Math.round((activeApproved * monthlyRate) / 100);
       document.getElementById('posInterestAmount').value = `₹ ${intAmt.toLocaleString('en-IN')}`;
 
-      // Sticky Bar
-      document.getElementById('stickyNetWeight').textContent = `${totals.totalNetWeight.toFixed(3)} g`;
-      document.getElementById('stickyLoanAmount').textContent = `₹ ${totals.approvedLoan.toLocaleString('en-IN')}`;
+      // Sticky Bar & Mode Display
+      document.getElementById('stickyNetWeight').textContent = `${(totals.totalNetWeight || 0).toFixed(3)} g`;
+      document.getElementById('stickyLoanAmount').textContent = `₹ ${activeApproved.toLocaleString('en-IN')}`;
+      document.getElementById('stickyNetDisbursed').textContent = `₹ ${netDisbursed.toLocaleString('en-IN')}`;
       document.getElementById('stickyMonthlyInt').textContent = `₹ ${intAmt.toLocaleString('en-IN')} / mo`;
+
+      handleDisbursementModeChange();
     }
 
     async function handlePosSubmit() {
@@ -923,9 +1361,34 @@
         return;
       }
 
+      const appraiserFeeVal = document.getElementById('posAppraiserFeeInput').value;
+      const otherFeeVal = document.getElementById('posOtherFeeInput').value;
+      const feeMode = document.getElementById('posFeeModeSelect').value;
       const approvedLoan = parseFloat(document.getElementById('posApprovedLoan').value) || 0;
       const allowLtvOverride = document.getElementById('posAllowLtvOverride').checked;
-      const totals = window.pledgePosManager.getAggregateTotals(approvedLoan);
+      const ltvPercent = parseFloat(localStorage.getItem('as_jewellar_ltv_percent')) || 75;
+
+      const disbursementMode = document.getElementById('posDisbursementModeSelect').value || 'CASH';
+      const disbursementRefNo = document.getElementById('posDisbursementRefInput').value.trim();
+
+      // Client validation for disbursement mode rules
+      const methodMeta = (window.PaymentMethodManager && typeof window.PaymentMethodManager.getMethod === 'function')
+        ? window.PaymentMethodManager.getMethod(disbursementMode)
+        : null;
+
+      if (methodMeta && methodMeta.refRule === 'REQUIRED' && !disbursementRefNo) {
+        UI.showToast(`Reference / UTR number is required for ${methodMeta.labelEn || methodMeta.nameEn || disbursementMode}`, 'error');
+        document.getElementById('posDisbursementRefInput').focus();
+        return;
+      }
+
+      const totals = window.pledgePosManager.getAggregateTotals({
+        appraiserFeeOverride: appraiserFeeVal,
+        otherFeeOverride: otherFeeVal,
+        feeDeductionMode: feeMode,
+        ltvPercent,
+        approvedLoanOverride: approvedLoan
+      });
 
       const mainBtn = document.getElementById('posMainSubmitBtn');
       const stickyBtn = document.getElementById('stickySubmitBtn');
@@ -943,14 +1406,33 @@
         rateGold24k: activeRatesSnapshot.gold24k,
         rateGold22k: activeRatesSnapshot.gold22k,
         rateSilver: activeRatesSnapshot.silver,
-        totalEstimatedValue: totals.totalEstimatedValue,
-        totalEligibleLoan: totals.totalEligibleLoan,
+        
+        grossValue: totals.grossValue,
+        totalEstimatedValue: totals.grossValue,
+        appraiserFee: totals.appraiserFee,
+        otherFees: totals.otherFees,
+        totalFees: totals.totalFees,
+        grossEligibleValue: totals.grossEligibleValue,
+        netEligibleValue: totals.netEligibleValue,
+        loanPercentage: totals.loanPercentage,
+        eligibleLoan: totals.eligibleLoan,
+        totalEligibleLoan: totals.eligibleLoan,
+        approvedLoan: approvedLoan,
         loanAmount: approvedLoan,
+        disbursementMode: disbursementMode,
+        disbursementRefNo: disbursementRefNo,
+        feeDeductionMode: totals.feeDeductionMode,
+        netDisbursementAmount: totals.netDisbursementAmount,
+
         monthlyInterestRate: totals.monthlyInterestRate,
         monthlyInterestAmount: totals.monthlyInterestAmount,
         vaultLocation: document.getElementById('posVaultLocation').value,
-        packetId: document.getElementById('posPacketId').value,
-        lockerTray: document.getElementById('posLockerTray').value,
+        locker: document.getElementById('posLocker').value,
+        tray: document.getElementById('posTray').value,
+        lockerTray: `${document.getElementById('posLocker').value} • ${document.getElementById('posTray').value}`,
+        packetId: (document.getElementById('posPacketId').value || '').trim(),
+        locationNote: (document.getElementById('posLocationNote') ? document.getElementById('posLocationNote').value.trim() : '') || 'Standard pouch',
+        itemPhotos: [...posItemPhotos],
         allowLtvOverride
       };
 
@@ -961,15 +1443,22 @@
         stickyBtn.textContent = 'Ticket Generated!';
         UI.showToast(`Pawn Ticket ${res.ticketNo} generated successfully!`, 'success');
 
-        // Render printable ticket in modal
-        const ticketHtml = window.pledgePosManager.generatePawnTicketHtml(res.pledge, cust);
-        document.getElementById('pawnTicketContainer').innerHTML = ticketHtml;
+        // Store active generated pledge and customer for modal
+        activeGeneratedPledge = res.pledge;
+        activeGeneratedCustomer = cust;
+        activePosTicketFormat = 'A4';
+        activePosTicketLanguage = 'BILINGUAL';
+
+        renderPosTicketModal(false);
         UI.openModal('pawnTicketModal');
 
         // Reset POS Form
         window.pledgePosManager.resetPos();
+        posItemPhotos = [];
+        renderPosItemPhotos();
+        document.getElementById('posDisbursementRefInput').value = '';
         renderItemsTable();
-        updateTotalsDisplay();
+        updateTotalsDisplay(null, true);
       } else {
         UI.showToast(res.message, 'error');
         mainBtn.disabled = false;
@@ -977,6 +1466,164 @@
         mainBtn.textContent = 'Approve & Issue Pawn Ticket';
         stickyBtn.textContent = 'Approve & Issue Pawn Ticket →';
       }
+    }
+
+    let activeGeneratedPledge = null;
+    let activeGeneratedCustomer = null;
+    let activePosTicketFormat = 'A4';
+    let activePosTicketLanguage = 'BILINGUAL';
+
+    // Item Photos State & WebRTC Handlers
+    let posItemPhotos = [];
+    let posItemCamStream = null;
+    let posItemCamFacing = 'environment';
+
+    function renderPosItemPhotos() {
+      const container = document.getElementById('posItemPhotosContainer');
+      const countBadge = document.getElementById('posPhotoCountBadge');
+      if (!container) return;
+
+      countBadge.textContent = `${posItemPhotos.length} Photo${posItemPhotos.length === 1 ? '' : 's'}`;
+
+      if (posItemPhotos.length === 0) {
+        container.innerHTML = `<span style="font-size:12px; color:var(--slate-400); padding:var(--space-2);" id="posNoPhotosPlaceholder">No item photographs attached yet. Click Camera or Upload above.</span>`;
+        return;
+      }
+
+      container.innerHTML = posItemPhotos.map((photoUrl, idx) => `
+        <div style="position:relative; width:72px; height:72px; border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border-subtle); box-shadow:var(--shadow-sm); background:#000;">
+          <img src="${photoUrl}" style="width:100%; height:100%; object-fit:cover;" alt="Item Photo ${idx + 1}" />
+          <button type="button" onclick="removePosItemPhoto(${idx})" style="position:absolute; top:2px; right:2px; background:rgba(220,38,38,0.85); color:#FFF; border:none; border-radius:50%; width:18px; height:18px; font-size:11px; cursor:pointer; display:flex; align-items:center; justify-content:center;" title="Remove Photo">&times;</button>
+        </div>
+      `).join('');
+    }
+
+    function removePosItemPhoto(index) {
+      posItemPhotos.splice(index, 1);
+      renderPosItemPhotos();
+    }
+
+    async function openPosItemCameraModal() {
+      UI.openModal('posItemPhotoCameraModal');
+      const video = document.getElementById('posItemCamVideo');
+      try {
+        if (posItemCamStream) {
+          posItemCamStream.getTracks().forEach(t => t.stop());
+        }
+        posItemCamStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: posItemCamFacing, width: { ideal: 1280 }, height: { ideal: 720 } },
+          audio: false
+        });
+        video.srcObject = posItemCamStream;
+        video.play();
+      } catch (err) {
+        console.warn('Camera stream notice:', err);
+        UI.showToast('Camera not available. You can use Upload Image button instead.', 'warning');
+      }
+    }
+
+    function closePosItemCameraModal() {
+      if (posItemCamStream) {
+        posItemCamStream.getTracks().forEach(t => t.stop());
+        posItemCamStream = null;
+      }
+      UI.closeModal('posItemPhotoCameraModal');
+    }
+
+    function togglePosItemCameraFacing() {
+      posItemCamFacing = posItemCamFacing === 'environment' ? 'user' : 'environment';
+      openPosItemCameraModal();
+    }
+
+    function snapPosItemPhoto() {
+      const video = document.getElementById('posItemCamVideo');
+      const canvas = document.getElementById('posItemCamCanvas');
+      if (!video || !canvas) return;
+
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Watermark with timestamp
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+      ctx.fillRect(0, canvas.height - 24, canvas.width, 24);
+      ctx.fillStyle = '#FFD700';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText(`AS JEWELLAR • ${new Date().toLocaleString('en-IN')}`, 8, canvas.height - 8);
+
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      posItemPhotos.push(dataUrl);
+      renderPosItemPhotos();
+      closePosItemCameraModal();
+      UI.showToast('Item photo captured ✓', 'success');
+    }
+
+    function handlePosItemPhotoUpload(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        posItemPhotos.push(e.target.result);
+        renderPosItemPhotos();
+        UI.showToast('Item photo attached ✓', 'success');
+      };
+      reader.readAsDataURL(file);
+      event.target.value = '';
+    }
+
+    function renderPosTicketModal(isReprint = false) {
+      if (!activeGeneratedPledge || !window.billingManager) return;
+      const html = window.billingManager.renderPawnTicket(
+        activeGeneratedPledge,
+        activeGeneratedCustomer,
+        activePosTicketFormat,
+        isReprint,
+        activePosTicketLanguage
+      );
+      document.getElementById('pawnTicketContainer').innerHTML = html;
+    }
+
+    function switchPosTicketFormat(format) {
+      activePosTicketFormat = format;
+      document.getElementById('posTabFormatA4Btn').classList.toggle('active', format === 'A4');
+      document.getElementById('posTabFormatThermalBtn').classList.toggle('active', format === 'THERMAL');
+      renderPosTicketModal(false);
+    }
+
+    function switchPosTicketLanguage(lang) {
+      activePosTicketLanguage = lang;
+      document.getElementById('posLangBilingualBtn').classList.toggle('active', lang === 'BILINGUAL');
+      document.getElementById('posLangEnBtn').classList.toggle('active', lang === 'EN');
+      document.getElementById('posLangTaBtn').classList.toggle('active', lang === 'TA');
+      renderPosTicketModal(false);
+    }
+
+    function handlePosReprintDoc() {
+      if (activeGeneratedPledge) {
+        renderPosTicketModal(true);
+        UI.showToast('Reprint generated and audit logged ✓', 'info');
+      }
+    }
+
+    async function handlePosCopyDetails() {
+      if (!activeGeneratedPledge) return;
+      const res = await window.billingManager.copyReceiptDetails('PAWN_TICKET', activeGeneratedPledge, activeGeneratedCustomer);
+      if (res.success) {
+        UI.showToast('Ticket summary copied to clipboard ✓', 'success');
+      }
+    }
+
+    function handlePosWhatsAppShare() {
+      if (!activeGeneratedPledge) return;
+      window.billingManager.openWhatsAppShare('PAWN_TICKET', activeGeneratedPledge, activeGeneratedCustomer);
+      UI.showToast('Opening WhatsApp with ticket summary...', 'info');
+    }
+
+    async function handlePosWebShare() {
+      if (!activeGeneratedPledge) return;
+      await window.billingManager.shareReceipt('PAWN_TICKET', activeGeneratedPledge, activeGeneratedCustomer);
     }
   </script>
 </body>

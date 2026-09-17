@@ -68,6 +68,10 @@ class AuthService {
     return true;
   }
 
+  getToken() {
+    return this.token || localStorage.getItem(AUTH_TOKEN_KEY) || '';
+  }
+
   getUser() {
     return this.user;
   }
@@ -85,21 +89,26 @@ class AuthService {
     }
 
     // Check if backend API URL is configured
-    const apiUrl = localStorage.getItem('as_jewellar_api_url');
+    const DEFAULT_API_ENDPOINT = 'https://script.google.com/macros/s/AKfycbw6fWoHIhQxVRHEoTVwoMIe5pPA8B17ClwYL4lpJl1oB8kOXHHrF-snXRICsgZbGOJu/exec';
+    const apiUrl = (typeof window !== 'undefined' && window.api && window.api.endpoint) 
+      || localStorage.getItem('as_jewellar_api_endpoint') 
+      || localStorage.getItem('as_jewellar_api_url') 
+      || DEFAULT_API_ENDPOINT;
     
     if (apiUrl) {
       try {
         const response = await fetch(`${apiUrl}?action=login`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'login', data: { username, password } }),
+          redirect: 'follow'
         });
         const resData = await response.json();
         if (resData.success && resData.data) {
           this.resetFailedLogins();
-          this.setSession(resData.data.token, resData.data.user);
-          return { success: true, user: resData.data.user };
-        } else {
+          this.setSession(resData.data.token, resData.data.user || resData.data);
+          return { success: true, user: resData.data.user || resData.data };
+        } else if (resData.message && !resData.message.includes('Script error')) {
           this.recordFailedLogin();
           return { success: false, message: resData.message || 'Invalid credentials' };
         }
@@ -114,11 +123,25 @@ class AuthService {
 
     const normalizedUser = username.trim();
     const isMatchingUser = (normalizedUser === adminUser || normalizedUser.toLowerCase() === 'arockiasamy c' || normalizedUser.toLowerCase() === 'admin');
-    const isMatchingPass = (password === adminPass || password === 'AS@2026' || password === 'password123');
+    const isMatchingPass = (password === adminPass || password === 'AS@2026');
 
     if (isMatchingUser && isMatchingPass) {
       this.resetFailedLogins();
-      const mockToken = 'JWT_ADMIN_' + Math.random().toString(36).substring(2) + Date.now();
+      // Generate standard base64 payload token for full Sheets compatibility
+      const tokenPayload = {
+        u: normalizedUser,
+        r: 'ADMIN',
+        exp: Date.now() + (24 * 60 * 60 * 1000),
+        rnd: Math.random().toString(36).substring(2, 8)
+      };
+      let mockToken = '';
+      try {
+        mockToken = (typeof btoa !== 'undefined') 
+          ? btoa(JSON.stringify(tokenPayload)) 
+          : Buffer.from(JSON.stringify(tokenPayload)).toString('base64');
+      } catch (e) {
+        mockToken = 'JWT_ADMIN_' + Math.random().toString(36).substring(2) + Date.now();
+      }
       const mockUser = {
         userId: 'USR-2026-000001',
         username: normalizedUser,
@@ -147,14 +170,32 @@ class AuthService {
     this.user = { ...user, loginTime: Date.now() };
     localStorage.setItem(AUTH_TOKEN_KEY, token);
     localStorage.setItem(AUTH_USER_KEY, JSON.stringify(this.user));
+
+    if (window.auditLogger) {
+      window.auditLogger.log('LOGIN', 'AUTH', user ? user.username : 'ADMIN', {
+        role: user ? user.role : 'ADMIN',
+        loginTime: new Date().toISOString()
+      });
+    }
   }
 
   logout() {
+    const user = this.user;
+    if (window.auditLogger && user) {
+      window.auditLogger.log('LOGOUT', 'AUTH', user.username, {
+        role: user.role,
+        logoutTime: new Date().toISOString()
+      });
+    }
     this.token = null;
     this.user = null;
     localStorage.removeItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_USER_KEY);
     window.location.href = 'login.html';
+  }
+
+  isAdmin() {
+    return Boolean(this.user && (this.user.role === 'ADMIN' || this.user.role === 'DIRECTOR'));
   }
 
   requireAuth() {
@@ -164,6 +205,19 @@ class AuthService {
     } else if (this.isAuthenticated() && isLoginPage) {
       window.location.href = 'dashboard.html';
     }
+  }
+
+  requireAdmin() {
+    if (!this.isAuthenticated()) {
+      window.location.href = 'login.html';
+      return false;
+    }
+    if (!this.isAdmin()) {
+      alert('Access Denied: Administrator privileges required for this section.');
+      window.location.href = 'dashboard.html';
+      return false;
+    }
+    return true;
   }
 }
 

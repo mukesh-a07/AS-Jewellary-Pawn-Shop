@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Admin Login &bull; AS Jewellar Pawn Shop</title>
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -19,27 +22,28 @@
       align-items: center;
       justify-content: center;
       padding: var(--space-4);
-      background: radial-gradient(circle at 50% 20%, #FFFDF9 0%, #F1F5F9 100%);
+      background: radial-gradient(circle at 50% 20%, #1E293B 0%, #0F172A 100%);
     }
     .login-card {
       width: 100%;
       max-width: 420px;
       background: #FFFFFF;
-      border: 1px solid var(--border-subtle);
+      border: 1px solid rgba(212, 175, 55, 0.3);
       border-radius: var(--radius-xl);
-      box-shadow: var(--shadow-lg);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5);
       overflow: hidden;
     }
     .login-header {
-      background: linear-gradient(180deg, var(--slate-900) 0%, #1E293B 100%);
+      background: linear-gradient(180deg, #090D16 0%, #111827 100%);
       padding: var(--space-6) var(--space-6) var(--space-5);
       text-align: center;
       color: #FFFFFF;
+      border-bottom: 2px solid #D4AF37;
     }
     .login-brand-logo {
       display: flex;
       justify-content: center;
-      margin-bottom: var(--space-3);
+      margin-bottom: var(--space-2);
     }
   </style>
 </head>
@@ -57,17 +61,12 @@
     <div class="login-card">
       <div class="login-header">
         <div class="login-brand-logo">
-          <svg width="60" height="60" viewBox="0 0 80 80" fill="none">
-            <rect x="0" y="0" width="80" height="80" rx="16" fill="#0F172A" />
-            <path d="M40 16 L62 32 L40 68 L18 32 Z" fill="none" stroke="#D4AF37" stroke-width="4" stroke-linejoin="round" />
-            <path d="M18 32 L62 32" stroke="#D4AF37" stroke-width="3" />
-            <path d="M40 16 L40 68" stroke="#D4AF37" stroke-width="3" />
-            <circle cx="40" cy="42" r="8" fill="#D4AF37" />
-          </svg>
+          <img src="assets/branding/as-jewellar-mark.svg" alt="AS Pawn Shop" style="width:72px; height:72px; object-fit:contain; filter:drop-shadow(0 4px 6px rgba(0,0,0,0.4));" />
         </div>
-        <h2 style="font-size:var(--font-size-lg); font-weight:800; color:#FFFFFF; letter-spacing:0.5px;" data-i18n="shop_name">AS JEWELLAR</h2>
-        <p style="font-size:11px; color:var(--gold-400); font-weight:700; letter-spacing:1px; margin-top:2px;">PAWN SHOP &bull; அடகு கடை</p>
-        <div style="font-size:var(--font-size-xs); color:var(--slate-400); margin-top:4px;" data-i18n="admin_portal">Admin Portal (நிர்வாக தளம்)</div>
+        <h2 style="font-size:22px; font-weight:900; color:#FFFFFF; letter-spacing:1.5px; font-family:'Cinzel', serif;" data-i18n="shop_name">AS PAWN SHOP</h2>
+        <p style="font-size:11.5px; color:#F3E7C4; font-weight:700; letter-spacing:1.5px; margin-top:2px;">AS JEWELLAR &bull; அடகு கடை</p>
+        <div style="font-size:9.5px; color:#94A3B8; font-weight:600; letter-spacing:2px; margin-top:4px;">SERVICE &bull; VALUE &bull; TRUST</div>
+        <div style="font-size:var(--font-size-xs); color:#CBD5E1; margin-top:6px;" data-i18n="admin_portal">Admin Portal (நிர்வாக தளம்)</div>
       </div>
 
       <div class="card-body" style="padding:var(--space-6);">
@@ -77,7 +76,7 @@
               <span>Admin Username</span>
               <span class="required">*</span>
             </label>
-            <input type="text" id="username" class="form-input" placeholder="Arockiasamy C" value="Arockiasamy C" required autofocus />
+            <input type="text" id="username" class="form-input" placeholder="Enter Admin Username" value="" required autofocus />
           </div>
 
           <div class="form-group">
@@ -85,8 +84,7 @@
               <span>Password</span>
               <span class="required">*</span>
             </label>
-            <input type="password" id="password" class="form-input" placeholder="••••••••" value="AS@2026" required />
-            
+            <input type="password" id="password" class="form-input" placeholder="Enter Password" value="" required />
           </div>
 
           <div id="loginError" class="alert alert-danger" style="display:none; margin-top:var(--space-3); padding:var(--space-2) var(--space-3);">

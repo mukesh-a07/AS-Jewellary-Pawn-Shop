@@ -18,8 +18,14 @@ class ApiClient {
     localStorage.setItem('as_jewellar_api_endpoint', url);
   }
 
+  isConfigured() {
+    return Boolean(this.endpoint && (this.endpoint.startsWith('https://script.google.com/macros/s/') || this.endpoint.startsWith('http')));
+  }
+
   async get(action, params = {}) {
-    const token = window.auth ? window.auth.getToken() : null;
+    const token = (typeof window !== 'undefined' && window.auth && typeof window.auth.getToken === 'function')
+      ? window.auth.getToken()
+      : ((typeof window !== 'undefined' && window.auth && window.auth.token) || localStorage.getItem('as_jewellar_token') || '');
     const query = new URLSearchParams({
       action,
       token: token || '',
@@ -57,7 +63,9 @@ class ApiClient {
   }
 
   async post(action, payload = {}) {
-    const token = window.auth ? window.auth.getToken() : null;
+    const token = (typeof window !== 'undefined' && window.auth && typeof window.auth.getToken === 'function')
+      ? window.auth.getToken()
+      : ((typeof window !== 'undefined' && window.auth && window.auth.token) || localStorage.getItem('as_jewellar_token') || '');
     const deviceId = (window.offlineQueue && window.offlineQueue.deviceId) || 'DEVICE-COUNTER-01';
     const idempotencyKey = `IDEMP-${action}-${Date.now()}-${Math.random().toString(36).substr(2, 6).toUpperCase()}`;
 
@@ -73,14 +81,22 @@ class ApiClient {
     // If offline, enqueue directly into IndexedDB queue
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       if (window.offlineQueue) {
-        const queuedItem = await window.offlineQueue.enqueueTransaction(action, payload);
+        const queuedItem = await window.offlineQueue.enqueueTransaction(action, payload, idempotencyKey);
         return {
           success: true,
           offlineQueued: true,
+          syncStatus: 'PENDING',
+          localTxId: queuedItem ? queuedItem.localTxId : null,
+          idempotencyKey,
           queuedItem,
-          message: 'Saved locally in Offline Queue (Status: PENDING)'
+          message: 'Saved locally in Offline Queue (Status: PENDING - Awaiting Cloud Sync)'
         };
       }
+      return {
+        success: false,
+        offline: true,
+        message: 'Application is offline. Transaction queued locally.'
+      };
     }
 
     try {
@@ -90,11 +106,10 @@ class ApiClient {
       const response = await fetch(this.endpoint, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Idempotency-Key': idempotencyKey,
-          'X-Device-ID': deviceId
+          'Content-Type': 'text/plain;charset=utf-8'
         },
         body: JSON.stringify(body),
+        redirect: 'follow',
         signal: controller.signal
       });
 
@@ -109,12 +124,15 @@ class ApiClient {
       console.warn(`API POST [${action}] failed over network. Enqueueing into Offline Queue:`, err.message);
 
       if (window.offlineQueue) {
-        const queuedItem = await window.offlineQueue.enqueueTransaction(action, payload);
+        const queuedItem = await window.offlineQueue.enqueueTransaction(action, payload, idempotencyKey);
         return {
           success: true,
           offlineQueued: true,
+          syncStatus: 'PENDING',
+          localTxId: queuedItem ? queuedItem.localTxId : null,
+          idempotencyKey,
           queuedItem,
-          message: 'Network disruption. Saved locally in Offline Queue (Status: PENDING).'
+          message: 'Network disruption. Saved locally in Offline Queue (Status: PENDING - Awaiting Cloud Sync)'
         };
       }
 
@@ -124,4 +142,13 @@ class ApiClient {
 }
 
 // Global ApiClient Instance
-window.api = new ApiClient();
+if (typeof window !== 'undefined') {
+  window.api = new ApiClient();
+  window.ApiClient = ApiClient;
+}
+if (typeof global !== 'undefined') {
+  global.ApiClient = ApiClient;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { ApiClient };
+}

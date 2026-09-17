@@ -4,7 +4,7 @@
  * Provides Cache-First offline shell and Network-First dynamic asset strategies.
  */
 
-const CACHE_NAME = 'as-jewellar-v5';
+const CACHE_NAME = 'as-jewellar-v9';
 
 const PRECACHE_ASSETS = [
   './',
@@ -23,8 +23,13 @@ const PRECACHE_ASSETS = [
   './rates.html',
   './reports.html',
   './documents.html',
+  './data-health.html',
   './settings.html',
   './manifest.json',
+  './favicon.ico',
+  './favicon-16x16.png',
+  './favicon-32x32.png',
+  './apple-touch-icon.png',
   './css/base.css',
   './css/layout.css',
   './css/components.css',
@@ -34,6 +39,7 @@ const PRECACHE_ASSETS = [
   './js/offline.js',
   './js/api.js',
   './js/validation.js',
+  './js/financialCalculator.js',
   './js/ui.js',
   './js/customers.js',
   './js/documents.js',
@@ -47,11 +53,24 @@ const PRECACHE_ASSETS = [
   './js/vault.js',
   './js/cash.js',
   './js/reports.js',
+  './js/audit.js',
+  './js/dataHealth.js',
   './js/app.js',
+  './assets/branding/as-jewellar-logo.svg',
+  './assets/branding/as-jewellar-logo-horizontal.svg',
+  './assets/branding/as-jewellar-mark.svg',
+  './assets/branding/as-jewellar-logo-white.svg',
+  './assets/logo/logo.png',
+  './assets/logo/Seal.png',
   './assets/logo/logo.svg',
   './assets/icons/favicon.svg',
+  './assets/icons/favicon-16x16.png',
+  './assets/icons/favicon-32x32.png',
+  './assets/icons/apple-touch-icon.png',
   './assets/icons/icon-192.svg',
-  './assets/icons/icon-512.svg'
+  './assets/icons/icon-512.svg',
+  './assets/icons/icon-192x192.png',
+  './assets/icons/icon-512x512.png'
 ];
 
 // 1. Install Event - Pre-cache Application Shell

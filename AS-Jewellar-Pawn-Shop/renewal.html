@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Pledge Renewal &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -68,15 +71,15 @@
           <div style="display:flex; flex-direction:column; gap:var(--space-4);">
             
             <!-- 1. Search Ticket -->
-            <div class="card" style="border-top:3px solid var(--gold-500);">
+            <div class="card" style="border-top:3px solid var(--gold-500); position:relative; z-index:40; overflow:visible !important;">
               <div class="card-header">
                 <h3 class="card-title">1. Select Pledge to Renew (அடகு சீட்டு தேர்வு)</h3>
               </div>
-              <div class="card-body">
-                <div class="search-box" style="margin-bottom:var(--space-3);">
+              <div class="card-body" style="position:relative; overflow:visible !important;">
+                <div class="search-box" style="margin-bottom:var(--space-3); position:relative;">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                   <input type="text" id="renTicketSearch" class="form-input" placeholder="Type Ticket No (e.g. PLG-2026-002341), Mobile, or Customer Name..." autocomplete="off" />
-                  <div id="renTicketSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0; background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); box-shadow:var(--shadow-lg); z-index:50; max-height:220px; overflow-y:auto;">
+                  <div id="renTicketSuggestions" class="suggestions-dropdown" style="display:none;">
                     <!-- Auto-complete -->
                   </div>
                 </div>
@@ -111,28 +114,58 @@
                     <label class="form-label" style="font-weight:800;" data-i18n="interest_to_settle">Accrued Interest to Settle (₹) *</label>
                     <div class="input-group">
                       <span class="input-addon">₹</span>
-                      <input type="number" id="renInterestInput" class="form-input" style="font-size:16px; font-weight:800; color:var(--gold-900);" />
+                      <input type="number" id="renInterestInput" class="form-input" style="font-size:16px; font-weight:800; color:var(--gold-900);" oninput="updateRenewalCalculations()" />
                     </div>
                   </div>
 
                   <div class="form-group" style="margin:0;">
-                    <label class="form-label">Payment Mode for Interest</label>
-                    <select id="renPaymentMode" class="form-select">
-                      <option value="CASH" selected>Cash (ரொக்கம்)</option>
-                      <option value="UPI">UPI (GPay / PhonePe / Paytm)</option>
-                      <option value="BANK_TRANSFER">Bank Transfer</option>
+                    <label class="form-label" data-i18n="payment_type">Payment Mode for Settlement *</label>
+                    <select id="renPaymentMode" class="form-select" onchange="updateRenewalRuleHints()">
+                      <!-- Populated dynamically via PaymentMethodManager -->
                     </select>
                   </div>
 
                 </div>
 
                 <div class="grid-2" style="margin-bottom:var(--space-4);">
-                  
                   <div class="form-group" style="margin:0;">
-                    <label class="form-label" style="font-weight:800;" data-i18n="new_loan_principal">New Loan Principal (₹) *</label>
+                    <label class="form-label">Appraiser / Renewal Fee (₹)</label>
                     <div class="input-group">
                       <span class="input-addon">₹</span>
-                      <input type="number" id="renNewPrincipalInput" class="form-input" style="font-size:16px; font-weight:800;" />
+                      <input type="number" id="renFeeInput" class="form-input" placeholder="0" value="0" min="0" oninput="updateRenewalCalculations()" />
+                    </div>
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Other Applicable Fee / Charges (₹)</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="renOtherFeeInput" class="form-input" placeholder="0" value="0" min="0" oninput="updateRenewalCalculations()" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="ref_no">Reference / UTR Number</label>
+                    <input type="text" id="renReferenceInput" class="form-input" placeholder="e.g. UTR / Txn ID / Cheque No" />
+                    <small id="renRefHint" class="form-hint" style="color:var(--slate-500); font-size:11px;"></small>
+                  </div>
+
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="notes">Renewal Notes / Remarks</label>
+                    <input type="text" id="renNotesInput" class="form-input" placeholder="e.g. 1 Year renewal with interest cleared" />
+                    <small id="renNotesHint" class="form-hint" style="color:var(--slate-500); font-size:11px;"></small>
+                  </div>
+                </div>
+
+                <div class="grid-2" style="margin-bottom:var(--space-4);">
+                  
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" style="font-weight:800;" data-i18n="new_loan_principal">Carried Principal / New Loan (₹) *</label>
+                    <div class="input-group">
+                      <span class="input-addon">₹</span>
+                      <input type="number" id="renNewPrincipalInput" class="form-input" style="font-size:16px; font-weight:800;" oninput="updateRenewalCalculations()" />
                     </div>
                   </div>
 
@@ -141,11 +174,6 @@
                     <input type="text" id="renNewMaturityInput" class="form-input" readonly style="background:#F1F5F9; font-weight:bold;" />
                   </div>
 
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Renewal Notes / Remarks</label>
-                  <input type="text" id="renNotesInput" class="form-input" placeholder="e.g. 1 Year renewal with interest cleared" />
                 </div>
 
                 <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:var(--space-3); margin-bottom:var(--space-4); font-size:12px; color:#1E40AF;">
@@ -182,13 +210,33 @@
                   </div>
 
                   <div style="display:flex; justify-content:space-between; font-size:13px;">
-                    <span class="text-muted">Accrued Interest Due:</span>
+                    <span class="text-muted">Accrued Interest:</span>
                     <strong style="font-size:14px; color:var(--gold-900);" id="renSideInterestDue">₹ 0</strong>
                   </div>
 
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Appraiser / Renewal Fee:</span>
+                    <strong style="font-size:13px;" id="renSideRenewalFee">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">Other Applicable Fee:</span>
+                    <strong style="font-size:13px;" id="renSideOtherFee">₹ 0</strong>
+                  </div>
+
                   <div style="background:#FEF3C7; border:1px solid #F59E0B; border-radius:var(--radius-md); padding:10px 12px; margin-top:var(--space-2); text-align:center;">
-                    <div style="font-size:11px; text-transform:uppercase; color:#92400E; font-weight:bold;">Amount to Collect at Renewal</div>
+                    <div style="font-size:11px; text-transform:uppercase; color:#92400E; font-weight:bold;">Amount Paid at Renewal</div>
                     <div style="font-size:20px; font-weight:900; color:#78350F;" id="renSideTotalCollect">₹ 0</div>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px; margin-top:var(--space-2);">
+                    <span class="text-muted">Remaining Principal Carried:</span>
+                    <strong style="color:#1E40AF; font-size:14px;" id="renSideRemainingPrincipal">₹ 0</strong>
+                  </div>
+
+                  <div style="display:flex; justify-content:space-between; font-size:13px;">
+                    <span class="text-muted">New Maturity Date:</span>
+                    <strong id="renSideNewMaturity">-</strong>
                   </div>
 
                   <div style="border-top:1px dashed var(--slate-300); padding-top:var(--space-3); margin-top:var(--space-2); font-size:12px;">
@@ -247,24 +295,53 @@
         <button class="modal-close-btn" onclick="UI.closeModal('renewalReceiptModal')">&times;</button>
       </div>
 
-      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
-        <button type="button" class="tab-btn active" id="renTabA4Btn" onclick="switchRenFormat('A4')">
-          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
-        </button>
-        <button type="button" class="tab-btn" id="renTabThermalBtn" onclick="switchRenFormat('THERMAL')">
-          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
-        </button>
+      <!-- Format & Language Controls Toolbar -->
+      <div class="doc-modal-toolbar">
+        <div class="doc-format-toggle">
+          <button type="button" class="doc-toggle-btn active" id="renTabA4Btn" onclick="switchRenFormat('A4')">
+            📄 Standard A4
+          </button>
+          <button type="button" class="doc-toggle-btn" id="renTabThermalBtn" onclick="switchRenFormat('THERMAL')">
+            🧾 80mm Thermal
+          </button>
+        </div>
+
+        <div class="doc-lang-toggle">
+          <button type="button" class="doc-toggle-btn active" id="renLangBilingualBtn" onclick="switchRenLanguage('BILINGUAL')">
+            EN + தமிழ்
+          </button>
+          <button type="button" class="doc-toggle-btn" id="renLangEnBtn" onclick="switchRenLanguage('EN')">
+            English
+          </button>
+          <button type="button" class="doc-toggle-btn" id="renLangTaBtn" onclick="switchRenLanguage('TA')">
+            தமிழ்
+          </button>
+        </div>
       </div>
 
       <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="renRenderContainer">
         <!-- Rendered dynamically via BillingManager -->
       </div>
 
-      <div class="modal-footer" style="background:#FFF;">
-        <button type="button" class="btn btn-outline" onclick="UI.closeModal('renewalReceiptModal')">Close</button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-          <span>🖨 Print Official Renewal Document</span>
-        </button>
+      <div class="modal-footer" style="background:#FFF; padding:var(--space-3) var(--space-4);">
+        <div class="doc-action-bar">
+          <button type="button" class="btn btn-outline btn-sm" onclick="UI.closeModal('renewalReceiptModal')">Close</button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handleRenCopyDetails()" title="Copy Details">
+            <span>📋 Copy Details</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handleRenWhatsAppShare()" title="Share on WhatsApp">
+            <span style="color:#16A34A; font-weight:bold;">📱 WhatsApp</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" onclick="handleRenWebShare()" title="Share Document">
+            <span>📤 Share</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" onclick="handleRenReprintDoc()">
+            <span>🔄 Reprint</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" title="Print / PDF">
+            <span>🖨 Print / PDF</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -278,10 +355,12 @@
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
   <script src="js/rates.js"></script>
+  <script src="js/financialCalculator.js"></script>
   <script src="js/pledgePos.js"></script>
   <script src="js/billing.js"></script>
   <script src="js/payments.js"></script>
   <script src="js/renewalRedemption.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
@@ -291,6 +370,7 @@
 
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pageTitleText').textContent = window.t('renewal');
+      populateRenPaymentModes();
       renderRenewalsTable();
       bindRenewalEvents();
 
@@ -304,6 +384,52 @@
         selectPledgeForRenewal(firstActive.ticketNo);
       }
     });
+
+    function populateRenPaymentModes() {
+      const select = document.getElementById('renPaymentMode');
+      if (!select) return;
+      const methods = (window.paymentMethodManager && window.paymentMethodManager.getActiveMethods()) || [
+        { code: 'CASH', labelEn: 'Cash', labelTa: 'ரொக்கம்' },
+        { code: 'UPI', labelEn: 'UPI (GPay / PhonePe / Paytm)', labelTa: 'யுபிஐ (GPay/PhonePe)' },
+        { code: 'BANK_TRANSFER', labelEn: 'Bank Transfer (NEFT/RTGS)', labelTa: 'வங்கி பரிவர்த்தனை' }
+      ];
+      select.innerHTML = methods.map(m => {
+        const lbl = (window.i18n && window.i18n.currentLang === 'ta')
+          ? `${m.labelTa || m.labelEn} (${m.labelEn})`
+          : `${m.labelEn} (${m.labelTa || m.labelEn})`;
+        return `<option value="${m.code}">${lbl}</option>`;
+      }).join('');
+      updateRenewalRuleHints();
+    }
+
+    function updateRenewalRuleHints() {
+      const mode = document.getElementById('renPaymentMode').value;
+      const method = window.paymentMethodManager ? window.paymentMethodManager.getMethod(mode) : null;
+      const refHint = document.getElementById('renRefHint');
+      const notesHint = document.getElementById('renNotesHint');
+
+      if (refHint) {
+        if (!method || method.refRule === 'OPTIONAL') {
+          refHint.textContent = 'Optional / விருப்பத்திற்குரியது';
+          refHint.style.color = 'var(--slate-500)';
+        } else if (method.refRule === 'RECOMMENDED') {
+          refHint.textContent = 'Recommended for audit tracking';
+          refHint.style.color = '#B45309';
+        } else if (method.refRule === 'REQUIRED') {
+          refHint.textContent = 'Required * / கட்டாயம்';
+          refHint.style.color = '#DC2626';
+        }
+      }
+
+      if (notesHint) {
+        if (method && method.notesRule === 'REQUIRED') {
+          notesHint.textContent = 'Mandatory note required * / குறிப்பு கட்டாயம்';
+          notesHint.style.color = '#DC2626';
+        } else {
+          notesHint.textContent = '';
+        }
+      }
+    }
 
     function selectPledgeForRenewal(ticketNo) {
       const p = window.pledgePosManager.pledges.find(item => item.ticketNo === ticketNo);
@@ -325,18 +451,38 @@
       // Calculate Accrual
       const accrual = window.paymentManager.calculateInterestAccrual(p);
 
-      document.getElementById('renSidePrincipal').textContent = `₹ ${accrual.principal.toLocaleString('en-IN')}`;
-      document.getElementById('renSideDays').textContent = `${accrual.daysElapsed} Days (${accrual.monthsElapsed} Mo)`;
-      document.getElementById('renSideInterestDue').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
-      document.getElementById('renSideTotalCollect').textContent = `₹ ${accrual.netInterestDue.toLocaleString('en-IN')}`;
-
       document.getElementById('renInterestInput').value = accrual.netInterestDue;
       document.getElementById('renNewPrincipalInput').value = accrual.principal;
+      document.getElementById('renFeeInput').value = 0;
+      document.getElementById('renOtherFeeInput').value = 0;
 
       // 12 Months New Maturity Date
       const nextYear = new Date();
       nextYear.setFullYear(nextYear.getFullYear() + 1);
-      document.getElementById('renNewMaturityInput').value = nextYear.toISOString().split('T')[0];
+      const maturityStr = nextYear.toISOString().split('T')[0];
+      document.getElementById('renNewMaturityInput').value = maturityStr;
+
+      updateRenewalCalculations();
+    }
+
+    function updateRenewalCalculations() {
+      if (!activePledgeForRenewal) return;
+
+      const accrual = window.paymentManager.calculateInterestAccrual(activePledgeForRenewal);
+      const interestAmt = parseFloat(document.getElementById('renInterestInput').value) || 0;
+      const renFee = parseFloat(document.getElementById('renFeeInput').value) || 0;
+      const othFee = parseFloat(document.getElementById('renOtherFeeInput').value) || 0;
+      const newPrincipal = parseFloat(document.getElementById('renNewPrincipalInput').value) || accrual.principal;
+      const totalToCollect = Math.round(interestAmt + renFee + othFee);
+
+      document.getElementById('renSidePrincipal').textContent = `₹ ${accrual.principal.toLocaleString('en-IN')}`;
+      document.getElementById('renSideDays').textContent = `${accrual.daysElapsed} Days (${accrual.monthsElapsed} Mo)`;
+      document.getElementById('renSideInterestDue').textContent = `₹ ${interestAmt.toLocaleString('en-IN')}`;
+      document.getElementById('renSideRenewalFee').textContent = `₹ ${renFee.toLocaleString('en-IN')}`;
+      document.getElementById('renSideOtherFee').textContent = `₹ ${othFee.toLocaleString('en-IN')}`;
+      document.getElementById('renSideTotalCollect').textContent = `₹ ${totalToCollect.toLocaleString('en-IN')}`;
+      document.getElementById('renSideRemainingPrincipal').textContent = `₹ ${newPrincipal.toLocaleString('en-IN')}`;
+      document.getElementById('renSideNewMaturity').textContent = document.getElementById('renNewMaturityInput').value || '12 Months';
     }
 
     function bindRenewalEvents() {
@@ -344,7 +490,7 @@
       const searchInput = document.getElementById('renTicketSearch');
       const suggBox = document.getElementById('renTicketSuggestions');
 
-      searchInput.addEventListener('input', () => {
+      const renderRenSuggestions = () => {
         const q = searchInput.value.toLowerCase().trim();
         if (q.length < 1) {
           suggBox.style.display = 'none';
@@ -355,27 +501,54 @@
           if (p.status === 'REDEEMED' || p.status === 'RENEWED') return false;
           const cust = window.customerManager.getCustomerById(p.customerId);
           const custName = cust ? cust.nameEn.toLowerCase() : '';
+          const custTa = cust ? (cust.nameTa || '').toLowerCase() : '';
           const custMob = cust ? cust.mobile : '';
-          return p.ticketNo.toLowerCase().includes(q) || custName.includes(q) || custMob.includes(q) || p.packetId.toLowerCase().includes(q);
+          return p.ticketNo.toLowerCase().includes(q) || custName.includes(q) || custTa.includes(q) || custMob.includes(q) || p.packetId.toLowerCase().includes(q);
         });
 
         if (matches.length === 0) {
-          suggBox.innerHTML = `<div style="padding:10px; font-size:12px; color:var(--slate-500);">No active renewable pledges found</div>`;
+          suggBox.innerHTML = `<div style="padding:14px; text-align:center; font-size:12px; color:var(--slate-500);">No active renewable pledges found</div>`;
         } else {
-          suggBox.innerHTML = matches.slice(0, 5).map(p => {
+          suggBox.innerHTML = matches.slice(0, 8).map(p => {
             const cust = window.customerManager.getCustomerById(p.customerId);
+            const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(p.customerId);
+            const photoUrl = cust && (cust.photoUrl || (photoDoc && photoDoc.previewUrl));
+            const initials = cust ? cust.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() : 'PL';
+            const avatarHtml = photoUrl
+              ? `<img src="${photoUrl}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1.5px solid var(--gold-400); flex-shrink:0;" alt="${cust ? cust.nameEn : ''}" />`
+              : `<div style="width:36px; height:36px; border-radius:50%; background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; flex-shrink:0; border:1px solid var(--gold-300);">${initials}</div>`;
+
             return `
-              <div style="padding:8px 12px; cursor:pointer; border-bottom:1px solid var(--border-subtle); display:flex; justify-content:space-between; align-items:center;" onclick="selectPledgeForRenewal('${p.ticketNo}')">
-                <div>
-                  <strong>${p.ticketNo}</strong> &bull; <span style="font-size:12px; color:var(--slate-700);">${cust ? cust.nameEn : p.customerId}</span>
-                  <div style="font-size:11px; color:var(--slate-500);">Principal: ₹${Number(p.loanAmount).toLocaleString('en-IN')} &bull; Status: ${p.status}</div>
+              <div class="cust-suggestion-item" onclick="selectPledgeForRenewal('${p.ticketNo}')">
+                <div style="display:flex; align-items:center; gap:12px;">
+                  ${avatarHtml}
+                  <div>
+                    <div style="font-weight:700; font-size:13.5px; color:var(--slate-900);">
+                      <span class="cell-mono" style="color:var(--primary-main); font-weight:800;">${p.ticketNo}</span> &bull; ${cust ? cust.nameEn : p.customerId} ${cust && cust.nameTa ? `<span style="color:var(--gold-700); font-size:12px;">(${cust.nameTa})</span>` : ''}
+                    </div>
+                    <div style="font-size:11.5px; color:var(--slate-500); margin-top:2px;">
+                      📞 ${cust ? cust.mobile : '-'} &bull; Principal: <strong>₹${Number(p.loanAmount).toLocaleString('en-IN')}</strong> &bull; Status: <span class="badge badge-gold" style="font-size:10px;">${p.status}</span>
+                    </div>
+                  </div>
                 </div>
-                <span class="badge badge-outline">Select &rarr;</span>
+                <button type="button" class="btn btn-outline btn-sm" style="border-color:var(--gold-500); color:var(--gold-800); background:var(--gold-50); font-weight:700; pointer-events:none;">Select &rarr;</button>
               </div>
             `;
           }).join('');
         }
         suggBox.style.display = 'block';
+      };
+
+      searchInput.addEventListener('input', renderRenSuggestions);
+      searchInput.addEventListener('focus', () => {
+        if (searchInput.value.trim().length >= 1) renderRenSuggestions();
+      });
+
+      // Close search results on click outside
+      document.addEventListener('click', (e) => {
+        if (!searchInput.contains(e.target) && !suggBox.contains(e.target)) {
+          suggBox.style.display = 'none';
+        }
       });
 
       // Change Ticket
@@ -398,9 +571,23 @@
       }
 
       const interestAmt = parseFloat(document.getElementById('renInterestInput').value) || 0;
+      const renFee = parseFloat(document.getElementById('renFeeInput').value) || 0;
+      const othFee = parseFloat(document.getElementById('renOtherFeeInput').value) || 0;
+      const totalToPay = Math.round(interestAmt + renFee + othFee);
       const newPrincipal = parseFloat(document.getElementById('renNewPrincipalInput').value) || activePledgeForRenewal.loanAmount;
       const mode = document.getElementById('renPaymentMode').value;
+      const refNo = document.getElementById('renReferenceInput').value.trim();
       const notes = document.getElementById('renNotesInput').value.trim();
+
+      if (window.paymentMethodManager && totalToPay > 0) {
+        const valRes = window.paymentMethodManager.validatePaymentInput(totalToPay, mode, refNo, notes);
+        if (!valRes.valid) {
+          UI.showToast(valRes.message, 'error');
+          if (valRes.field === 'referenceNo') document.getElementById('renReferenceInput').focus();
+          else if (valRes.field === 'notes') document.getElementById('renNotesInput').focus();
+          return;
+        }
+      }
 
       const btn = document.getElementById('renSubmitBtn');
       btn.disabled = true;
@@ -408,8 +595,11 @@
 
       const res = await window.renewalRedemptionManager.renewPledge(activePledgeForRenewal.ticketNo, {
         interestAmount: interestAmt,
+        renewalFee: renFee,
+        otherFee: othFee,
         newPrincipal: newPrincipal,
         paymentMode: mode,
+        referenceNo: refNo,
         notes: notes || '12-Month Pledge Renewal'
       });
 
@@ -469,34 +659,78 @@
       openRenewalReceiptModal(r, oldP, newP, 'A4');
     }
 
+    let activeRenLanguage = 'BILINGUAL';
+
     function openRenewalReceiptModal(renewalRecord, oldPledge, newPledge, format = 'A4') {
       activeRenRecordForModal = { renewalRecord, oldPledge, newPledge };
       activeRenFormat = format;
       document.getElementById('renModalTitle').textContent = `Renewal Receipt &bull; ${renewalRecord.renewalId}`;
 
-      switchRenFormat(format);
+      renderCurrentRenewalReceipt(false);
       UI.openModal('renewalReceiptModal');
     }
 
     function switchRenFormat(format) {
       activeRenFormat = format;
-      const a4Btn = document.getElementById('renTabA4Btn');
-      const thermalBtn = document.getElementById('renTabThermalBtn');
+      document.getElementById('renTabA4Btn').classList.toggle('active', format === 'A4');
+      document.getElementById('renTabThermalBtn').classList.toggle('active', format === 'THERMAL');
+      renderCurrentRenewalReceipt(false);
+    }
 
-      if (format === 'A4') {
-        a4Btn.classList.add('active');
-        thermalBtn.classList.remove('active');
-      } else {
-        a4Btn.classList.remove('active');
-        thermalBtn.classList.add('active');
-      }
+    function switchRenLanguage(lang) {
+      activeRenLanguage = lang;
+      document.getElementById('renLangBilingualBtn').classList.toggle('active', lang === 'BILINGUAL');
+      document.getElementById('renLangEnBtn').classList.toggle('active', lang === 'EN');
+      document.getElementById('renLangTaBtn').classList.toggle('active', lang === 'TA');
+      renderCurrentRenewalReceipt(false);
+    }
 
+    function renderCurrentRenewalReceipt(isReprint = false) {
+      if (!activeRenRecordForModal) return;
+      const { renewalRecord, oldPledge, newPledge } = activeRenRecordForModal;
+      const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
+      const docHtml = window.billingManager.renderRenewalReceipt(
+        renewalRecord,
+        oldPledge,
+        newPledge,
+        cust,
+        activeRenFormat,
+        isReprint,
+        activeRenLanguage
+      );
+      document.getElementById('renRenderContainer').innerHTML = docHtml;
+    }
+
+    function handleRenReprintDoc() {
       if (activeRenRecordForModal) {
-        const { renewalRecord, oldPledge, newPledge } = activeRenRecordForModal;
-        const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
-        const docHtml = window.billingManager.renderRenewalReceipt(renewalRecord, oldPledge, newPledge, cust, format, false);
-        document.getElementById('renRenderContainer').innerHTML = docHtml;
+        renderCurrentRenewalReceipt(true);
+        UI.showToast('Reprint generated and audit logged ✓', 'info');
       }
+    }
+
+    async function handleRenCopyDetails() {
+      if (!activeRenRecordForModal) return;
+      const { renewalRecord } = activeRenRecordForModal;
+      const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
+      const res = await window.billingManager.copyReceiptDetails('RENEWAL_RECEIPT', renewalRecord, cust);
+      if (res.success) {
+        UI.showToast('Renewal receipt copied to clipboard ✓', 'success');
+      }
+    }
+
+    function handleRenWhatsAppShare() {
+      if (!activeRenRecordForModal) return;
+      const { renewalRecord } = activeRenRecordForModal;
+      const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
+      window.billingManager.openWhatsAppShare('RENEWAL_RECEIPT', renewalRecord, cust);
+      UI.showToast('Opening WhatsApp with renewal summary...', 'info');
+    }
+
+    async function handleRenWebShare() {
+      if (!activeRenRecordForModal) return;
+      const { renewalRecord } = activeRenRecordForModal;
+      const cust = window.customerManager.getCustomerById(renewalRecord.customerId);
+      await window.billingManager.shareReceipt('RENEWAL_RECEIPT', renewalRecord, cust);
     }
   </script>
 </body>
