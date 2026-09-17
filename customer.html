@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Customer 360° Profile &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -11,6 +14,76 @@
   <link rel="stylesheet" href="css/layout.css" />
   <link rel="stylesheet" href="css/components.css" />
   <link rel="stylesheet" href="css/responsive.css" />
+  <style>
+    .doc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: var(--space-4);
+    }
+    .doc-card {
+      background: #FFFFFF;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-sm);
+      transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+    }
+    .doc-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--gold-400);
+    }
+    .doc-preview-box {
+      height: 140px;
+      background: var(--slate-100);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .doc-preview-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .doc-preview-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(15, 23, 42, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity var(--transition-fast);
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 12px;
+      gap: 4px;
+    }
+    .doc-preview-box:hover .doc-preview-overlay {
+      opacity: 1;
+    }
+    .camera-viewport {
+      width: 100%;
+      height: 260px;
+      background: #000000;
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .camera-viewport video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+  </style>
 </head>
 <body>
   <div class="app-shell">
@@ -32,32 +105,43 @@
             
             <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:var(--space-4);">
               
-              <!-- Customer Profile Info -->
+              <!-- Customer Profile Info with Photo Avatar -->
               <div style="display:flex; gap:var(--space-4); align-items:center;">
-                <div style="width:68px; height:68px; border-radius:var(--radius-full); background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-size:var(--font-size-2xl); font-weight:800; border:2px solid var(--gold-300);" id="custAvatarCircle">
-                  RM
+                <div class="avatar-photo-wrapper" id="custAvatarWrapper" title="Click to Capture or Upload Customer Photo" onclick="openPhotoModal()">
+                  <div id="custAvatarCircle" class="avatar-initials">RM</div>
+                  <img id="custAvatarImg" class="customer-avatar-img" style="display:none;" alt="Customer Photo" />
+                  <div class="avatar-edit-overlay">
+                    <span style="font-size:18px;">📷</span>
+                    <span data-i18n="change_photo" style="font-size:9px;">Photo</span>
+                  </div>
                 </div>
                 <div>
                   <div style="display:flex; align-items:center; gap:var(--space-2); flex-wrap:wrap;">
-                    <h2 style="font-size:var(--font-size-xl); font-weight:800;" id="cust360NameEn">R. Murugan</h2>
-                    <span style="font-size:var(--font-size-md); color:var(--gold-700); font-weight:700;" id="cust360NameTa">(ஆர். முருகன்)</span>
-                    <span class="badge badge-success" id="cust360KycBadge">✓ Verified KYC</span>
+                    <h2 style="font-size:var(--font-size-xl); font-weight:800;" id="cust360NameEn"></h2>
+                    <span style="font-size:var(--font-size-md); color:var(--gold-700); font-weight:700;" id="cust360NameTa"></span>
+                    <span class="badge badge-success" id="cust360KycBadge"></span>
+                    <span id="cust360PhotoSyncBadge" class="photo-sync-badge pending" style="display:none;">⏳ Sync Pending</span>
                   </div>
                   
                   <div style="font-size:var(--font-size-xs); color:var(--slate-600); margin-top:4px; display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
-                    <span><strong style="color:var(--slate-900);">ID:</strong> <span class="cell-mono" id="cust360Id">CUS-2026-000184</span></span>
+                    <span><strong style="color:var(--slate-900);">ID:</strong> <span class="cell-mono" id="cust360Id"></span></span>
                     <span>&bull;</span>
-                    <span><strong style="color:var(--slate-900);">Mobile:</strong> <a href="tel:9876543210" id="cust360MobileLink" style="font-weight:700; color:var(--slate-900);">98765 43210</a></span>
+                    <span><strong style="color:var(--slate-900);">Mobile:</strong> <a href="#" id="cust360MobileLink" style="font-weight:700; color:var(--slate-900);"></a></span>
                     <span>&bull;</span>
-                    <span id="cust360Town">Madurai Town (மதுரை)</span>
+                    <span id="cust360Town"></span>
                     <span>&bull;</span>
-                    <span class="text-muted" id="cust360CreatedDate">Customer since: 12-Jan-2024</span>
+                    <span class="text-muted" id="cust360CreatedDate"></span>
                   </div>
                 </div>
               </div>
 
               <!-- Fast Action Buttons Bar -->
-              <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+              <div style="display:flex; gap:var(--space-2); flex-wrap:wrap; align-items:center;">
+                <button type="button" class="btn btn-outline" id="headerCapturePhotoBtn" onclick="openPhotoModal()" style="font-weight:700; border-color:var(--gold-400); background:var(--gold-50);">
+                  <span>📷</span>
+                  <span data-i18n="capture_photo">Customer Photo</span>
+                </button>
+
                 <a href="#" id="actionNewPledgeBtn" class="btn btn-primary">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
                   <span data-i18n="new_pledge">+ New Pledge (அடகு)</span>
@@ -107,6 +191,28 @@
         </div>
 
         <!-- ==========================================================================
+             CUSTOMER KYC VERIFICATION HEALTH CARD
+             ========================================================================== -->
+        <div class="card" id="kycHealthCard" style="margin-bottom:var(--space-4); border-left:4px solid var(--gold-500);">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2); padding:var(--space-3) var(--space-4);">
+            <div style="display:flex; align-items:center; gap:var(--space-2);">
+              <h3 class="card-title" style="font-size:var(--font-size-base); display:flex; align-items:center; gap:6px;">
+                <span>📋</span>
+                <span data-i18n="kyc_checklist">Customer KYC Verification Checklist (கேஒய்சி சரிபார்ப்பு)</span>
+              </h3>
+            </div>
+            <div id="kycOverallStatusBadge">
+              <!-- Dynamically populated by JS -->
+            </div>
+          </div>
+          <div class="card-body" style="padding:var(--space-3) var(--space-4);">
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:var(--space-3);" id="kycChecklistItems">
+              <!-- Injected dynamically via renderCustomerKycChecklist -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ==========================================================================
              360° PROFILE TABS
              ========================================================================== -->
         <div class="tab-bar">
@@ -132,37 +238,37 @@
                   <tbody>
                     <tr>
                       <td style="width:40%; font-weight:600; color:var(--slate-500);">Full Name (English):</td>
-                      <td id="ovCustNameEn" class="cell-primary">R. Murugan</td>
+                      <td id="ovCustNameEn" class="cell-primary"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">பெயர் (தமிழ்):</td>
-                      <td id="ovCustNameTa" style="color:var(--gold-800); font-weight:700;">ஆர். முருகன்</td>
+                      <td id="ovCustNameTa" style="color:var(--gold-800); font-weight:700;"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Father / Husband:</td>
-                      <td id="ovFatherHusband">M. Ramanathan</td>
+                      <td id="ovFatherHusband"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Date of Birth & Gender:</td>
-                      <td id="ovDobGender">14-May-1982 (Male / 44 yrs)</td>
+                      <td id="ovDobGender"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Occupation:</td>
-                      <td id="ovOccupation">Trader / Business (வணிகர்)</td>
+                      <td id="ovOccupation"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Primary Mobile:</td>
                       <td>
-                        <a href="tel:9876543210" id="ovMobile" class="cell-mono cell-primary">98765 43210</a>
+                        <a href="#" id="ovMobile" class="cell-mono cell-primary"></a>
                       </td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Alternate Mobile:</td>
-                      <td id="ovAltMobile" class="cell-mono">98421 99887</td>
+                      <td id="ovAltMobile" class="cell-mono"></td>
                     </tr>
                     <tr>
                       <td style="font-weight:600; color:var(--slate-500);">Email Address:</td>
-                      <td id="ovEmail">murugan.r82@gmail.com</td>
+                      <td id="ovEmail"></td>
                     </tr>
                   </tbody>
                 </table>
@@ -276,14 +382,17 @@
 
         <!-- TAB 4: KYC & DOCUMENTS -->
         <div id="tabDocuments" class="tab-pane" style="display:none;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4);">
-            <h3 style="font-size:var(--font-size-md); font-weight:800;">Uploaded Customer Verification Documents</h3>
-            <button class="btn btn-primary btn-sm" onclick="UI.openModal('uploadCustDocModal')">
-              <span>+ Upload New Document</span>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-2);">
+            <div>
+              <h3 style="font-size:var(--font-size-md); font-weight:800;" data-i18n="doc_repository">Customer Verification Documents & Repository</h3>
+              <p class="text-muted" style="font-size:var(--font-size-xs);">Private Google Drive cloud documents, identity proofs, photos & signed receipts.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openUploadDocModal()">
+              <span>+ Upload / Scan Document</span>
             </button>
           </div>
 
-          <div class="grid-4" id="custDocsGrid">
+          <div class="doc-grid" id="custDocsGrid">
             <!-- Injected via JS -->
           </div>
         </div>
@@ -300,13 +409,8 @@
             <div class="card-body">
               <div style="background:var(--gold-50); border:1px solid var(--gold-200); padding:var(--space-4); border-radius:var(--radius-md);">
                 <div style="font-weight:800; font-size:var(--font-size-sm); margin-bottom:var(--space-2);" id="waPreviewTitle">
-                  வணக்கம் R. Murugan அவர்களுக்கு,
                 </div>
                 <div style="font-size:var(--font-size-sm); color:var(--slate-800); line-height:1.6;" id="waPreviewBody">
-                  AS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.<br/>
-                  மொத்த நிலுவை கடன்: <strong>₹ 1,85,000</strong> &bull; நடப்பு வட்டி: <strong>₹ 18,500</strong>.<br/>
-                  கடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.<br/>
-                  தொடர்புக்கு: <strong>AS Jewellar, Madurai. Ph: 0452-2345678</strong>
                 </div>
               </div>
             </div>
@@ -321,11 +425,7 @@
             </div>
             <div class="card-body">
               <div style="background:var(--slate-50); border-left:4px solid var(--gold-500); padding:var(--space-4); border-radius:var(--radius-sm); margin-bottom:var(--space-4);">
-                <div style="font-size:12px; font-weight:700; color:var(--slate-500); margin-bottom:4px;">
-                  Recorded on: 30-Aug-2026 10:30 AM by Admin
-                </div>
                 <p style="font-size:var(--font-size-sm); color:var(--slate-800); line-height:1.5;" id="custInternalNotes">
-                  Regular prompt payer. High-value jewellery customer. Prefers Tamil notices.
                 </p>
               </div>
 
@@ -344,38 +444,297 @@
     </div>
   </div>
 
-  <!-- Upload Document Modal -->
+  <!-- ==========================================================================
+       MODAL: UPLOAD / SCAN CUSTOMER DOCUMENT (Dual Tabs: File/PDF & Live Camera/Scanner)
+       ========================================================================== -->
   <div class="modal-backdrop" id="uploadCustDocModal">
-    <div class="modal-dialog">
+    <div class="modal-dialog modal-lg">
       <div class="modal-header">
-        <h3 class="modal-title">Upload Customer KYC Document</h3>
-        <button class="modal-close-btn" onclick="UI.closeModal('uploadCustDocModal')">
+        <h3 class="modal-title" data-i18n="upload_doc">+ Secure Document Upload & Scanner (ஆவணம் ஏற்று)</h3>
+        <button class="modal-close-btn" onclick="closeUploadDocModal()">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
+
+      <!-- Upload Source Tabs -->
+      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
+        <button type="button" class="tab-btn active" id="tabDocSourceFileBtn" onclick="switchDocUploadSource('FILE')">
+          📁 1. Upload File / PDF (கோப்பு ஏற்று)
+        </button>
+        <button type="button" class="tab-btn" id="tabDocSourceCameraBtn" onclick="switchDocUploadSource('CAMERA')">
+          📷 2. Scanner Device / Live Camera (ஸ்கேனர் / கேமரா)
+        </button>
+      </div>
+
       <form id="uploadCustDocForm">
-        <div class="modal-body">
-          <div class="form-group">
-            <label class="form-label">Document Category</label>
-            <select id="uploadDocCategory" class="form-select">
-              <option value="AADHAAR">Aadhaar Card Front / Back</option>
-              <option value="VOTER_ID">Voter ID</option>
-              <option value="PHOTO">Customer Photo</option>
-              <option value="SIGNATURE">Signature Specimen</option>
-              <option value="THUMB">Thumb Impression</option>
-              <option value="JEWELLERY_PHOTO">Jewellery Item Photo</option>
-            </select>
+        <div class="modal-body" style="max-height:calc(90vh - 140px); overflow-y:auto;">
+          
+          <div class="grid-2" style="margin-bottom:var(--space-4);">
+            <div class="form-group">
+              <label class="form-label" for="uploadDocType">
+                <span data-i18n="doc_type">Document Category</span>
+                <span class="required">*</span>
+              </label>
+              <select id="uploadDocType" class="form-select" required>
+                <option value="AADHAAR_ID">🪪 Aadhaar Card (ஆதார் அட்டை)</option>
+                <option value="ADDRESS_PROOF">🏠 Address Proof (Ration Card / EB Bill)</option>
+                <option value="CUSTOMER_PHOTO">👤 Customer Photograph (வாடிக்கையாளர் புகைப்படம்)</option>
+                <option value="PAN_CARD">💳 PAN Card (பான் கார்டு)</option>
+                <option value="OTHER_ID">📄 Voter ID / Driving Licence (இதர அடையாள சான்று)</option>
+                <option value="SIGNATURE">✍️ Customer Signature Specimen (கையொப்பம்)</option>
+                <option value="THUMB_IMPRESSION">👍 Thumb Impression (கைரேகை)</option>
+                <option value="PLEDGE_ITEM_PHOTO">💍 Pledged Jewellery Photo (நகை படம்)</option>
+                <option value="PAWN_TICKET_PDF">📑 Signed Pawn Ticket PDF (அடகு சீட்டு)</option>
+                <option value="SUPPORTING_DOC">📁 Supporting Document / Invoice (துணை ஆவணம்)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="uploadDocTitle">Document Title / Description *</label>
+              <input type="text" id="uploadDocTitle" class="form-input" placeholder="e.g. Aadhaar Card Scan" required />
+            </div>
           </div>
+
+          <!-- TAB SOURCE A: FILE PICKER & SCANNER PDF -->
+          <div id="uploadDocSourceFilePane">
+            <div class="form-group">
+              <label class="form-label">Select Document / Scanner PDF (Max 15MB &bull; JPG, PNG, WEBP, PDF)</label>
+              <input type="file" id="fileDocPickerInput" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf" />
+              <div class="text-muted" style="font-size:11px; margin-top:4px;">
+                Directly attach files from Xerox scanner, mobile gallery, or electronic PDF documents.
+              </div>
+            </div>
+            
+            <div id="fileDocSelectedSummary" style="display:none; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-3); margin-top:var(--space-3);">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <div style="font-weight:700; font-size:13px;" id="selectedDocFileName">file.pdf</div>
+                  <div style="font-size:11px; color:var(--slate-500); margin-top:2px;" id="selectedDocFileSize">1.2 MB</div>
+                </div>
+                <div id="fileDocRotateControls" style="display:none; gap:var(--space-2);">
+                  <button type="button" class="btn btn-outline btn-sm" onclick="rotateSelectedDocFile(-90)" title="Rotate Left">↺ 90°</button>
+                  <button type="button" class="btn btn-outline btn-sm" onclick="rotateSelectedDocFile(90)" title="Rotate Right">↻ 90°</button>
+                </div>
+              </div>
+
+              <!-- Quick Image Preview for selected image file -->
+              <div id="fileDocPreviewContainer" style="display:none; margin-top:var(--space-3); text-align:center;">
+                <img id="fileDocPreviewImgEl" style="max-height:200px; max-width:100%; border-radius:var(--radius-md); border:1px solid var(--border-subtle); object-fit:contain;" alt="Preview" />
+              </div>
+            </div>
+          </div>
+
+          <!-- TAB SOURCE B: LIVE CAMERA / SCANNER DEVICE -->
+          <div id="uploadDocSourceCameraPane" style="display:none;">
+            <!-- Device Selection Bar -->
+            <div style="display:flex; gap:var(--space-2); margin-bottom:var(--space-3); align-items:center;">
+              <label style="font-size:12px; font-weight:700; color:var(--slate-700); white-space:nowrap;">Device:</label>
+              <select id="cameraDocDeviceSelect" class="form-select" style="font-size:12px; height:32px; padding:2px 8px;">
+                <option value="DEFAULT">Primary Camera / Counter Webcam</option>
+              </select>
+              <button type="button" class="btn btn-outline btn-sm" id="btnRefreshDocDevices" title="Refresh Devices">🔄</button>
+            </div>
+
+            <div class="camera-viewport">
+              <video id="cameraDocVideo" autoplay playsinline muted></video>
+              <canvas id="cameraDocCanvas" style="display:none;"></canvas>
+              <div id="cameraDocPlaceholder" style="color:var(--slate-400); font-size:13px; text-align:center; padding:var(--space-4);">
+                Click "Start Camera / Scanner" to initialize counter webcam or mobile camera.
+              </div>
+            </div>
+
+            <div style="display:flex; justify-content:center; gap:var(--space-3); margin-top:var(--space-3); flex-wrap:wrap;">
+              <button type="button" class="btn btn-secondary btn-sm" id="startDocCamBtn">▶ Start Camera / Scanner</button>
+              <button type="button" class="btn btn-outline btn-sm" id="switchDocFacingBtn" style="display:none;">🔄 Switch Cam</button>
+              <button type="button" class="btn btn-primary btn-sm" id="snapDocPhotoBtn" style="display:none;">📷 Capture Scan</button>
+              <button type="button" class="btn btn-outline btn-sm" id="retakeDocPhotoBtn" style="display:none;">🔄 Retake</button>
+            </div>
+
+            <!-- Captured Image Review with 90° Rotation Buttons -->
+            <div id="cameraDocCapturedPreview" style="display:none; margin-top:var(--space-3); text-align:center;">
+              <div style="font-size:11px; font-weight:700; color:var(--success-main); margin-bottom:6px;">✓ Document Captured with Security Timestamp Watermark</div>
+              <div style="display:inline-block; position:relative;">
+                <img id="capturedDocImgEl" style="max-height:180px; max-width:100%; border-radius:var(--radius-md); border:1px solid var(--border-subtle);" alt="Captured preview" />
+              </div>
+              <div style="margin-top:var(--space-2); display:flex; justify-content:center; gap:var(--space-2);">
+                <button type="button" class="btn btn-outline btn-sm" onclick="rotateCapturedDocScan(-90)">↺ Rotate Left (90°)</button>
+                <button type="button" class="btn btn-outline btn-sm" onclick="rotateCapturedDocScan(90)">↻ Rotate Right (90°)</button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeUploadDocModal()" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="submitCustDocBtn">
+            <span data-i18n="upload_doc">Confirm & Upload Document</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: PREVIEW DOCUMENT -->
+  <div class="modal-backdrop" id="previewCustDocModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <h3 class="modal-title" id="prevCustDocTitle">Document Preview</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('previewCustDocModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:0;">
+        <div style="display:flex; flex-wrap:wrap;">
+          <div style="flex:2; min-width:320px; background:var(--slate-900); padding:var(--space-4); display:flex; align-items:center; justify-content:center; min-height:420px; position:relative;">
+            <img id="prevCustDocImg" src="" style="max-width:100%; max-height:420px; object-fit:contain; border-radius:var(--radius-md); display:none;" alt="Preview" />
+            <div id="prevCustDocPdfContainer" style="width:100%; height:420px; display:none;">
+              <object id="prevCustDocPdfObject" data="" type="application/pdf" style="width:100%; height:100%; border:none; border-radius:var(--radius-md);">
+                <div style="color:#FFF; text-align:center; padding:var(--space-8);">
+                  <div style="font-weight:700; margin-top:8px;">PDF Document (Secured View)</div>
+                  <div style="font-size:11px; color:var(--slate-400); margin-top:4px;" id="prevCustDocPdfName">ticket.pdf</div>
+                </div>
+              </object>
+            </div>
+          </div>
+          <div style="flex:1.2; min-width:240px; padding:var(--space-4); background:#FFFFFF; border-left:1px solid var(--border-subtle);">
+            <h4 style="font-size:13px; font-weight:800; text-transform:uppercase; color:var(--slate-500); margin-bottom:var(--space-3);">Document Metadata</h4>
+            <table class="data-table" style="font-size:11px; border:none;">
+              <tbody>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Doc ID:</td><td class="cell-mono" id="metaCustDocId" style="font-weight:700;"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Customer:</td><td id="metaCustDocCustomer" style="font-weight:700;"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Category:</td><td id="metaCustDocType"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Stored Name:</td><td class="cell-mono text-muted" id="metaCustDocStoredFilename" style="word-break:break-all;"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Drive Path:</td><td class="text-muted" id="metaCustDocDriveFolder" style="font-size:10px; word-break:break-all;"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">File Size:</td><td id="metaCustDocFileSize"></td></tr>
+                <tr><td style="font-weight:600; color:var(--slate-500); padding:4px 0;">Status:</td><td id="metaCustDocStatus"></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('previewCustDocModal')">Close</button>
+        <button type="button" class="btn btn-primary" id="downloadCustDocBtn"><span>⬇ Authorized Download</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: REPLACE DOCUMENT VERSION -->
+  <div class="modal-backdrop" id="replaceCustDocModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="replace_doc">Replace Document Version</h3>
+        <button class="modal-close-btn" onclick="UI.closeModal('replaceCustDocModal')">&times;</button>
+      </div>
+      <form id="replaceCustDocForm">
+        <input type="hidden" id="replaceCustDocId" />
+        <div class="modal-body">
+          <p class="text-muted" style="font-size:12px; margin-bottom:var(--space-3);">
+            Select a new scan or PDF file to replace the active document version while maintaining historical audit records.
+          </p>
           <div class="form-group">
-            <label class="form-label">Select File / Capture Photo</label>
-            <input type="file" id="uploadDocFile" class="form-input" accept="image/*,application/pdf" required />
+            <label class="form-label">Select Replacement File / PDF *</label>
+            <input type="file" id="replaceCustDocFileInput" class="form-input" accept="image/jpeg,image/png,image/webp,application/pdf" required />
+            <div class="text-muted" style="font-size:11px; margin-top:4px;">Supported: JPG, PNG, WEBP, PDF &bull; Max 15MB</div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="UI.closeModal('uploadCustDocModal')">Cancel</button>
-          <button type="submit" class="btn btn-primary">Upload Document</button>
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('replaceCustDocModal')">Cancel</button>
+          <button type="submit" class="btn btn-primary">Update Document Version</button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: CAPTURE / UPLOAD CUSTOMER PHOTO
+       ========================================================================== -->
+  <div class="modal-backdrop" id="capturePhotoModal">
+    <div class="modal-dialog" style="max-width:520px;">
+      <div class="modal-header">
+        <h3 class="modal-title" data-i18n="customer_photo">Customer Photo (வாடிக்கையாளர் புகைப்படம்)</h3>
+        <button class="modal-close-btn" onclick="closePhotoModal()">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:var(--space-4); max-height:calc(90vh - 140px); overflow-y:auto;">
+        
+        <!-- Mode Tabs: Camera vs Upload -->
+        <div style="display:flex; border-bottom:1px solid var(--border-subtle); margin-bottom:var(--space-4); gap:var(--space-2);">
+          <button type="button" id="photoTabCameraBtn" class="tab-btn active" style="flex:1; text-align:center; padding:8px;" onclick="setPhotoMode('camera')">
+            <span data-i18n="capture_photo">📷 Live Camera</span>
+          </button>
+          <button type="button" id="photoTabUploadBtn" class="tab-btn" style="flex:1; text-align:center; padding:8px;" onclick="setPhotoMode('upload')">
+            <span data-i18n="upload_photo">📁 Upload File</span>
+          </button>
+        </div>
+
+        <!-- CAMERA MODE VIEW -->
+        <div id="cameraModeSection">
+          <!-- Error Alert (Permission denied / unavailable) -->
+          <div id="cameraErrorBox" class="alert alert-danger" style="display:none; margin-bottom:var(--space-3); flex-direction:column; gap:6px;">
+            <div id="cameraErrorMsg">Camera permission denied or camera not available.</div>
+            <div>
+              <button type="button" class="btn btn-outline btn-sm" style="background:#FFF;" onclick="setPhotoMode('upload')">Switch to File Upload &rarr;</button>
+            </div>
+          </div>
+
+          <!-- Video Viewport with Portrait Oval Guide -->
+          <div class="camera-viewport" id="camViewport">
+            <video id="camVideo" playsinline autoplay muted></video>
+            <canvas id="camCanvas" style="display:none;"></canvas>
+            <div class="camera-guide-overlay" id="camGuide">
+              <div class="camera-guide-oval"></div>
+              <div class="camera-guide-text" data-i18n="align_face_guide">Align customer face within guide</div>
+            </div>
+          </div>
+
+          <!-- Live Capture Controls -->
+          <div id="camLiveControls" class="camera-controls-bar">
+            <button type="button" class="btn btn-outline btn-sm" id="btnSwitchCamera" onclick="toggleCameraFacing()" title="Switch Front/Rear Camera">
+              <span>🔄</span> <span data-i18n="switch_camera">Switch Cam</span>
+            </button>
+
+            <button type="button" class="btn-camera-capture" id="btnSnapPhoto" onclick="takeSnapshot()" title="Capture Photograph">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+          </div>
+
+          <!-- Captured Photo Review Controls -->
+          <div id="camReviewControls" style="display:none; margin-top:var(--space-4); text-align:center;">
+            <div style="font-size:12px; font-weight:700; color:var(--success-main); margin-bottom:var(--space-3);">
+              ✓ Photo Captured &bull; Ready to Save
+            </div>
+            <div style="display:flex; justify-content:center; gap:var(--space-3);">
+              <button type="button" class="btn btn-outline" onclick="retakeSnapshot()">
+                <span>🔄</span> <span data-i18n="retake_photo">Retake</span>
+              </button>
+              <button type="button" class="btn btn-primary" id="btnSaveCapturedPhoto" onclick="saveCapturedCustomerPhoto()">
+                <span>✓</span> <span data-i18n="confirm_photo">Confirm & Save Photo</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- UPLOAD MODE VIEW -->
+        <div id="uploadModeSection" style="display:none;">
+          <div class="form-group">
+            <label class="form-label" data-i18n="upload_photo">Select Photo from Device</label>
+            <input type="file" id="filePhotoInput" class="form-input" accept="image/*" capture="user" onchange="handlePhotoFileSelected(event)" />
+            <div class="text-muted" style="font-size:11px; margin-top:4px;">Supported: JPG, PNG, WEBP &bull; Max 5MB (Auto-compressed)</div>
+          </div>
+
+          <div id="filePreviewBox" style="display:none; text-align:center; margin-top:var(--space-3);">
+            <div style="width:190px; height:190px; margin:0 auto var(--space-3); border-radius:var(--radius-lg); overflow:hidden; border:3px solid var(--gold-400); box-shadow:var(--shadow-md);">
+              <img id="filePreviewImg" style="width:100%; height:100%; object-fit:cover;" alt="Preview" />
+            </div>
+            <button type="button" class="btn btn-primary" id="btnSaveUploadedPhoto" onclick="saveUploadedCustomerPhoto()">
+              <span>✓</span> <span data-i18n="confirm_photo">Confirm & Save Photo</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer" style="padding:var(--space-3) var(--space-4);">
+        <button type="button" class="btn btn-outline" onclick="closePhotoModal()" data-i18n="cancel">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -387,35 +746,88 @@
   <script src="js/validation.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/financialCalculator.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/renewalRedemption.js"></script>
+  <script src="js/documents.js"></script>
+  <script src="js/reminders.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let currentCustomer = null;
     let isIdUnmasked = false;
+    let capturedPhotoDataUrl = null;
+    let uploadedPhotoDataUrl = null;
+    let activePhotoMode = 'camera';
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('pageTitleText').textContent = window.t('customer');
 
       // Get Customer ID from URL
       const urlParams = new URLSearchParams(window.location.search);
-      const custId = urlParams.get('id') || 'CUS-2026-000184';
+      let custId = urlParams.get('id');
+
+      // Sync customer database if needed
+      if (window.customerManager && typeof window.customerManager.syncWithBackend === 'function') {
+        if (!custId || !window.customerManager.getCustomerById(custId)) {
+          await window.customerManager.syncWithBackend();
+        } else {
+          window.customerManager.syncWithBackend();
+        }
+      }
+
+      if (!custId && window.customerManager && window.customerManager.customers.length > 0) {
+        custId = window.customerManager.customers[0].customerId;
+      }
+
+      if (!custId) {
+        document.querySelector('.content-body').innerHTML = `
+          <div class="card" style="text-align:center; padding:var(--space-8); margin-top:var(--space-6);">
+            <div style="font-size:48px; margin-bottom:var(--space-3);">👤</div>
+            <h3 style="font-size:var(--font-size-lg); font-weight:800; color:var(--slate-900);">No Customer Selected</h3>
+            <p class="text-muted" style="margin-bottom:var(--space-4);">Select a customer from the Customer Directory or register a new one at the counter.</p>
+            <a href="customers.html" class="btn btn-primary">Go to Customer Directory</a>
+          </div>
+        `;
+        return;
+      }
 
       loadCustomerProfile(custId);
+    });
+
+    window.addEventListener('customersSynced', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const custId = urlParams.get('id') || (window.customerManager && window.customerManager.customers[0]?.customerId);
+      if (custId && (!currentCustomer || currentCustomer.customerId !== custId || !currentCustomer.nameEn)) {
+        loadCustomerProfile(custId);
+      }
     });
 
     function loadCustomerProfile(customerId) {
       const bundle = window.customerManager.getCustomer360(customerId);
       if (!bundle || !bundle.profile) {
         UI.showToast(`Customer ID ${customerId} not found`, 'error');
+        document.querySelector('.content-body').innerHTML = `
+          <div class="card" style="text-align:center; padding:var(--space-8); margin-top:var(--space-6);">
+            <div style="font-size:48px; margin-bottom:var(--space-3);">🔍</div>
+            <h3 style="font-size:var(--font-size-lg); font-weight:800; color:var(--slate-900);">Customer Not Found</h3>
+            <p class="text-muted" style="margin-bottom:var(--space-4);">No customer matches ID: ${customerId}</p>
+            <a href="customers.html" class="btn btn-primary">Back to Customer Directory</a>
+          </div>
+        `;
         return;
       }
 
       currentCustomer = bundle.profile;
       const c = bundle.profile;
 
-      // 1. Header Population
-      const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
-      document.getElementById('custAvatarCircle').textContent = initials;
+      // 1. Header Population & Customer Photo
+      renderCustomerAvatar(c);
+
       document.getElementById('cust360NameEn').textContent = c.nameEn;
       document.getElementById('cust360NameTa').textContent = c.nameTa ? `(${c.nameTa})` : '';
       document.getElementById('cust360Id').textContent = c.customerId;
@@ -437,7 +849,6 @@
       // Fast Actions
       document.getElementById('actionNewPledgeBtn').href = `new-pledge.html?customerId=${c.customerId}`;
       document.getElementById('actionCollectPaymentBtn').href = `payments.html?customerId=${c.customerId}`;
-      document.getElementById('tabActionNewPledge').href = `new-pledge.html?customerId=${c.customerId}`;
 
       // Edit Profile
       document.getElementById('actionEditProfileBtn').onclick = () => {
@@ -533,23 +944,24 @@
       }).join('');
 
       // 5. Tab 4 Documents Grid Population
-      const docsGrid = document.getElementById('custDocsGrid');
-      docsGrid.innerHTML = bundle.documents.map(doc => {
-        return `
-          <div class="card" style="text-align:center; padding:var(--space-4);">
-            <div style="font-weight:700; font-size:var(--font-size-xs); margin-bottom:var(--space-2);">${doc.docTitle}</div>
-            <div style="width:90px; height:90px; border-radius:var(--radius-md); background:var(--slate-100); margin:0 auto var(--space-3); display:flex; align-items:center; justify-content:center; color:var(--slate-500);">
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-            </div>
-            <div class="cell-mono text-muted" style="font-size:11px; margin-bottom:var(--space-2);">${doc.fileName}</div>
-            <span class="badge badge-success">✓ ${doc.status}</span>
-          </div>
-        `;
-      }).join('');
+      renderDocumentsGrid(bundle.documents);
 
-      // 6. Tab 5 WhatsApp Reminders Trigger
+      // 6. Tab 5 WhatsApp Reminders Trigger & Dynamic Preview
+      const shopPhone = localStorage.getItem('as_jewellar_shop_phone') || 'AS Jewellar';
+      const shopMobile = localStorage.getItem('as_jewellar_shop_mobile') || '';
+      const totalOut = Number(c.totalOutstanding || 0).toLocaleString('en-IN');
+      const pendInt = Number(c.pendingInterest || 0).toLocaleString('en-IN');
+
+      document.getElementById('waPreviewTitle').textContent = `வணக்கம் ${c.nameEn || ''} அவர்களுக்கு,`;
+      document.getElementById('waPreviewBody').innerHTML = `
+        AS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.<br/>
+        மொத்த நிலுவை கடன்: <strong>₹ ${totalOut}</strong> &bull; நடப்பு வட்டி: <strong>₹ ${pendInt}</strong>.<br/>
+        கடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.<br/>
+        தொடர்புக்கு: <strong>AS Jewellar &bull; Ph: ${shopPhone} ${shopMobile ? `/ ${shopMobile}` : ''}</strong>
+      `;
+
       document.getElementById('dispatchWhatsAppBtn').onclick = () => {
-        const msg = `வணக்கம் ${c.nameEn} அவர்களுக்கு,\n\nAS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.\n\nமொத்த நிலுவை கடன்: ₹ ${c.totalOutstanding.toLocaleString('en-IN')}\nநிலுவை வட்டி: ₹ ${c.pendingInterest.toLocaleString('en-IN')}\n\nகடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.\n\nதொடர்புக்கு:\nAS Jewellar Pawn Shop, Madurai.\nதொலைபேசி: 0452-2345678`;
+        const msg = `வணக்கம் ${c.nameEn} அவர்களுக்கு,\n\nAS Jewellar Pawn Shop-ல் உள்ள உங்கள் அடகு சீட்டுகள் தொடர்பான மாதாந்திர வட்டி கட்டண நினைவூட்டல்.\n\nமொத்த நிலுவை கடன்: ₹ ${totalOut}\nநிலுவை வட்டி: ₹ ${pendInt}\n\nகடைக்கு வந்து வட்டி செலுத்தி சீட்டை புதுப்பிக்கவும் கேட்டுக்கொள்கிறோம்.\n\nதொடர்புக்கு:\nAS Jewellar Pawn Shop, Madurai.\nதொலைபேசி: ${shopPhone} ${shopMobile ? `/ ${shopMobile}` : ''}`;
         window.open(`https://wa.me/91${c.mobile}?text=${encodeURIComponent(msg)}`, '_blank');
         UI.showToast(`WhatsApp reminder opened for ${c.nameEn}`, 'success');
       };
@@ -567,16 +979,697 @@
         }
       };
 
-      // 8. Upload Doc Form
-      document.getElementById('uploadCustDocForm').onsubmit = (e) => {
-        e.preventDefault();
-        UI.showLoading('Uploading customer document to Google Drive...');
-        setTimeout(() => {
+      // 8. Document Management & Scanner Form Submission
+      initDocumentScannerControls();
+
+      // 9. Initial KYC Health Checklist Render
+      renderCustomerKycChecklist(c.customerId);
+    }
+
+    function renderCustomerKycChecklist(customerId) {
+      if (!window.documentManager) return;
+      const kyc = window.documentManager.getCustomerKycStatus(customerId);
+      const badgeContainer = document.getElementById('kycOverallStatusBadge');
+      const listContainer = document.getElementById('kycChecklistItems');
+      if (!badgeContainer || !listContainer) return;
+
+      const missingCount = kyc.checklist.filter(item => item.status === 'MISSING').length;
+      if (kyc.isKycComplete) {
+        badgeContainer.innerHTML = `<span class="badge badge-success" style="font-size:12px;">✓ KYC Complete (சரிபார்க்கப்பட்டது)</span>`;
+      } else {
+        badgeContainer.innerHTML = `<span class="badge badge-warning" style="font-size:12px;">⚠ ${missingCount} Pending Item${missingCount > 1 ? 's' : ''} (நிலுவை)</span>`;
+      }
+
+      listContainer.innerHTML = kyc.checklist.map(item => {
+        const isDone = item.status === 'DONE';
+        const statusBadge = isDone
+          ? `<span class="badge badge-success" style="font-size:11px;">✓ Verified</span>`
+          : `<span class="badge badge-warning" style="font-size:11px;">⚠ Missing</span>`;
+
+        const actionBtn = isDone
+          ? `<button type="button" class="btn btn-outline btn-sm" onclick="viewKycDocument('${customerId}', '${item.docType}')" style="font-size:11px; padding:2px 8px;">👁️ View</button>`
+          : (item.docType === 'CUSTOMER_PHOTO'
+              ? `<button type="button" class="btn btn-primary btn-sm" onclick="openPhotoModal()" style="font-size:11px; padding:2px 8px;">📷 Capture</button>`
+              : `<button type="button" class="btn btn-primary btn-sm" onclick="openUploadDocModal('${item.docType}')" style="font-size:11px; padding:2px 8px;">+ Scan / Upload</button>`);
+
+        return `
+          <div style="background:#FFF; border:1px solid var(--border-subtle); border-radius:var(--radius-md); padding:var(--space-3); display:flex; flex-direction:column; justify-content:space-between; gap:var(--space-2); box-shadow:var(--shadow-xs);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:var(--space-2);">
+              <div style="display:flex; align-items:center; gap:var(--space-2);">
+                <span style="font-size:20px;">${item.icon}</span>
+                <div>
+                  <div style="font-weight:700; font-size:12px; color:var(--slate-900);">${item.labelEn}</div>
+                  <div style="font-size:10px; color:var(--gold-700); font-weight:600;">${item.labelTa || ''}</div>
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid var(--slate-100); padding-top:6px; margin-top:2px;">
+              ${statusBadge}
+              ${actionBtn}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function viewKycDocument(customerId, docType) {
+      if (!window.documentManager) return;
+      const docs = window.documentManager.documents.filter(d => d.customerId === customerId && d.docType === docType && d.status !== 'ARCHIVED');
+      if (docs.length > 0) {
+        previewCustDocument(docs[0].docId);
+      } else {
+        switchCustomerTab('tabDocuments');
+      }
+    }
+
+    function renderCustomerAvatar(c) {
+      const avatarCircle = document.getElementById('custAvatarCircle');
+      const avatarImg = document.getElementById('custAvatarImg');
+      const syncBadge = document.getElementById('cust360PhotoSyncBadge');
+
+      const photoDoc = window.documentManager.getCustomerPhoto(c.customerId);
+      const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+
+      if (photoUrl) {
+        avatarImg.src = photoUrl;
+        avatarImg.style.display = 'block';
+        avatarCircle.style.display = 'none';
+
+        if (photoDoc && photoDoc.status === 'PENDING_SYNC') {
+          syncBadge.style.display = 'inline-flex';
+          syncBadge.className = 'photo-sync-badge pending';
+          syncBadge.textContent = '⏳ Sync Pending';
+        } else {
+          syncBadge.style.display = 'none';
+        }
+      } else {
+        const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        avatarCircle.textContent = initials;
+        avatarCircle.style.display = 'flex';
+        avatarImg.style.display = 'none';
+        syncBadge.style.display = 'none';
+      }
+    }
+
+    function renderDocumentsGrid(docs) {
+      const docsGrid = document.getElementById('custDocsGrid');
+      if (!docs || docs.length === 0) {
+        docsGrid.innerHTML = `
+          <div style="grid-column:1/-1; text-align:center; padding:var(--space-6); background:#FFF; border-radius:var(--radius-md); border:1px dashed var(--border-subtle);">
+            <div style="font-size:32px; margin-bottom:var(--space-2);">📁</div>
+            <p class="text-muted" style="font-size:var(--font-size-sm); margin-bottom:var(--space-3);">No documents or photographs uploaded yet.</p>
+            <button class="btn btn-primary btn-sm" onclick="openUploadDocModal()">+ Scan / Upload Document</button>
+          </div>
+        `;
+        return;
+      }
+
+      docsGrid.innerHTML = docs.map(doc => {
+        const typeMeta = (window.DOCUMENT_TYPES && window.DOCUMENT_TYPES[doc.docType]) || {};
+        const icon = typeMeta.icon || '📄';
+        const isPdf = doc.mimeType === 'application/pdf' || (doc.storedFilename && doc.storedFilename.endsWith('.pdf'));
+        const isPhoto = doc.previewUrl && !isPdf;
+
+        const previewHtml = isPhoto
+          ? `<img src="${doc.previewUrl}" style="max-height:140px; max-width:100%; object-fit:contain;" alt="${doc.docTitle}" />`
+          : `<div style="text-align:center; padding:var(--space-4); color:var(--slate-700);">
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+              <div style="font-weight:700; font-size:11px; margin-top:4px;">PDF Document</div>
+            </div>`;
+
+        const statusBadge = doc.status === 'ARCHIVED'
+          ? `<span class="badge badge-danger">📁 Archived</span>`
+          : (doc.status === 'PENDING_SYNC'
+              ? `<span class="photo-sync-badge pending">⏳ Pending Sync</span>`
+              : `<span class="badge badge-success">✓ Verified</span>`);
+
+        return `
+          <div class="doc-card" id="doc-card-${doc.docId}">
+            <div class="doc-preview-box" onclick="previewCustDocument('${doc.docId}')" title="Click to View Document">
+              ${previewHtml}
+              <div class="doc-preview-overlay">
+                <span>👁️ View</span>
+              </div>
+            </div>
+            <div style="padding:var(--space-3); flex:1; display:flex; flex-direction:column; justify-content:space-between;">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                  <span style="font-size:10px; font-weight:700; color:var(--gold-800); text-transform:uppercase;">${icon} ${typeMeta.labelEn || doc.docType}</span>
+                  ${statusBadge}
+                </div>
+                <div style="font-weight:800; font-size:13px; color:var(--slate-900); line-height:1.3; margin-bottom:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${doc.docTitle}">
+                  ${doc.docTitle}
+                </div>
+                <div class="cell-mono text-muted" style="font-size:10px; margin-bottom:6px;">
+                  ${doc.fileSizeFormatted || ''} &bull; ${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleDateString() : ''}
+                </div>
+              </div>
+              <div style="display:flex; gap:var(--space-1); border-top:1px solid var(--border-subtle); padding-top:6px; margin-top:6px;">
+                <button type="button" class="btn btn-outline btn-sm" style="flex:1; font-size:11px; padding:2px 4px;" onclick="previewCustDocument('${doc.docId}')">👁️ View</button>
+                <button type="button" class="btn btn-outline btn-sm" style="font-size:11px; padding:2px 4px;" onclick="openReplaceCustDocModal('${doc.docId}')" title="Replace Version">🔄</button>
+                <button type="button" class="btn btn-ghost btn-sm" style="font-size:11px; padding:2px 4px; color:${doc.status === 'ARCHIVED' ? 'var(--success-main)' : 'var(--danger-main)'};" onclick="toggleArchiveCustDoc('${doc.docId}')" title="${doc.status === 'ARCHIVED' ? 'Restore' : 'Archive'}">
+                  ${doc.status === 'ARCHIVED' ? '↺' : '🗑️'}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    /* ==========================================================================
+       DOCUMENT SCANNER & UPLOAD CONTROLLER
+       ========================================================================== */
+    let selectedDocFileObj = null;
+    let selectedDocFileDataUrl = null;
+    let capturedDocScanDataUrl = null;
+    let activeDocUploadSource = 'FILE';
+
+    function openUploadDocModal(preselectedType = 'AADHAAR_ID') {
+      if (preselectedType) {
+        document.getElementById('uploadDocType').value = preselectedType;
+        const typeMeta = window.DOCUMENT_TYPES && window.DOCUMENT_TYPES[preselectedType];
+        document.getElementById('uploadDocTitle').value = typeMeta ? `${typeMeta.labelEn} - ${currentCustomer.nameEn}` : `Document - ${currentCustomer.nameEn}`;
+      }
+      document.getElementById('uploadCustDocForm').reset();
+      if (preselectedType) document.getElementById('uploadDocType').value = preselectedType;
+      selectedDocFileObj = null;
+      selectedDocFileDataUrl = null;
+      capturedDocScanDataUrl = null;
+      document.getElementById('fileDocSelectedSummary').style.display = 'none';
+      document.getElementById('cameraDocCapturedPreview').style.display = 'none';
+      switchDocUploadSource('FILE');
+      UI.openModal('uploadCustDocModal');
+    }
+
+    function closeUploadDocModal() {
+      if (window.documentManager) {
+        window.documentManager.stopCamera();
+      }
+      UI.closeModal('uploadCustDocModal');
+    }
+
+    function switchDocUploadSource(source) {
+      activeDocUploadSource = source;
+      const tabFile = document.getElementById('tabDocSourceFileBtn');
+      const tabCam = document.getElementById('tabDocSourceCameraBtn');
+      const paneFile = document.getElementById('uploadDocSourceFilePane');
+      const paneCam = document.getElementById('uploadDocSourceCameraPane');
+
+      if (source === 'FILE') {
+        tabFile.classList.add('active');
+        tabCam.classList.remove('active');
+        paneFile.style.display = 'block';
+        paneCam.style.display = 'none';
+        if (window.documentManager) window.documentManager.stopCamera();
+      } else {
+        tabCam.classList.add('active');
+        tabFile.classList.remove('active');
+        paneCam.style.display = 'block';
+        paneFile.style.display = 'none';
+        populateDocVideoDevices();
+      }
+    }
+
+    async function populateDocVideoDevices() {
+      const devSelect = document.getElementById('cameraDocDeviceSelect');
+      if (!devSelect) return;
+      const devices = await window.documentManager.listVideoDevices();
+      if (devices.length > 0) {
+        devSelect.innerHTML = devices.map(d => `<option value="${d.deviceId}">${d.label}</option>`).join('');
+      } else {
+        devSelect.innerHTML = `<option value="DEFAULT">Primary Camera / Counter Webcam</option>`;
+      }
+    }
+
+    async function rotateSelectedDocFile(degrees) {
+      if (!selectedDocFileDataUrl) return;
+      UI.showLoading('Rotating document...');
+      selectedDocFileDataUrl = await window.documentManager.rotateImage(selectedDocFileDataUrl, degrees);
+      document.getElementById('fileDocPreviewImgEl').src = selectedDocFileDataUrl;
+      UI.hideLoading();
+    }
+
+    async function rotateCapturedDocScan(degrees) {
+      if (!capturedDocScanDataUrl) return;
+      UI.showLoading('Rotating scan...');
+      capturedDocScanDataUrl = await window.documentManager.rotateImage(capturedDocScanDataUrl, degrees);
+      document.getElementById('capturedDocImgEl').src = capturedDocScanDataUrl;
+      UI.hideLoading();
+    }
+
+    function initDocumentScannerControls() {
+      // File Picker listener
+      const fileInput = document.getElementById('fileDocPickerInput');
+      if (fileInput) {
+        fileInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+
+          const val = window.documentManager.validateFile(file);
+          if (!val.valid) {
+            UI.showToast(val.message, 'error');
+            fileInput.value = '';
+            return;
+          }
+
+          selectedDocFileObj = file;
+          document.getElementById('selectedDocFileName').textContent = file.name;
+          document.getElementById('selectedDocFileSize').textContent = window.documentManager.formatBytes(file.size);
+          document.getElementById('fileDocSelectedSummary').style.display = 'block';
+
+          if (!document.getElementById('uploadDocTitle').value) {
+            document.getElementById('uploadDocTitle').value = file.name.replace(/\.[^/.]+$/, "");
+          }
+
+          const isImg = file.type.startsWith('image/');
+          const imgControls = document.getElementById('fileDocRotateControls');
+          const imgPrevBox = document.getElementById('fileDocPreviewContainer');
+          const imgEl = document.getElementById('fileDocPreviewImgEl');
+
+          if (isImg) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+              selectedDocFileDataUrl = ev.target.result;
+              imgEl.src = selectedDocFileDataUrl;
+              imgControls.style.display = 'flex';
+              imgPrevBox.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+          } else {
+            selectedDocFileDataUrl = null;
+            imgControls.style.display = 'none';
+            imgPrevBox.style.display = 'none';
+          }
+        };
+      }
+
+      // Live Camera buttons
+      const videoEl = document.getElementById('cameraDocVideo');
+      const canvasEl = document.getElementById('cameraDocCanvas');
+      const startCamBtn = document.getElementById('startDocCamBtn');
+      const snapBtn = document.getElementById('snapDocPhotoBtn');
+      const retakeBtn = document.getElementById('retakeDocPhotoBtn');
+      const switchBtn = document.getElementById('switchDocFacingBtn');
+
+      if (startCamBtn) {
+        startCamBtn.onclick = async () => {
+          try {
+            UI.showLoading('Starting camera / scanner feed...');
+            const devSelect = document.getElementById('cameraDocDeviceSelect');
+            const selectedDev = devSelect && devSelect.value !== 'DEFAULT' ? devSelect.value : null;
+            await window.documentManager.startCamera(videoEl, selectedDev);
+            UI.hideLoading();
+            document.getElementById('cameraDocPlaceholder').style.display = 'none';
+            startCamBtn.style.display = 'none';
+            snapBtn.style.display = 'inline-flex';
+            switchBtn.style.display = 'inline-flex';
+          } catch (err) {
+            UI.hideLoading();
+            UI.showToast(err.message, 'error');
+          }
+        };
+      }
+
+      if (switchBtn) {
+        switchBtn.onclick = async () => {
+          try {
+            await window.documentManager.switchCamera(videoEl);
+          } catch (err) {
+            UI.showToast(err.message, 'warning');
+          }
+        };
+      }
+
+      if (snapBtn) {
+        snapBtn.onclick = () => {
+          capturedDocScanDataUrl = window.documentManager.capturePhoto(videoEl, canvasEl, { watermark: true });
+          document.getElementById('capturedDocImgEl').src = capturedDocScanDataUrl;
+          document.getElementById('cameraDocCapturedPreview').style.display = 'block';
+          snapBtn.style.display = 'none';
+          retakeBtn.style.display = 'inline-flex';
+          window.documentManager.stopCamera();
+        };
+      }
+
+      if (retakeBtn) {
+        retakeBtn.onclick = async () => {
+          document.getElementById('cameraDocCapturedPreview').style.display = 'none';
+          retakeBtn.style.display = 'none';
+          snapBtn.style.display = 'inline-flex';
+          const devSelect = document.getElementById('cameraDocDeviceSelect');
+          const selectedDev = devSelect && devSelect.value !== 'DEFAULT' ? devSelect.value : null;
+          await window.documentManager.startCamera(videoEl, selectedDev);
+        };
+      }
+
+      // Upload Form Submit
+      const uploadForm = document.getElementById('uploadCustDocForm');
+      if (uploadForm) {
+        uploadForm.onsubmit = async (e) => {
+          e.preventDefault();
+          if (!currentCustomer) return;
+
+          const docType = document.getElementById('uploadDocType').value;
+          const docTitle = document.getElementById('uploadDocTitle').value.trim();
+
+          if (!selectedDocFileObj && !capturedDocScanDataUrl) {
+            UI.showToast('Please select a file or take a camera scan first', 'warning');
+            return;
+          }
+
+          UI.showLoading('Optimizing & uploading document...');
+          let uploadPayload = capturedDocScanDataUrl || selectedDocFileDataUrl;
+          if (!uploadPayload && selectedDocFileObj) {
+            uploadPayload = await new Promise(resolve => {
+              const reader = new FileReader();
+              reader.onload = ev => resolve(ev.target.result);
+              reader.readAsDataURL(selectedDocFileObj);
+            });
+          }
+
+          if (docType === 'CUSTOMER_PHOTO') {
+            await window.documentManager.saveCustomerPhoto({
+              customerId: currentCustomer.customerId,
+              dataUrl: uploadPayload,
+              filename: selectedDocFileObj ? selectedDocFileObj.name : 'photo.jpg'
+            });
+            renderCustomerAvatar(currentCustomer);
+          } else {
+            await window.documentManager.uploadDocument({
+              customerId: currentCustomer.customerId,
+              docType,
+              docTitle: docTitle || `${docType} - ${currentCustomer.nameEn}`,
+              fileOrDataUrl: uploadPayload,
+              originalFilename: selectedDocFileObj ? selectedDocFileObj.name : `${docType}_Scan.jpg`,
+              mimeType: selectedDocFileObj ? selectedDocFileObj.type : 'image/jpeg',
+              fileSizeBytes: selectedDocFileObj ? selectedDocFileObj.size : Math.round((uploadPayload.length * 3) / 4)
+            });
+          }
+
           UI.hideLoading();
-          UI.showToast('Document uploaded successfully!', 'success');
-          UI.closeModal('uploadCustDocModal');
-        }, 800);
+          closeUploadDocModal();
+          UI.showToast(window.t ? window.t('upload_success') : 'Document uploaded successfully!', 'success');
+
+          const updatedDocs = window.documentManager.documents.filter(d => d.customerId === currentCustomer.customerId);
+          renderDocumentsGrid(updatedDocs);
+          renderCustomerKycChecklist(currentCustomer.customerId);
+        };
+      }
+
+      // Replace Form Submit
+      const replaceForm = document.getElementById('replaceCustDocForm');
+      if (replaceForm) {
+        replaceForm.onsubmit = async (e) => {
+          e.preventDefault();
+          const docId = document.getElementById('replaceCustDocId').value;
+          const fileInput = document.getElementById('replaceCustDocFileInput');
+          const file = fileInput.files[0];
+          if (!file) return;
+
+          const val = window.documentManager.validateFile(file);
+          if (!val.valid) {
+            UI.showToast(val.message, 'error');
+            return;
+          }
+
+          UI.showLoading('Replacing document version...');
+          const reader = new FileReader();
+          reader.onload = async (ev) => {
+            const res = await window.documentManager.replaceDocument(docId, {
+              fileOrDataUrl: ev.target.result,
+              originalFilename: file.name,
+              mimeType: file.type,
+              fileSizeBytes: file.size
+            });
+
+            UI.hideLoading();
+            UI.closeModal('replaceCustDocModal');
+            if (res.success) {
+              UI.showToast(window.t ? window.t('replace_success') : 'Document version replaced successfully', 'success');
+              const updatedDocs = window.documentManager.documents.filter(d => d.customerId === currentCustomer.customerId);
+              renderDocumentsGrid(updatedDocs);
+              renderCustomerKycChecklist(currentCustomer.customerId);
+            } else {
+              UI.showToast(res.message || 'Replacement failed', 'error');
+            }
+          };
+          reader.readAsDataURL(file);
+        };
+      }
+    }
+
+    /* ==========================================================================
+       DOCUMENT PREVIEW & REPLACE MODAL HANDLERS
+       ========================================================================== */
+    function previewCustDocument(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+
+      document.getElementById('prevCustDocTitle').textContent = doc.docTitle;
+      document.getElementById('metaCustDocId').textContent = doc.docId;
+      document.getElementById('metaCustDocCustomer').textContent = `${currentCustomer.nameEn} (${doc.customerId})`;
+      document.getElementById('metaCustDocType').textContent = (window.DOCUMENT_TYPES && window.DOCUMENT_TYPES[doc.docType]?.labelEn) || doc.docType;
+      document.getElementById('metaCustDocStoredFilename').textContent = doc.storedFilename || doc.originalFilename;
+      document.getElementById('metaCustDocDriveFolder').textContent = doc.driveFolder || '-';
+      document.getElementById('metaCustDocFileSize').textContent = doc.fileSizeFormatted || window.documentManager.formatBytes(doc.fileSizeBytes);
+      document.getElementById('metaCustDocStatus').innerHTML = doc.status === 'VERIFIED' ? `<span class="badge badge-success">VERIFIED</span>` : `<span class="badge badge-warning">${doc.status}</span>`;
+
+      const imgEl = document.getElementById('prevCustDocImg');
+      const pdfContainer = document.getElementById('prevCustDocPdfContainer');
+      const pdfObj = document.getElementById('prevCustDocPdfObject');
+      const isPdf = doc.mimeType === 'application/pdf' || (doc.storedFilename && doc.storedFilename.endsWith('.pdf'));
+
+      if (isPdf) {
+        imgEl.style.display = 'none';
+        pdfContainer.style.display = 'block';
+        pdfObj.data = doc.previewUrl || '';
+      } else {
+        pdfContainer.style.display = 'none';
+        imgEl.style.display = 'block';
+        imgEl.src = doc.previewUrl || 'assets/logo/logo.svg';
+      }
+
+      document.getElementById('downloadCustDocBtn').onclick = () => {
+        downloadCustDocument(doc.docId);
       };
+
+      UI.openModal('previewCustDocModal');
+    }
+
+    function downloadCustDocument(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+      if (doc.previewUrl && doc.previewUrl.startsWith('data:')) {
+        const a = document.createElement('a');
+        a.href = doc.previewUrl;
+        a.download = doc.storedFilename || `DOC_${doc.docId}.jpg`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        UI.showToast(`Downloading ${doc.storedFilename}...`, 'info');
+      } else {
+        UI.showToast(`Retrieving authorized file from Drive: ${doc.driveFileId}`, 'info');
+      }
+    }
+
+    function openReplaceCustDocModal(docId) {
+      document.getElementById('replaceCustDocId').value = docId;
+      document.getElementById('replaceCustDocFileInput').value = '';
+      UI.openModal('replaceCustDocModal');
+    }
+
+    async function toggleArchiveCustDoc(docId) {
+      const doc = window.documentManager.documents.find(d => d.docId === docId);
+      if (!doc) return;
+
+      const action = doc.status === 'ARCHIVED' ? 'restore' : 'archive';
+      if (!confirm(`Are you sure you want to ${action} this document?`)) return;
+
+      await window.documentManager.archiveDocument(docId);
+      UI.showToast(`Document ${action}d successfully`, 'success');
+      const updatedDocs = window.documentManager.documents.filter(d => d.customerId === currentCustomer.customerId);
+      renderDocumentsGrid(updatedDocs);
+      renderCustomerKycChecklist(currentCustomer.customerId);
+    }
+
+    /* ==========================================================================
+       CAMERA & PHOTO MODAL CONTROLLERS (CUSTOMER AVATAR PHOTO)
+       ========================================================================== */
+    function openPhotoModal() {
+      capturedPhotoDataUrl = null;
+      uploadedPhotoDataUrl = null;
+      setPhotoMode('camera');
+      UI.openModal('capturePhotoModal');
+    }
+
+    function closePhotoModal() {
+      if (window.documentManager) {
+        window.documentManager.stopCamera();
+      }
+      UI.closeModal('capturePhotoModal');
+    }
+
+    async function setPhotoMode(mode) {
+      activePhotoMode = mode;
+      const tabCam = document.getElementById('photoTabCameraBtn');
+      const tabUp = document.getElementById('photoTabUploadBtn');
+      const camSec = document.getElementById('cameraModeSection');
+      const upSec = document.getElementById('uploadModeSection');
+
+      if (mode === 'camera') {
+        tabCam.classList.add('active');
+        tabUp.classList.remove('active');
+        camSec.style.display = 'block';
+        upSec.style.display = 'none';
+        retakeSnapshot();
+        await startLiveCamera();
+      } else {
+        tabUp.classList.add('active');
+        tabCam.classList.remove('active');
+        camSec.style.display = 'none';
+        upSec.style.display = 'block';
+        if (window.documentManager) {
+          window.documentManager.stopCamera();
+        }
+      }
+    }
+
+    async function startLiveCamera() {
+      const videoEl = document.getElementById('camVideo');
+      const errBox = document.getElementById('cameraErrorBox');
+      const errTxt = document.getElementById('cameraErrorMsg');
+
+      errBox.style.display = 'none';
+      try {
+        await window.documentManager.startCamera(videoEl);
+      } catch (err) {
+        console.warn('Camera initiation notice:', err);
+        errTxt.textContent = err.message || (window.t ? window.t('camera_permission_denied') : 'Camera permission denied or camera not available.');
+        errBox.style.display = 'flex';
+      }
+    }
+
+    async function toggleCameraFacing() {
+      const videoEl = document.getElementById('camVideo');
+      try {
+        await window.documentManager.switchCamera(videoEl);
+      } catch (err) {
+        UI.showToast(err.message, 'warning');
+      }
+    }
+
+    function takeSnapshot() {
+      const videoEl = document.getElementById('camVideo');
+      const canvasEl = document.getElementById('camCanvas');
+      const guideEl = document.getElementById('camGuide');
+      const liveControls = document.getElementById('camLiveControls');
+      const reviewControls = document.getElementById('camReviewControls');
+
+      capturedPhotoDataUrl = window.documentManager.capturePhoto(videoEl, canvasEl, { cropSquare: true, watermark: true });
+      if (!capturedPhotoDataUrl) {
+        UI.showToast('Could not capture frame from camera', 'error');
+        return;
+      }
+
+      // Freeze frame display
+      videoEl.style.display = 'none';
+      canvasEl.style.display = 'block';
+      guideEl.style.display = 'none';
+      liveControls.style.display = 'none';
+      reviewControls.style.display = 'block';
+    }
+
+    function retakeSnapshot() {
+      const videoEl = document.getElementById('camVideo');
+      const canvasEl = document.getElementById('camCanvas');
+      const guideEl = document.getElementById('camGuide');
+      const liveControls = document.getElementById('camLiveControls');
+      const reviewControls = document.getElementById('camReviewControls');
+
+      capturedPhotoDataUrl = null;
+      videoEl.style.display = 'block';
+      canvasEl.style.display = 'none';
+      guideEl.style.display = 'flex';
+      liveControls.style.display = 'flex';
+      reviewControls.style.display = 'none';
+    }
+
+    async function saveCapturedCustomerPhoto() {
+      if (!capturedPhotoDataUrl || !currentCustomer) return;
+
+      UI.showLoading('Optimizing & saving customer photo...');
+      const res = await window.documentManager.saveCustomerPhoto({
+        customerId: currentCustomer.customerId,
+        dataUrl: capturedPhotoDataUrl,
+        filename: `photo_${currentCustomer.customerId}.jpg`
+      });
+
+      UI.hideLoading();
+      closePhotoModal();
+
+      if (res.success) {
+        renderCustomerAvatar(currentCustomer);
+        const updatedDocs = window.documentManager.documents.filter(d => d.customerId === currentCustomer.customerId);
+        renderDocumentsGrid(updatedDocs);
+        renderCustomerKycChecklist(currentCustomer.customerId);
+
+        if (res.isOffline) {
+          UI.showToast(window.t ? window.t('photo_sync_pending') : 'Photo saved locally (Pending Cloud Sync)', 'info');
+        } else {
+          UI.showToast(window.t ? window.t('customer_photo_updated') : 'Customer photo updated successfully!', 'success');
+        }
+      } else {
+        UI.showToast(res.message || 'Failed to save customer photo', 'error');
+      }
+    }
+
+    function handlePhotoFileSelected(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const validation = window.documentManager.validateFile(file);
+      if (!validation.valid) {
+        UI.showToast(validation.message, 'error');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        uploadedPhotoDataUrl = ev.target.result;
+        document.getElementById('filePreviewImg').src = uploadedPhotoDataUrl;
+        document.getElementById('filePreviewBox').style.display = 'block';
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveUploadedCustomerPhoto() {
+      if (!uploadedPhotoDataUrl || !currentCustomer) return;
+
+      UI.showLoading('Optimizing & uploading customer photo...');
+      const res = await window.documentManager.saveCustomerPhoto({
+        customerId: currentCustomer.customerId,
+        dataUrl: uploadedPhotoDataUrl,
+        filename: `photo_${currentCustomer.customerId}.jpg`
+      });
+
+      UI.hideLoading();
+      closePhotoModal();
+
+      if (res.success) {
+        renderCustomerAvatar(currentCustomer);
+        const updatedDocs = window.documentManager.documents.filter(d => d.customerId === currentCustomer.customerId);
+        renderDocumentsGrid(updatedDocs);
+        renderCustomerKycChecklist(currentCustomer.customerId);
+
+        if (res.isOffline) {
+          UI.showToast(window.t ? window.t('photo_sync_pending') : 'Photo saved locally (Pending Cloud Sync)', 'info');
+        } else {
+          UI.showToast(window.t ? window.t('customer_photo_updated') : 'Customer photo updated successfully!', 'success');
+        }
+      } else {
+        UI.showToast(res.message || 'Failed to save photo', 'error');
+      }
     }
 
     function switchCustomerTab(tabId) {
@@ -584,7 +1677,9 @@
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
       const target = document.getElementById(tabId);
       if (target) target.style.display = 'block';
-      event.target.classList.add('active');
+      
+      const tabBtn = Array.from(document.querySelectorAll('.tab-btn')).find(btn => btn.getAttribute('onclick')?.includes(tabId));
+      if (tabBtn) tabBtn.classList.add('active');
     }
   </script>
 </body>

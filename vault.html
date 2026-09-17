@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Vault & Packet Management &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -46,6 +49,49 @@
       color: var(--slate-500);
       margin-top: 2px;
     }
+
+    /* Scanner Viewfinder & Targeting Reticle */
+    .scanner-viewfinder {
+      position: relative;
+      width: 100%;
+      height: 260px;
+      background: #0F172A;
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .scanner-viewfinder video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .scanner-reticle {
+      width: 180px;
+      height: 180px;
+      border: 2.5px solid var(--gold-400);
+      border-radius: 12px;
+      position: absolute;
+      box-shadow: 0 0 0 4000px rgba(15, 23, 42, 0.6);
+      pointer-events: none;
+    }
+    .scanner-laser {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #DC2626;
+      box-shadow: 0 0 8px #DC2626;
+      animation: scanLaser 2s infinite ease-in-out;
+    }
+    @keyframes scanLaser {
+      0% { top: 0%; }
+      50% { top: 100%; }
+      100% { top: 0%; }
+    }
+
     @media print {
       body * {
         visibility: hidden;
@@ -76,12 +122,15 @@
         <!-- Header -->
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:var(--space-4); flex-wrap:wrap; gap:var(--space-3);">
           <div>
-            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="vault_title">Vault & Packet Management (பெட்டகம் & பாக்கெட்)</h2>
+            <h2 style="font-size:var(--font-size-xl); font-weight:800;" data-i18n="vault_title">Vault &amp; Packet Management (பெட்டகம் &amp; பாக்கெட்)</h2>
             <p class="text-muted" style="font-size:var(--font-size-xs);">Physical safe inventory tracking, locker/tray hierarchy, immutable movement auditing, and pouch QR tags.</p>
           </div>
 
-          <div style="display:flex; gap:var(--space-2);">
-            <a href="new-pledge.html" class="btn btn-primary">+ New Pledge POS</a>
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button type="button" class="btn btn-gold" id="openScannerBtn" style="font-weight:700;">
+              <span>📷 Scan Packet QR</span>
+            </button>
+            <a href="new-pledge.html" class="btn btn-primary" style="font-weight:700;">+ New Pledge POS</a>
           </div>
         </div>
 
@@ -160,7 +209,7 @@
           <div class="card-body" style="border-bottom:1px solid var(--border-subtle); padding:var(--space-3) var(--space-4);">
             <div class="search-box">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="packetSearchInput" class="form-input" placeholder="Search by Packet ID (e.g. PKT-0087), Ticket No, or Customer Name..." />
+              <input type="text" id="packetSearchInput" class="form-input" placeholder="Search by Packet ID, Ticket No, or Customer Name..." />
             </div>
           </div>
 
@@ -201,9 +250,9 @@
       <div class="modal-body">
         
         <div id="moveCurrentBanner" style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:var(--space-4); font-size:12.5px;">
-          <div><strong>Packet ID:</strong> <span id="moveDisplayPacket" class="cell-mono font-bold">PKT-0087</span></div>
-          <div><strong>Ticket Ref:</strong> <span id="moveDisplayTicket" class="cell-mono">PLG-2026-002341</span></div>
-          <div><strong>Current Location:</strong> <span id="moveDisplayCurrentLoc" class="font-bold text-gold">Vault A &bull; Locker 03 &bull; Tray 12</span></div>
+          <div><strong>Packet ID:</strong> <span id="moveDisplayPacket" class="cell-mono font-bold"></span></div>
+          <div><strong>Ticket Ref:</strong> <span id="moveDisplayTicket" class="cell-mono"></span></div>
+          <div><strong>Current Location:</strong> <span id="moveDisplayCurrentLoc" class="font-bold text-gold"></span></div>
         </div>
 
         <div class="grid-2" style="margin-bottom:var(--space-3);">
@@ -335,6 +384,160 @@
     </div>
   </div>
 
+  <!-- ==========================================================================
+       MODAL: MOBILE CAMERA & USB LASER SCANNER
+       ========================================================================== -->
+  <div class="modal-backdrop" id="qrScannerModal">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span style="font-size:20px;">📷</span>
+          <h3 class="modal-title">Scan Pledge Packet QR</h3>
+        </div>
+        <button class="modal-close-btn" onclick="closeScannerModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        
+        <div class="scanner-viewfinder" id="scannerViewfinder">
+          <video id="scannerVideo" playsinline autoplay muted></video>
+          <div class="scanner-reticle">
+            <div class="scanner-laser"></div>
+          </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:var(--space-2); margin-bottom:var(--space-3); flex-wrap:wrap; gap:8px;">
+          <span style="font-size:11.5px; color:var(--slate-600);" id="scannerStatusText">Point camera at packet QR code or use barcode gun</span>
+          <div style="display:flex; gap:var(--space-2);">
+            <button type="button" class="btn btn-outline btn-sm" id="flipCameraBtn" title="Switch Camera" style="display:none;" onclick="switchCamera()">🔄 Switch</button>
+            <button type="button" class="btn btn-outline btn-sm" id="torchBtn" title="Toggle Torch" style="display:none;" onclick="toggleTorch()">🔦 Torch</button>
+          </div>
+        </div>
+
+        <div style="border-top:1px solid var(--border-subtle); padding-top:var(--space-3);">
+          <label class="form-label" style="font-size:12px; font-weight:700;">Handheld Laser Scanner / Manual Reference</label>
+          <div style="display:flex; gap:var(--space-2);">
+            <input type="text" id="manualScannerInput" class="form-input" placeholder="Scan with USB gun or paste ASJEW:TKT:... / Ticket No" autocomplete="off" />
+            <button type="button" class="btn btn-primary" id="manualScannerSubmitBtn" onclick="handleManualScanSubmit()">Lookup</button>
+          </div>
+          <div style="font-size:11px; color:var(--slate-500); margin-top:4px;">Protected QR payload format: <span class="cell-mono">ASJEW:TKT:PLG-2026-0001:PKT-0001</span></div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="closeScannerModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL: SCANNED PACKET QUICK VIEW (7 Required Fields)
+       ========================================================================== -->
+  <div class="modal-backdrop" id="scannedPacketModal">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-header">
+        <div style="display:flex; align-items:center; gap:var(--space-2);">
+          <span style="font-size:20px;">🛡️</span>
+          <h3 class="modal-title" id="scannedModalTitle">Pledge Packet Verification</h3>
+        </div>
+        <button class="modal-close-btn" onclick="UI.closeModal('scannedPacketModal')">&times;</button>
+      </div>
+      <div class="modal-body" style="padding:var(--space-4);">
+        
+        <!-- Header Banner: Packet ID + Status Badge -->
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#0F172A; color:#FFF; padding:12px 16px; border-radius:var(--radius-md); margin-bottom:var(--space-4); flex-wrap:wrap; gap:8px;">
+          <div>
+            <div style="font-size:10px; color:#94A3B8; text-transform:uppercase; letter-spacing:1px; font-weight:800;">Physical Collateral Packet Tag</div>
+            <div style="font-size:22px; font-weight:900; color:#F59E0B; letter-spacing:0.5px;" id="scannedPacketIdTag">PKT-0001</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span id="scannedStatusBadge" class="badge badge-success" style="font-size:13px; padding:6px 12px;">IN VAULT</span>
+          </div>
+        </div>
+
+        <!-- 7-Point Field Grid -->
+        <div class="grid-2" style="gap:var(--space-3); margin-bottom:var(--space-4);">
+          
+          <!-- Field 1: Pledge Number -->
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:var(--slate-500); font-weight:700;">1. PLEDGE NUMBER (அடகு எண்)</div>
+            <div style="font-size:15px; font-weight:900; color:var(--primary-main); margin-top:2px;" id="scannedTicketNo"></div>
+            <div style="font-size:11px; color:var(--slate-500);" id="scannedPledgeDate"></div>
+          </div>
+
+          <!-- Field 2: Customer Name -->
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:var(--slate-500); font-weight:700;">2. CUSTOMER (வாடிக்கையாளர்)</div>
+            <div style="font-size:15px; font-weight:900; color:var(--slate-900); margin-top:2px;" id="scannedCustomerName"></div>
+            <div style="font-size:11px; color:var(--slate-500);" id="scannedCustomerContact"></div>
+          </div>
+
+          <!-- Field 3: Item Summary -->
+          <div style="grid-column:1 / -1; background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:4px;">
+              <div style="font-size:11px; color:var(--slate-500); font-weight:700;">3. ITEM SUMMARY & GOLD COLLATERAL (நகை விபரம்)</div>
+              <div style="font-size:12px; font-weight:800; color:#B45309;" id="scannedWeightsSummary"></div>
+            </div>
+            <div style="font-size:13.5px; font-weight:700; color:var(--slate-800); margin-top:4px;" id="scannedItemSummary"></div>
+          </div>
+
+          <!-- Field 4: Physical Location Hierarchy -->
+          <div style="background:#EFF6FF; border:1px solid #BFDBFE; border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:#1E40AF; font-weight:800;">4. PHYSICAL PACKET LOCATION (பெட்டக இருப்பிடம்)</div>
+            <div style="font-size:15px; font-weight:900; color:#1E3A8A; margin-top:2px;" id="scannedLocationHierarchy"></div>
+            <div style="font-size:11.5px; color:#3B82F6; margin-top:2px;" id="scannedLocationNote"></div>
+          </div>
+
+          <!-- Field 5 & 6: Outstanding Dues & Calculation -->
+          <div style="background:#FEF3C7; border:1px solid #FDE68A; border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:#92400E; font-weight:800;">5. OUTSTANDING AMOUNT (நிலுவை தொகை)</div>
+            <div style="font-size:18px; font-weight:900; color:#78350F; margin-top:2px;" id="scannedOutstandingTotal">₹ 0</div>
+            <div style="font-size:11.5px; color:#B45309;" id="scannedOutstandingBreakdown"></div>
+          </div>
+
+          <!-- Field 7: Maturity & Due Date -->
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:var(--slate-500); font-weight:700;">6. STATUTORY DUE DATE (முதிர்வு தேதி)</div>
+            <div style="font-size:15px; font-weight:900; color:var(--slate-900); margin-top:2px;" id="scannedDueDate"></div>
+            <div style="font-size:11.5px;" id="scannedDueStatus"></div>
+          </div>
+
+          <!-- Quick Status Transition Box -->
+          <div style="background:var(--slate-50); border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:10px 14px;">
+            <div style="font-size:11px; color:var(--slate-500); font-weight:700;">7. QUICK STATUS TRANSITION (நிலை மாற்றம்)</div>
+            <div style="display:flex; gap:6px; margin-top:6px;">
+              <select id="scannedQuickStatusSelect" class="form-select" style="font-size:12px; font-weight:bold; height:36px;">
+                <option value="IN_VAULT">IN VAULT (பெட்டகத்தில்)</option>
+                <option value="OUT_FOR_VERIFICATION">OUT FOR VERIFICATION (சரிபார்ப்பு)</option>
+                <option value="AUCTION_REVIEW">AUCTION REVIEW (ஏல பரிசீலனை)</option>
+              </select>
+              <button type="button" class="btn btn-outline btn-sm" id="scannedApplyStatusBtn" onclick="applyScannedQuickStatus()">Apply</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Operational Actions Bar -->
+        <div style="border-top:1px solid var(--border-subtle); padding-top:var(--space-3); display:flex; gap:var(--space-2); flex-wrap:wrap; justify-content:space-between; align-items:center;">
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <button type="button" class="btn btn-outline btn-sm" id="scannedMoveLocBtn">📍 Relocate</button>
+            <button type="button" class="btn btn-outline btn-sm" id="scannedPrintTagBtn">🏷 Print Tag</button>
+            <button type="button" class="btn btn-outline btn-sm" id="scannedViewHistoryBtn">📜 Audit Ledger</button>
+          </div>
+          
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <a href="#" class="btn btn-primary btn-sm" id="scannedPaymentLink">💳 Pay Interest/Part</a>
+            <a href="#" class="btn btn-primary btn-sm" id="scannedRenewalLink">🔄 Renewal</a>
+            <a href="#" class="btn btn-success btn-sm" id="scannedRedemptionLink">🎁 Redemption</a>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" onclick="UI.closeModal('scannedPacketModal')">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Core Foundation Scripts -->
   <script src="js/i18n.js"></script>
   <script src="js/auth.js"></script>
@@ -351,17 +554,36 @@
   <script src="js/dashboard.js"></script>
   <script src="js/reminders.js"></script>
   <script src="js/vault.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let activeVaultFilter = 'ALL';
     let selectedLocker = null;
     let activePacketForMove = null;
+    let activeScannedPacket = null;
+    let scannerStream = null;
+    let isScanningActive = false;
+    let scanAnimationId = null;
+    let currentFacingMode = 'environment';
+    let isTorchOn = false;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('pageTitleText').textContent = window.t('vault');
       refreshVaultScreen();
       bindVaultEvents();
+      handleUrlQueryParams();
+
+      // Listen for sync events across modules
+      window.addEventListener('vaultSynced', () => refreshVaultScreen());
+      window.addEventListener('pledgesSynced', () => refreshVaultScreen());
+      window.addEventListener('customersSynced', () => refreshVaultScreen());
+
+      // Trigger automatic background sync with Google Sheets backend
+      if (window.vaultManager && typeof window.vaultManager.syncWithBackend === 'function') {
+        await window.vaultManager.syncWithBackend();
+        refreshVaultScreen();
+      }
     });
 
     function refreshVaultScreen() {
@@ -457,7 +679,9 @@
 
         return `
           <tr>
-            <td class="cell-mono cell-primary"><strong>${p.packetId}</strong></td>
+            <td class="cell-mono cell-primary">
+              <a href="javascript:void(0)" onclick="resolveAndDisplayPacket('${p.ticketNo}')" style="font-weight:900;">${p.packetId}</a>
+            </td>
             <td>
               <span class="font-bold">${p.vaultLocation}</span> &bull; <span class="badge badge-outline">${p.locker}</span> &bull; <span>${p.tray}</span>
               <div style="font-size:10px; color:var(--slate-500);">${p.locationNote}</div>
@@ -472,11 +696,14 @@
             <td>${statusBadge}</td>
             <td>
               <div style="display:flex; gap:var(--space-1);">
+                <button type="button" class="btn btn-primary btn-sm" onclick="resolveAndDisplayPacket('${p.ticketNo}')" title="Inspect & Verify">
+                  <span>🔍 View</span>
+                </button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="openMoveModal('${p.packetId}')" title="Move Packet">
                   <span>📍 Move</span>
                 </button>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="openTagModal('${p.packetId}')" title="Print Tag">
-                  <span>🏷 Tag</span>
+                  <span>🏷</span>
                 </button>
                 <button type="button" class="btn btn-ghost btn-sm" onclick="openHistoryModal('${p.packetId}')" title="View Audit History">
                   <span>📜</span>
@@ -513,11 +740,324 @@
 
       // Relocation Save
       document.getElementById('saveRelocationBtn').addEventListener('click', handleSaveRelocation);
+
+      // Open Scanner Button
+      document.getElementById('openScannerBtn').addEventListener('click', openScannerModal);
+
+      // Manual Scanner input Enter key listener
+      document.getElementById('manualScannerInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          handleManualScanSubmit();
+        }
+      });
     }
 
+    // =========================================================================
+    // QR SCANNER ENGINE (Camera Stream + Laser Barcode Gun Listener)
+    // =========================================================================
+    async function openScannerModal() {
+      UI.openModal('qrScannerModal');
+      document.getElementById('manualScannerInput').value = '';
+      document.getElementById('scannerStatusText').textContent = 'Initializing camera scanner...';
+      document.getElementById('manualScannerInput').focus();
+
+      await startCameraStream(currentFacingMode);
+    }
+
+    function closeScannerModal() {
+      stopCameraStream();
+      UI.closeModal('qrScannerModal');
+    }
+
+    async function startCameraStream(facingMode = 'environment') {
+      stopCameraStream();
+      const video = document.getElementById('scannerVideo');
+      const statusText = document.getElementById('scannerStatusText');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        statusText.textContent = 'Camera not available. Please use USB Laser scanner or type reference below.';
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facingMode },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          }
+        });
+
+        scannerStream = stream;
+        video.srcObject = stream;
+        await video.play();
+
+        isScanningActive = true;
+        statusText.textContent = 'Align packet QR code inside the viewfinder';
+
+        // Check if multiple video devices exist to show flip button
+        try {
+          const devices = await navigator.mediaDevices.enumerateDevices();
+          const videoDevices = devices.filter(d => d.kind === 'videoinput');
+          if (videoDevices.length > 1) {
+            document.getElementById('flipCameraBtn').style.display = 'inline-flex';
+          }
+        } catch (e) {}
+
+        // Check torch capability
+        const track = stream.getVideoTracks()[0];
+        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+        if (capabilities.torch) {
+          document.getElementById('torchBtn').style.display = 'inline-flex';
+        }
+
+        startVideoFrameDetection(video);
+      } catch (err) {
+        console.warn('Camera access error:', err);
+        statusText.textContent = 'Camera permission denied or camera busy. You can use USB laser scanner or paste reference.';
+      }
+    }
+
+    function stopCameraStream() {
+      isScanningActive = false;
+      if (scanAnimationId) {
+        cancelAnimationFrame(scanAnimationId);
+        scanAnimationId = null;
+      }
+      if (scannerStream) {
+        scannerStream.getTracks().forEach(track => track.stop());
+        scannerStream = null;
+      }
+      const video = document.getElementById('scannerVideo');
+      if (video) video.srcObject = null;
+    }
+
+    async function switchCamera() {
+      currentFacingMode = (currentFacingMode === 'environment') ? 'user' : 'environment';
+      await startCameraStream(currentFacingMode);
+    }
+
+    async function toggleTorch() {
+      if (!scannerStream) return;
+      const track = scannerStream.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        isTorchOn = !isTorchOn;
+        try {
+          await track.applyConstraints({ advanced: [{ torch: isTorchOn }] });
+          document.getElementById('torchBtn').textContent = isTorchOn ? '🔦 Off' : '🔦 Torch';
+        } catch (e) {
+          console.warn('Torch toggle error:', e);
+        }
+      }
+    }
+
+    function startVideoFrameDetection(video) {
+      if (!('BarcodeDetector' in window)) {
+        document.getElementById('scannerStatusText').textContent = 'Scanner ready. Point at code or scan with laser gun.';
+        return;
+      }
+
+      let barcodeDetector;
+      try {
+        barcodeDetector = new BarcodeDetector({ formats: ['qr_code', 'code_128', 'code_39', 'data_matrix'] });
+      } catch (e) {
+        console.warn('BarcodeDetector format init notice:', e);
+        return;
+      }
+
+      const scanFrame = async () => {
+        if (!isScanningActive) return;
+
+        if (video.readyState === video.HAVE_ENOUGH_DATA) {
+          try {
+            const barcodes = await barcodeDetector.detect(video);
+            if (barcodes && barcodes.length > 0) {
+              const detectedValue = barcodes[0].rawValue;
+              if (detectedValue) {
+                playScanBeep();
+                closeScannerModal();
+                resolveAndDisplayPacket(detectedValue);
+                return;
+              }
+            }
+          } catch (e) {
+            // Frame processing error; continue loop
+          }
+        }
+
+        scanAnimationId = requestAnimationFrame(scanFrame);
+      };
+
+      scanAnimationId = requestAnimationFrame(scanFrame);
+    }
+
+    function handleManualScanSubmit() {
+      const input = document.getElementById('manualScannerInput');
+      const val = input.value.trim();
+      if (!val) {
+        UI.showToast('Please scan or enter a packet QR reference / ticket number', 'warning');
+        input.focus();
+        return;
+      }
+
+      playScanBeep();
+      closeScannerModal();
+      resolveAndDisplayPacket(val);
+    }
+
+    function playScanBeep() {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContext) return;
+        const ctx = new AudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.12);
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // RESOLVE SCANNED QR & OPEN 7-POINT VERIFICATION MODAL
+    // =========================================================================
+    function resolveAndDisplayPacket(qrOrTicket) {
+      const res = window.vaultManager.resolveScannedQr(qrOrTicket);
+
+      if (!res.success) {
+        UI.showToast(res.message, 'error');
+        return;
+      }
+
+      activeScannedPacket = res;
+
+      // 1. Header Banner & Status Badge
+      document.getElementById('scannedPacketIdTag').textContent = res.packetId;
+      const statusBadge = document.getElementById('scannedStatusBadge');
+      statusBadge.textContent = res.status.replace(/_/g, ' ');
+
+      if (res.status === 'IN_VAULT') {
+        statusBadge.className = 'badge badge-success';
+      } else if (res.status === 'OUT_FOR_VERIFICATION') {
+        statusBadge.className = 'badge badge-warning';
+      } else if (res.status === 'RELEASED') {
+        statusBadge.className = 'badge badge-slate';
+      } else if (res.status === 'AUCTION_REVIEW') {
+        statusBadge.className = 'badge badge-danger';
+      }
+
+      // Field 1: Pledge Number
+      document.getElementById('scannedTicketNo').innerHTML = `<a href="pledges.html?ticket=${res.ticketNo}" style="text-decoration:underline;">${res.ticketNo}</a>`;
+      document.getElementById('scannedPledgeDate').textContent = `Booked on: ${res.dueDate.pledgeDate || 'N/A'}`;
+
+      // Field 2: Customer Name
+      const custTa = res.customerNameTa ? ` (${res.customerNameTa})` : '';
+      document.getElementById('scannedCustomerName').innerHTML = `<a href="customer.html?id=${res.customerId}" style="color:var(--slate-900); text-decoration:underline;">${res.customerName}${custTa}</a>`;
+      document.getElementById('scannedCustomerContact').textContent = `📞 ${res.mobile || 'N/A'} • ID: ${res.customerId}`;
+
+      // Field 3: Item Summary & Gold Weights
+      document.getElementById('scannedWeightsSummary').textContent = `Net: ${res.netWeight} g • Gross: ${res.grossWeight} g (${res.itemsCount} Items)`;
+      document.getElementById('scannedItemSummary').textContent = res.itemSummary;
+
+      // Field 4: Physical Location Hierarchy
+      document.getElementById('scannedLocationHierarchy').textContent = res.packetLocation.formattedLocation;
+      document.getElementById('scannedLocationNote').textContent = `Note: ${res.packetLocation.locationNote || 'Standard pouch'}`;
+
+      // Field 5 & 6: Outstanding Dues & Calculation
+      document.getElementById('scannedOutstandingTotal').textContent = res.outstandingAmount.formatted;
+      document.getElementById('scannedOutstandingBreakdown').textContent = `Principal: ₹ ${Number(res.outstandingAmount.principal).toLocaleString('en-IN')} + Accrued Interest: ₹ ${Number(res.outstandingAmount.accruedInterest).toLocaleString('en-IN')}`;
+
+      // Field 7: Maturity Due Date
+      document.getElementById('scannedDueDate').textContent = res.dueDate.maturityDate;
+      const dueStatusEl = document.getElementById('scannedDueStatus');
+      dueStatusEl.textContent = res.dueDate.statusText;
+      dueStatusEl.style.fontWeight = 'bold';
+      dueStatusEl.style.color = res.dueDate.isOverdue ? '#DC2626' : '#15803D';
+
+      // Quick Status selector
+      document.getElementById('scannedQuickStatusSelect').value = (res.status === 'RELEASED') ? 'IN_VAULT' : res.status;
+
+      // Action Button bindings
+      document.getElementById('scannedMoveLocBtn').onclick = () => {
+        UI.closeModal('scannedPacketModal');
+        openMoveModal(res.packetId);
+      };
+
+      document.getElementById('scannedPrintTagBtn').onclick = () => {
+        UI.closeModal('scannedPacketModal');
+        openTagModal(res.packetId);
+      };
+
+      document.getElementById('scannedViewHistoryBtn').onclick = () => {
+        UI.closeModal('scannedPacketModal');
+        openHistoryModal(res.packetId);
+      };
+
+      // Direct Navigation links
+      document.getElementById('scannedPaymentLink').href = `payments.html?ticket=${res.ticketNo}`;
+      document.getElementById('scannedRenewalLink').href = `renewal.html?ticket=${res.ticketNo}`;
+      document.getElementById('scannedRedemptionLink').href = `redemption.html?ticket=${res.ticketNo}`;
+
+      UI.openModal('scannedPacketModal');
+    }
+
+    async function applyScannedQuickStatus() {
+      if (!activeScannedPacket) return;
+
+      const newStatus = document.getElementById('scannedQuickStatusSelect').value;
+      const btn = document.getElementById('scannedApplyStatusBtn');
+      btn.disabled = true;
+      btn.textContent = 'Updating...';
+
+      const res = await window.vaultManager.updatePacketStatus(
+        activeScannedPacket.packetId,
+        newStatus,
+        `Quick status transition to ${newStatus} via Packet Inspection`
+      );
+
+      if (res.success) {
+        UI.showToast(`Status updated to ${newStatus}`, 'success');
+        refreshVaultScreen();
+        resolveAndDisplayPacket(activeScannedPacket.packetId);
+      } else {
+        UI.showToast(res.message, 'error');
+      }
+
+      btn.disabled = false;
+      btn.textContent = 'Apply';
+    }
+
+    function handleUrlQueryParams() {
+      const params = new URLSearchParams(window.location.search);
+      const ticket = params.get('ticket');
+      const packet = params.get('packet');
+      const scan = params.get('scan');
+
+      if (ticket) {
+        setTimeout(() => resolveAndDisplayPacket(ticket), 300);
+      } else if (packet) {
+        setTimeout(() => resolveAndDisplayPacket(packet), 300);
+      } else if (scan === 'true') {
+        setTimeout(() => openScannerModal(), 300);
+      }
+    }
+
+    // =========================================================================
+    // RELOCATION & AUDIT MODAL HANDLERS
+    // =========================================================================
     function openMoveModal(packetId) {
-      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId);
-      if (!p) return;
+      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId || item.ticketNo === packetId);
+      if (!p) {
+        UI.showToast('Packet not found in inventory', 'error');
+        return;
+      }
 
       activePacketForMove = p;
       document.getElementById('moveDisplayPacket').textContent = p.packetId;
@@ -527,7 +1067,7 @@
       document.getElementById('moveVaultSelect').value = p.vaultLocation || 'Vault A';
       document.getElementById('moveLockerSelect').value = p.locker || 'Locker 01';
       document.getElementById('moveTraySelect').value = p.tray || 'Tray 01';
-      document.getElementById('moveStatusSelect').value = p.status || 'IN_VAULT';
+      document.getElementById('moveStatusSelect').value = (p.status === 'RELEASED') ? 'IN_VAULT' : p.status;
       document.getElementById('moveReasonInput').value = '';
       document.getElementById('moveNoteInput').value = p.locationNote || '';
 
@@ -575,8 +1115,11 @@
     }
 
     function openTagModal(packetId) {
-      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId);
-      if (!p) return;
+      const p = window.vaultManager.getPackets('ALL').find(item => item.packetId === packetId || item.ticketNo === packetId);
+      if (!p) {
+        UI.showToast('Packet not found in inventory', 'error');
+        return;
+      }
 
       const html = window.vaultManager.generatePacketQrTag(p);
       document.getElementById('tagContainer').innerHTML = html;
@@ -585,7 +1128,7 @@
 
     function openHistoryModal(packetId) {
       const logs = window.vaultManager.getPacketAuditHistory(packetId);
-      document.getElementById('historyModalTitle').textContent = `Movement Audit Ledger &bull; ${packetId}`;
+      document.getElementById('historyModalTitle').textContent = `Movement Audit Ledger • ${packetId}`;
       const tbody = document.getElementById('historyTbody');
 
       if (logs.length === 0) {
@@ -594,7 +1137,7 @@
         tbody.innerHTML = logs.map(l => `
           <tr>
             <td class="cell-mono cell-primary">${l.logId}</td>
-            <td style="font-size:12px;">${l.timestamp.split('T')[0]}</td>
+            <td style="font-size:12px;">${(l.timestamp || '').split('T')[0]}</td>
             <td style="font-size:12px;">${l.previousLocation}</td>
             <td style="font-size:12px; font-weight:bold; color:var(--primary-main);">${l.newLocation}</td>
             <td><span class="badge badge-outline">${l.newStatus}</span></td>

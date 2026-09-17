@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Pledges & Pawn Tickets &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -133,28 +136,53 @@
         <button class="modal-close-btn" onclick="UI.closeModal('printDocumentModal')">&times;</button>
       </div>
 
-      <!-- Format Switcher Tab Bar -->
-      <div class="tab-bar" style="margin:0; border-radius:0; border-bottom:1px solid var(--border-subtle); padding:0 var(--space-4);">
-        <button type="button" class="tab-btn active" id="tabFormatA4Btn" onclick="switchPrintFormat('A4')">
-          <span data-i18n="format_a4">📄 Standard A4 Full Page</span>
-        </button>
-        <button type="button" class="tab-btn" id="tabFormatThermalBtn" onclick="switchPrintFormat('THERMAL')">
-          <span data-i18n="format_thermal">🧾 80mm Thermal Receipt Slip</span>
-        </button>
+      <!-- Format & Language Controls Toolbar -->
+      <div class="doc-modal-toolbar">
+        <div class="doc-format-toggle">
+          <button type="button" class="doc-toggle-btn active" id="tabFormatA4Btn" onclick="switchPrintFormat('A4')">
+            📄 Standard A4
+          </button>
+          <button type="button" class="doc-toggle-btn" id="tabFormatThermalBtn" onclick="switchPrintFormat('THERMAL')">
+            🧾 80mm Thermal
+          </button>
+        </div>
+
+        <div class="doc-lang-toggle">
+          <button type="button" class="doc-toggle-btn active" id="langBilingualBtn" onclick="switchDocLanguage('BILINGUAL')">
+            EN + தமிழ்
+          </button>
+          <button type="button" class="doc-toggle-btn" id="langEnBtn" onclick="switchDocLanguage('EN')">
+            English
+          </button>
+          <button type="button" class="doc-toggle-btn" id="langTaBtn" onclick="switchDocLanguage('TA')">
+            தமிழ்
+          </button>
+        </div>
       </div>
 
       <div class="modal-body" style="padding:var(--space-4); background:#F8FAFC; max-height:75vh; overflow-y:auto;" id="docRenderContainer">
         <!-- Rendered dynamically via BillingManager -->
       </div>
 
-      <div class="modal-footer" style="background:#FFF;">
-        <button type="button" class="btn btn-outline" onclick="UI.closeModal('printDocumentModal')">Close</button>
-        <button type="button" class="btn btn-secondary" id="reprintDocBtn">
-          <span>🔄 Reprint (Audit Logged)</span>
-        </button>
-        <button type="button" class="btn btn-primary" onclick="window.print()">
-          <span>🖨 Print Document</span>
-        </button>
+      <div class="modal-footer" style="background:#FFF; padding:var(--space-3) var(--space-4);">
+        <div class="doc-action-bar">
+          <button type="button" class="btn btn-outline btn-sm" onclick="UI.closeModal('printDocumentModal')">Close</button>
+          <button type="button" class="btn btn-outline btn-sm" id="copyDetailsBtn" onclick="handleCopyDetails()" title="Copy Formatted Details">
+            <span>📋 Copy Details</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="whatsappShareBtn" onclick="handleWhatsAppShare()" title="Share on WhatsApp">
+            <span style="color:#16A34A; font-weight:bold;">📱 WhatsApp</span>
+          </button>
+          <button type="button" class="btn btn-outline btn-sm" id="webShareBtn" onclick="handleWebShare()" title="Share Document">
+            <span>📤 Share</span>
+          </button>
+          <button type="button" class="btn btn-secondary btn-sm" id="reprintDocBtn" onclick="handleReprintDoc()">
+            <span>🔄 Reprint</span>
+          </button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="window.print()" title="Print / Download PDF">
+            <span>🖨 Print / PDF</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -168,15 +196,19 @@
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
   <script src="js/rates.js"></script>
+  <script src="js/financialCalculator.js"></script>
+  <script src="js/payments.js"></script>
   <script src="js/pledgePos.js"></script>
   <script src="js/billing.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let activePledgeForModal = null;
     let activeFormat = 'A4';
+    let activeLanguage = 'BILINGUAL';
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('pageTitleText').textContent = window.t('pledges');
       renderPledgesTable();
       bindPledgeEvents();
@@ -187,6 +219,22 @@
       if (ticketParam) {
         openDocumentModal(ticketParam, 'A4');
       }
+
+      // Sync customer & pledge databases with Google Sheets
+      if (window.customerManager && typeof window.customerManager.syncWithBackend === 'function') {
+        window.customerManager.syncWithBackend();
+      }
+      if (window.pledgePosManager && typeof window.pledgePosManager.syncWithBackend === 'function') {
+        await window.pledgePosManager.syncWithBackend();
+        renderPledgesTable();
+      }
+    });
+
+    window.addEventListener('pledgesSynced', () => {
+      renderPledgesTable();
+    });
+    window.addEventListener('customersSynced', () => {
+      renderPledgesTable();
     });
 
     function renderPledgesTable() {
@@ -266,11 +314,15 @@
             <td class="cell-primary">${window.Validation.formatINR(p.loanAmount)}</td>
             <td class="cell-mono" style="color:var(--gold-900); font-weight:700;">${window.Validation.formatINR(p.monthlyInterestAmount)}</td>
             <td>${statusBadge}</td>
-            <td class="cell-mono" style="font-size:11px;">${p.packetId}<br/><span style="font-size:10px; color:var(--slate-400);">${p.vaultLocation}</span></td>
+            <td class="cell-mono" style="font-size:11px;">
+              <a href="vault.html?ticket=${p.ticketNo}" style="font-weight:800; color:var(--primary-main);" title="Inspect in Safe Vault">${p.packetId}</a>
+              <br/><span style="font-size:10px; color:var(--slate-500);">${p.vaultLocation || 'Vault A'}</span>
+            </td>
             <td>
-              <div style="display:flex; gap:var(--space-1);">
+              <div style="display:flex; gap:var(--space-1); flex-wrap:wrap;">
                 <button type="button" class="btn btn-outline btn-sm" onclick="openDocumentModal('${p.ticketNo}', 'A4')" title="Print A4 Ticket">📄 A4</button>
                 <button type="button" class="btn btn-outline btn-sm" onclick="openDocumentModal('${p.ticketNo}', 'THERMAL')" title="Print 80mm Slip">🧾 80mm</button>
+                <a href="vault.html?ticket=${p.ticketNo}" class="btn btn-ghost btn-sm" title="Vault & QR Tag">🛡️</a>
                 <a href="payments.html?ticket=${p.ticketNo}" class="btn btn-secondary btn-sm" title="Collect Payment">Pay</a>
               </div>
             </td>
@@ -283,15 +335,6 @@
       document.getElementById('pledgeSearchInput').addEventListener('input', renderPledgesTable);
       document.getElementById('pledgeStatusFilter').addEventListener('change', renderPledgesTable);
       document.getElementById('pledgeDateFilter').addEventListener('change', renderPledgesTable);
-
-      document.getElementById('reprintDocBtn').addEventListener('click', () => {
-        if (activePledgeForModal) {
-          const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
-          const docHtml = window.billingManager.renderPawnTicket(activePledgeForModal, cust, activeFormat, true);
-          document.getElementById('docRenderContainer').innerHTML = docHtml;
-          UI.showToast(window.t('reprint_logged'), 'success');
-        }
-      });
     }
 
     function openDocumentModal(ticketNo, format = 'A4') {
@@ -302,28 +345,61 @@
       activeFormat = format;
       document.getElementById('docModalTitle').textContent = `Pawn Ticket &bull; ${p.ticketNo}`;
 
-      switchPrintFormat(format);
+      renderCurrentDoc(false);
       UI.openModal('printDocumentModal');
     }
 
     function switchPrintFormat(format) {
       activeFormat = format;
-      const a4Btn = document.getElementById('tabFormatA4Btn');
-      const thermalBtn = document.getElementById('tabFormatThermalBtn');
+      document.getElementById('tabFormatA4Btn').classList.toggle('active', format === 'A4');
+      document.getElementById('tabFormatThermalBtn').classList.toggle('active', format === 'THERMAL');
+      renderCurrentDoc(false);
+    }
 
-      if (format === 'A4') {
-        a4Btn.classList.add('active');
-        thermalBtn.classList.remove('active');
-      } else {
-        a4Btn.classList.remove('active');
-        thermalBtn.classList.add('active');
-      }
+    function switchDocLanguage(lang) {
+      activeLanguage = lang;
+      document.getElementById('langBilingualBtn').classList.toggle('active', lang === 'BILINGUAL');
+      document.getElementById('langEnBtn').classList.toggle('active', lang === 'EN');
+      document.getElementById('langTaBtn').classList.toggle('active', lang === 'TA');
+      renderCurrentDoc(false);
+    }
 
+    function renderCurrentDoc(isReprint = false) {
+      if (!activePledgeForModal) return;
+      const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+      const docHtml = window.billingManager.renderPawnTicket(activePledgeForModal, cust, activeFormat, isReprint, activeLanguage);
+      document.getElementById('docRenderContainer').innerHTML = docHtml;
+    }
+
+    function handleReprintDoc() {
       if (activePledgeForModal) {
-        const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
-        const docHtml = window.billingManager.renderPawnTicket(activePledgeForModal, cust, format, false);
-        document.getElementById('docRenderContainer').innerHTML = docHtml;
+        renderCurrentDoc(true);
+        UI.showToast('Reprint generated and audit logged ✓', 'info');
       }
+    }
+
+    async function handleCopyDetails() {
+      if (!activePledgeForModal) return;
+      const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+      const res = await window.billingManager.copyReceiptDetails('PAWN_TICKET', activePledgeForModal, cust);
+      if (res.success) {
+        UI.showToast('Ticket summary copied to clipboard ✓', 'success');
+      } else {
+        UI.showToast('Failed to copy ticket details', 'error');
+      }
+    }
+
+    function handleWhatsAppShare() {
+      if (!activePledgeForModal) return;
+      const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+      window.billingManager.openWhatsAppShare('PAWN_TICKET', activePledgeForModal, cust);
+      UI.showToast('Opening WhatsApp with ticket summary...', 'info');
+    }
+
+    async function handleWebShare() {
+      if (!activePledgeForModal) return;
+      const cust = window.customerManager.getCustomerById(activePledgeForModal.customerId);
+      await window.billingManager.shareReceipt('PAWN_TICKET', activePledgeForModal, cust);
     }
   </script>
 </body>

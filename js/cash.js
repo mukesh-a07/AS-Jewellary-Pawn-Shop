@@ -20,30 +20,9 @@ class CashManager {
     } catch (e) {
       console.warn('Failed to load expenses', e);
     }
-    const seedExpenses = [
-      {
-        expenseId: 'EXP-2026-000001',
-        category: 'TEA_SNACKS',
-        amount: 150,
-        date: new Date().toISOString().split('T')[0],
-        description: 'Counter tea and refreshments for customer visits',
-        paymentMethod: 'CASH',
-        createdAt: new Date().toISOString(),
-        createdBy: 'ADMIN'
-      },
-      {
-        expenseId: 'EXP-2026-000002',
-        category: 'STATIONERY',
-        amount: 450,
-        date: new Date().toISOString().split('T')[0],
-        description: 'Pawn ticket thermal paper rolls & pouch tags',
-        paymentMethod: 'CASH',
-        createdAt: new Date().toISOString(),
-        createdBy: 'ADMIN'
-      }
-    ];
-    this.saveExpenses(seedExpenses);
-    return seedExpenses;
+    // ✅ PRODUCTION: No seed data. Expenses are recorded by admin during counter operations.
+    this.saveExpenses([]);
+    return [];
   }
 
   loadDayBookClosings() {
@@ -97,21 +76,36 @@ class CashManager {
     const todayCashPayments = payments.filter(p => p.date === dateStr && p.status === 'CONFIRMED' && (p.paymentMode === 'CASH' || !p.paymentMode));
     const cashCollections = todayCashPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    // Also track UPI and Bank Inflows for Day-Book comparison
+    // Also track UPI, Bank, Card, Other Inflows for Day-Book comparison
     const upiCollections = payments.filter(p => p.date === dateStr && p.status === 'CONFIRMED' && p.paymentMode === 'UPI')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const bankCollections = payments.filter(p => p.date === dateStr && p.status === 'CONFIRMED' && p.paymentMode === 'BANK_TRANSFER')
       .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const cardCollections = payments.filter(p => p.date === dateStr && p.status === 'CONFIRMED' && p.paymentMode === 'CARD')
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const otherCollections = payments.filter(p => p.date === dateStr && p.status === 'CONFIRMED' && (p.paymentMode === 'OTHER' || (p.paymentMode && !['CASH', 'UPI', 'BANK_TRANSFER', 'CARD'].includes(p.paymentMode))))
+      .reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
 
-    // 2. Cash Outflows (Loans Disbursed in CASH)
+    // 2. Loans Disbursed & Outflows (Physical CASH Drawer Outflows vs Digital/Bank Modes)
     const todayPledges = pledges.filter(p => p.pledgeDate === dateStr);
-    const cashLoansGiven = todayPledges.reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
+    const todayCashPledges = todayPledges.filter(p => !p.disbursementMode || p.disbursementMode === 'CASH');
+    const cashLoansGiven = todayCashPledges.reduce((sum, p) => sum + (Number(p.netDisbursementAmount !== undefined ? p.netDisbursementAmount : (p.principalDisbursed !== undefined ? p.principalDisbursed : p.loanAmount)) || 0), 0);
+
+    const upiLoansGiven = todayPledges.filter(p => p.disbursementMode === 'UPI')
+      .reduce((sum, p) => sum + (Number(p.netDisbursementAmount !== undefined ? p.netDisbursementAmount : (p.principalDisbursed !== undefined ? p.principalDisbursed : p.loanAmount)) || 0), 0);
+    const bankLoansGiven = todayPledges.filter(p => p.disbursementMode === 'BANK_TRANSFER')
+      .reduce((sum, p) => sum + (Number(p.netDisbursementAmount !== undefined ? p.netDisbursementAmount : (p.principalDisbursed !== undefined ? p.principalDisbursed : p.loanAmount)) || 0), 0);
+    const cardLoansGiven = todayPledges.filter(p => p.disbursementMode === 'CARD')
+      .reduce((sum, p) => sum + (Number(p.netDisbursementAmount !== undefined ? p.netDisbursementAmount : (p.principalDisbursed !== undefined ? p.principalDisbursed : p.loanAmount)) || 0), 0);
+    const otherLoansGiven = todayPledges.filter(p => p.disbursementMode && !['CASH', 'UPI', 'BANK_TRANSFER', 'CARD'].includes(p.disbursementMode))
+      .reduce((sum, p) => sum + (Number(p.netDisbursementAmount !== undefined ? p.netDisbursementAmount : (p.principalDisbursed !== undefined ? p.principalDisbursed : p.loanAmount)) || 0), 0);
+    const totalLoansGiven = cashLoansGiven + upiLoansGiven + bankLoansGiven + cardLoansGiven + otherLoansGiven;
 
     // 3. Cash Expenses
     const todayExpenses = this.expenses.filter(e => e.date === dateStr && e.paymentMethod === 'CASH');
     const cashExpensesTotal = todayExpenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0);
 
-    // 4. Expected Closing Cash in Drawer
+    // 4. Expected Closing Cash in Drawer (Physical Cash Only)
     const expectedClosingCash = openingBalance + cashCollections - cashLoansGiven - cashExpensesTotal;
 
     return {
@@ -120,14 +114,31 @@ class CashManager {
       cashCollections,
       upiCollections,
       bankCollections,
-      totalCollections: cashCollections + upiCollections + bankCollections,
+      cardCollections,
+      otherCollections,
+      totalCollections: cashCollections + upiCollections + bankCollections + cardCollections + otherCollections,
       cashLoansGiven,
+      upiLoansGiven,
+      bankLoansGiven,
+      cardLoansGiven,
+      otherLoansGiven,
+      totalLoansGiven,
+      totalLoansDisbursed: totalLoansGiven,
       cashExpensesTotal,
       expectedClosingCash,
       todayPaymentsList: todayCashPayments,
       todayPledgesList: todayPledges,
       todayExpensesList: todayExpenses
     };
+  }
+
+  /**
+   * Record physical cash disbursement from counter till
+   */
+  recordLoanDisbursement(amount, ticketNo, mode = 'CASH') {
+    if (mode !== 'CASH') return;
+    // Log or track drawer outflow if needed
+    console.log(`[CashManager] Physical cash loan disbursed: ₹${amount} for ${ticketNo}`);
   }
 
   /**
@@ -218,4 +229,13 @@ class CashManager {
 }
 
 // Global CashManager Instance
-window.cashManager = new CashManager();
+if (typeof window !== 'undefined') {
+  window.CashManager = CashManager;
+  window.cashManager = new CashManager();
+}
+if (typeof global !== 'undefined') {
+  global.CashManager = CashManager;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { CashManager };
+}

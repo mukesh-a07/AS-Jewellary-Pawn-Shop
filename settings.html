@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Settings & Offline Sync Inspector &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -24,7 +27,8 @@
             <p class="text-muted" style="font-size:var(--font-size-xs);">Configure shop profile, API endpoint, print settings, and inspect IndexedDB offline sync queue.</p>
           </div>
 
-          <div style="display:flex; gap:var(--space-2);">
+          <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
+            <a href="data-health.html" class="btn btn-outline">🛡️ Data Health &amp; Backups</a>
             <button type="button" class="btn btn-primary" id="saveAllSettingsBtn">Save Settings</button>
           </div>
         </div>
@@ -81,6 +85,240 @@
 
         </div>
 
+        <!-- Pawn Valuation & Appraiser Fee Configuration -->
+        <div class="card" style="border-top:4px solid var(--gold-500); margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <h3 class="card-title" data-i18n="valuation_settings">Pawn Valuation &amp; Appraiser Fee Configuration (மதிப்பீடு &amp; கட்டண அமைப்புகள்)</h3>
+          </div>
+          <div class="card-body">
+            <div class="grid-2" style="margin-bottom:var(--space-4);">
+              
+              <!-- Gold Appraiser Fee -->
+              <div style="background:#F8FAFC; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-4);">
+                <div style="font-weight:800; font-size:14px; color:var(--slate-900); margin-bottom:var(--space-2);" data-i18n="gold_appraiser_fee">
+                  Gold Appraiser Fee (நகை மதிப்பீட்டாளர் கட்டணம்)
+                </div>
+                <div class="grid-2">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" data-i18n="appraiser_fee_type">Fee Type</label>
+                    <select id="cfgAppraiserFeeType" class="form-select">
+                      <option value="FIXED" selected data-i18n="fee_type_fixed">Fixed Amount (₹)</option>
+                      <option value="PERCENTAGE" data-i18n="fee_type_percentage">Percentage of Gross Valuation (%)</option>
+                      <option value="NONE" data-i18n="fee_type_none">No Fee (₹0)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" id="lblAppraiserFeeVal">Fee Value (₹ / %)</label>
+                    <input type="number" step="0.01" id="cfgAppraiserFeeVal" class="form-input" value="150" placeholder="e.g. 150 or 0.5" />
+                  </div>
+                </div>
+                <span class="form-help" style="margin-top:6px; display:block;">Calculated automatically during pledge valuation. Never hardcoded.</span>
+              </div>
+
+              <!-- Other Configured Fee -->
+              <div style="background:#F8FAFC; border:1px solid var(--slate-200); border-radius:var(--radius-md); padding:var(--space-4);">
+                <div style="font-weight:800; font-size:14px; color:var(--slate-900); margin-bottom:var(--space-2);" data-i18n="other_configured_fee">
+                  Other Configured Fee (இதர கட்டணம்)
+                </div>
+                <div class="grid-2">
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label">Fee Type</label>
+                    <select id="cfgOtherFeeType" class="form-select">
+                      <option value="NONE" selected data-i18n="fee_type_none">No Fee (₹0)</option>
+                      <option value="FIXED" data-i18n="fee_type_fixed">Fixed Amount (₹)</option>
+                      <option value="PERCENTAGE" data-i18n="fee_type_percentage">Percentage (%)</option>
+                    </select>
+                  </div>
+                  <div class="form-group" style="margin:0;">
+                    <label class="form-label" id="lblOtherFeeVal">Fee Value (₹ / %)</label>
+                    <input type="number" step="0.01" id="cfgOtherFeeVal" class="form-input" value="0" placeholder="0" />
+                  </div>
+                </div>
+                <span class="form-help" style="margin-top:6px; display:block;">Optional packet / documentation / service handling fee.</span>
+              </div>
+
+            </div>
+
+            <div class="grid-3" style="align-items:flex-end;">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" data-i18n="fee_deduction_mode">Default Fee Collection Method</label>
+                <select id="cfgFeeMode" class="form-select">
+                  <option value="DEDUCT_FROM_DISBURSEMENT" selected data-i18n="deduct_from_disbursement">Deduct from Loan Disbursement</option>
+                  <option value="COLLECT_SEPARATELY" data-i18n="collect_separately">Collect Separately at Counter</option>
+                </select>
+              </div>
+
+              <div class="form-group" style="margin:0;">
+                <label class="form-label" data-i18n="ltv_percent">Default Loan-to-Value (LTV %)</label>
+                <div class="input-group">
+                  <input type="number" step="1" id="cfgLtvPercent" class="form-input" value="75" min="10" max="100" />
+                  <span class="input-addon">%</span>
+                </div>
+              </div>
+
+              <div class="form-group" style="margin:0; padding-bottom:8px;">
+                <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:13px; font-weight:600;">
+                  <input type="checkbox" id="cfgAllowCustomFee" checked />
+                  <span data-i18n="allow_per_pledge_custom_fee">Allow Per-Pledge Fee Adjustment on POS</span>
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Payment Methods & Mode Configuration -->
+        <div class="card" style="margin-bottom:var(--space-5); border-left:4px solid var(--primary-main);">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title" data-i18n="payment_methods_config">Payment Methods &amp; Mode Configuration (கட்டண முறைகள்)</h3>
+              <p class="text-muted" style="font-size:12px; margin-top:2px;" data-i18n="payment_methods_desc">
+                Enable or disable payment methods, customize display labels, and set reference / note requirements.
+              </p>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="data-table" style="font-size:12.5px;">
+                <thead>
+                  <tr style="background:#F8FAFC;">
+                    <th style="width:70px; text-align:center;" data-i18n="enable_payment_method">Enable</th>
+                    <th style="width:140px;" data-i18n="method_code">Code</th>
+                    <th data-i18n="method_label_en">Display Label (English)</th>
+                    <th data-i18n="method_label_ta">Display Label (Tamil)</th>
+                    <th style="width:170px;" data-i18n="ref_rule">Reference No Rule</th>
+                    <th style="width:160px;" data-i18n="notes_rule">Notes Rule</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentMethodsTbody">
+                  <!-- Rendered dynamically by loadPaymentMethodsUI() -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Receipt, Pawn Ticket & Statutory Terms Configuration -->
+        <div class="card" style="margin-bottom:var(--space-5); border-left:4px solid var(--gold-600);">
+          <div class="card-header">
+            <div>
+              <h3 class="card-title">Receipt, Pawn Ticket &amp; Statutory Terms Configuration (ரசீது &amp; சட்ட விதிமுறைகள்)</h3>
+              <p class="text-muted" style="font-size:12px; margin-top:2px;">
+                Configure shop letterhead info, license number, default print format/language, and statutory Tamil Nadu Pawnbrokers Act contract terms.
+              </p>
+            </div>
+          </div>
+          <div class="card-body">
+            <!-- Shop Letterhead Details -->
+            <div class="grid-3" style="margin-bottom:var(--space-4);">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Name (English)</label>
+                <input type="text" id="cfgShopNameEn" class="form-input" placeholder="e.g. AS JEWELLAR PAWN SHOP" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Name (தமிழ்)</label>
+                <input type="text" id="cfgShopNameTa" class="form-input" placeholder="e.g. ஏ.எஸ் ஜூவல்லர்ஸ்" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Pawnbroker License No</label>
+                <input type="text" id="cfgShopLicNo" class="form-input" placeholder="e.g. PB/MDU/2026/042" />
+              </div>
+            </div>
+
+            <div class="grid-2" style="margin-bottom:var(--space-4);">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Address (English)</label>
+                <input type="text" id="cfgShopAddressEn" class="form-input" placeholder="e.g. No. 14, Main Bazaar, Madurai - 625001" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Address (தமிழ்)</label>
+                <input type="text" id="cfgShopAddressTa" class="form-input" placeholder="e.g. எண். 14, மெயின் பஜார், மதுரை - 625001" />
+              </div>
+            </div>
+
+            <!-- Shop Contact Numbers & Defaults -->
+            <div class="grid-4" style="margin-bottom:var(--space-4);">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Landline / STD</label>
+                <input type="text" id="cfgShopPhone" class="form-input" placeholder="e.g. 0452-2345678" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Shop Mobile / WhatsApp</label>
+                <input type="tel" id="cfgShopMobile" class="form-input" placeholder="e.g. 9876543210" maxlength="10" />
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Default Print Format</label>
+                <select id="cfgDefaultPrintFormat" class="form-select">
+                  <option value="A4" selected>📄 A4 Standard Full Page</option>
+                  <option value="THERMAL">🧾 80mm Thermal Slip</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Default Receipt Language</label>
+                <select id="cfgDefaultDocLang" class="form-select">
+                  <option value="BILINGUAL" selected>English + தமிழ் (Bilingual)</option>
+                  <option value="EN">English Only</option>
+                  <option value="TA">தமிழ் (Tamil Only)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Statutory Terms & Conditions in English and Tamil -->
+            <div class="grid-2">
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Statutory Pawn Terms (English) - One per line</label>
+                <textarea id="cfgTermsEn" class="form-textarea" rows="4" placeholder="Enter terms in English..."></textarea>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">சட்ட விதிமுறைகள் (தமிழ்) - ஒரு வரிக்கு ஒன்று</label>
+                <textarea id="cfgTermsTa" class="form-textarea" rows="4" placeholder="தமிழில் விதிமுறைகளை உள்ளிடவும்..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sample / Demo Dataset Management -->
+        <div class="card" style="border-left:4px solid var(--gold-500); margin-bottom:var(--space-5);">
+          <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:var(--space-2);">
+            <div>
+              <h3 class="card-title">📦 Production Sample Dataset (மாதிரி தரவு மேலாண்மை)</h3>
+              <p class="text-muted" style="font-size:12px; margin-top:2px;">
+                Populate or reset realistic sample data for testing complete pawn shop workflows (5 customers, 6 pledges, 8 items, 4 payments, renewal, redemption, vault, documents, and day-book cash drawer).
+              </p>
+            </div>
+            <span class="badge badge-primary">E2E TEST DATA</span>
+          </div>
+          <div class="card-body">
+            <div style="display:flex; gap:var(--space-3); flex-wrap:wrap; align-items:center;">
+              <button type="button" class="btn btn-primary" id="loadSampleDataBtn">
+                📥 Load Sample Dataset (மாதிரி தரவு ஏற்று)
+              </button>
+              <button type="button" class="btn btn-outline" id="clearSampleDataBtn">
+                🗑 Clear Sample Data
+              </button>
+            </div>
+            <p style="font-size:11.5px; color:var(--slate-500); margin-top:var(--space-3); margin-bottom:0;">
+              💡 <em>Loading sample data automatically writes to LocalStorage and IndexedDB multi-tier storage with zero cloud overwrite conflicts.</em>
+            </p>
+          </div>
+        </div>
+
+        <!-- Production Data Reset (Danger Zone) -->
+        <div class="card" style="border:2px solid #FCA5A5; margin-bottom:var(--space-5);">
+          <div class="card-header" style="background:#FEF2F2;">
+            <h3 class="card-title" style="color:#991B1B;">&#9888; Production Reset / Clear Demo Data</h3>
+          </div>
+          <div class="card-body">
+            <p style="font-size:13px; color:var(--slate-700); margin-bottom:var(--space-3);">
+              If your browser has old demo/test data in localStorage, use this button to clear all local data and start fresh.
+              <strong>This is irreversible.</strong> Only use before your first real customer transaction.
+            </p>
+            <button type="button" class="btn btn-danger" id="clearAllLocalDataBtn">
+              &#128465; Clear All Local Data &amp; Reset to Fresh Start
+            </button>
+          </div>
+        </div>
+
         <!-- ==========================================================================
              OFFLINE QUEUE & BACKGROUND SYNC INSPECTOR
              ========================================================================== -->
@@ -91,9 +329,12 @@
               <p class="text-muted" style="font-size:11.5px; margin-top:2px;">View transactions queued during offline mode, track idempotency tokens, and resolve conflicts.</p>
             </div>
 
-            <div style="display:flex; gap:var(--space-2);">
+            <div style="display:flex; gap:var(--space-2); flex-wrap:wrap;">
               <button type="button" class="btn btn-primary btn-sm" id="manualSyncBtn">
                 <span>🔄 Sync Queue Now</span>
+              </button>
+              <button type="button" class="btn btn-outline btn-sm" id="retryFailedBtn" style="border-color:#DC2626; color:#DC2626; font-weight:700;">
+                <span>🔄 Retry Failed</span>
               </button>
               <button type="button" class="btn btn-outline btn-sm" id="clearSyncedBtn">
                 <span>🗑 Clear Synced</span>
@@ -174,19 +415,101 @@
   <script src="js/vault.js"></script>
   <script src="js/cash.js"></script>
   <script src="js/reports.js"></script>
+  <script src="js/audit.js"></script>
+  <script src="js/dataHealth.js"></script>
+  <script src="js/sampleData.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       document.getElementById('pageTitleText').textContent = window.t('settings');
       loadSettingsUI();
+      loadPaymentMethodsUI();
       refreshQueueUI();
       bindSettingsEvents();
     });
 
+    function loadPaymentMethodsUI() {
+      if (typeof PaymentMethodManager === 'undefined') return;
+      const methods = PaymentMethodManager.getMethods();
+      const tbody = document.getElementById('paymentMethodsTbody');
+      if (!tbody) return;
+
+      tbody.innerHTML = methods.map(m => {
+        const isCash = m.id === 'CASH';
+        return `
+          <tr data-method-id="${m.id}">
+            <td style="text-align:center;">
+              <input type="checkbox" class="method-enable-chk" ${m.enabled !== false ? 'checked' : ''} ${isCash ? 'disabled title="Cash is the mandatory counter method"' : ''} />
+            </td>
+            <td>
+              <strong class="cell-mono">${m.icon || '💳'} ${m.id}</strong>
+            </td>
+            <td>
+              <input type="text" class="form-input method-name-en" value="${m.nameEn || ''}" placeholder="Label in English" style="padding:4px 8px; font-size:12px;" />
+            </td>
+            <td>
+              <input type="text" class="form-input method-name-ta" value="${m.nameTa || ''}" placeholder="Label in Tamil" style="padding:4px 8px; font-size:12px;" />
+            </td>
+            <td>
+              <select class="form-select method-ref-rule" style="padding:4px 8px; font-size:12px;">
+                <option value="OPTIONAL" ${m.refRule === 'OPTIONAL' ? 'selected' : ''}>Optional</option>
+                <option value="RECOMMENDED" ${m.refRule === 'RECOMMENDED' ? 'selected' : ''}>Recommended</option>
+                <option value="REQUIRED" ${m.refRule === 'REQUIRED' ? 'selected' : ''}>Strictly Required</option>
+              </select>
+            </td>
+            <td>
+              <select class="form-select method-notes-rule" style="padding:4px 8px; font-size:12px;">
+                <option value="OPTIONAL" ${m.notesRule === 'OPTIONAL' ? 'selected' : ''}>Optional</option>
+                <option value="REQUIRED" ${m.notesRule === 'REQUIRED' ? 'selected' : ''}>Strictly Required</option>
+              </select>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
     function loadSettingsUI() {
       document.getElementById('cfgApiEndpoint').value = window.api.endpoint;
       document.getElementById('cfgDeviceId').value = window.offlineQueue.deviceId;
+      
+      // Load Shop Details & Letterhead
+      document.getElementById('cfgShopNameEn').value = localStorage.getItem('as_jewellar_shop_name_en') || 'AS JEWELLAR PAWN SHOP';
+      document.getElementById('cfgShopNameTa').value = localStorage.getItem('as_jewellar_shop_name_ta') || 'ஏ.எஸ் ஜூவல்லர்ஸ் (அடகு கடை & நகை மாளிகை)';
+      document.getElementById('cfgShopLicNo').value = localStorage.getItem('as_jewellar_shop_lic_no') || 'PB/MDU/2026/042';
+      document.getElementById('cfgShopAddressEn').value = localStorage.getItem('as_jewellar_shop_address_en') || 'No. 5/420-23, Murugaiya Complex, Sankrankovil Road Uthumalai Revenue Village, V.K Pudur Taluk, Tenkasi District';
+      document.getElementById('cfgShopAddressTa').value = localStorage.getItem('as_jewellar_shop_address_ta') || 'எண். 5/420-23, முருகையா வளாகம், சங்கரன்கோவில் சாலை ஊத்துமலை வருவாய் கிராமம், வி.கே.புதூர் தாலுக்கா, தென்காசி மாவட்டம்';
+      document.getElementById('cfgShopPhone').value = localStorage.getItem('as_jewellar_shop_phone') || '0452-2345678';
+      document.getElementById('cfgShopMobile').value = localStorage.getItem('as_jewellar_shop_mobile') || '9876543210';
+      document.getElementById('cfgDefaultPrintFormat').value = localStorage.getItem('as_jewellar_default_print_format') || 'A4';
+      document.getElementById('cfgDefaultDocLang').value = localStorage.getItem('as_jewellar_default_doc_lang') || 'BILINGUAL';
+
+      // Load Statutory Terms (English & Tamil)
+      const defaultTermsEn = [
+        'The pledged jewellery articles must be redeemed within 12 months from the pledge date by paying the principal loan amount and accrued interest.',
+        'Monthly interest is payable regularly on or before the due date.',
+        'If not redeemed within the stipulated statutory period, the pledged articles will be liable for statutory public auction under the Tamil Nadu Pawnbrokers Act.',
+        'This pawn ticket must be presented at the time of renewal, interest payment, or article redemption.'
+      ].join('\n');
+
+      const defaultTermsTa = [
+        'அடகு வைக்கப்பட்ட நகைகளை அடகு வைத்த தேதியிலிருந்து 12 மாத காலத்திற்குள் அசல் மற்றும் வட்டி செலுத்தி மீட்டுக்கொள்ள வேண்டும்.',
+        'மாதாந்திர வட்டித் தொகையை மாதந்தோறும் தவறாமல் செலுத்த வேண்டும்.',
+        'சட்டப்படியான காலக்கெடுவுக்குள் மீட்கப்படாத நகைகள் தமிழ்நாடு அடகு பிடிப்போர் சட்ட விதிகளின்படி பொது ஏலத்தில் விடப்படும்.',
+        'அடகை புதுப்பிக்கவோ, வட்டி செலுத்தவோ அல்லது மீட்கவோ இந்த அடகு ரசீதை கொண்டு வர வேண்டும்.'
+      ].join('\n');
+
+      document.getElementById('cfgTermsEn').value = localStorage.getItem('as_jewellar_terms_en') || defaultTermsEn;
+      document.getElementById('cfgTermsTa').value = localStorage.getItem('as_jewellar_terms_ta') || defaultTermsTa;
+
+      // Load Valuation & Appraiser Fee Settings
+      document.getElementById('cfgAppraiserFeeType').value = localStorage.getItem('as_jewellar_appraiser_fee_type') || 'FIXED';
+      document.getElementById('cfgAppraiserFeeVal').value = localStorage.getItem('as_jewellar_appraiser_fee_val') || '150';
+      document.getElementById('cfgOtherFeeType').value = localStorage.getItem('as_jewellar_other_fee_type') || 'NONE';
+      document.getElementById('cfgOtherFeeVal').value = localStorage.getItem('as_jewellar_other_fee_val') || '0';
+      document.getElementById('cfgFeeMode').value = localStorage.getItem('as_jewellar_fee_mode') || 'DEDUCT_FROM_DISBURSEMENT';
+      document.getElementById('cfgLtvPercent').value = localStorage.getItem('as_jewellar_ltv_percent') || '75';
+      document.getElementById('cfgAllowCustomFee').checked = localStorage.getItem('as_jewellar_allow_custom_fee') !== 'false';
     }
 
     async function refreshQueueUI() {
@@ -229,13 +552,24 @@
     }
 
     function bindSettingsEvents() {
-      // Manual Sync
+      // Manual Sync (forces retry of all queued transactions)
       document.getElementById('manualSyncBtn').addEventListener('click', async () => {
-        UI.showToast('Starting background sync...', 'info');
-        const res = await window.offlineQueue.syncQueue();
+        UI.showToast('Starting queue sync...', 'info');
+        const res = await window.offlineQueue.syncQueue(true);
         refreshQueueUI();
-        UI.showToast(`Sync completed: ${res.syncedCount || 0} Synced, ${res.failedCount || 0} Failed`, 'success');
+        UI.showToast(`Sync completed: ${res.syncedCount || 0} Synced, ${res.failedCount || 0} Failed`, res.failedCount > 0 ? 'warning' : 'success');
       });
+
+      // Retry Failed Items
+      const retryBtn = document.getElementById('retryFailedBtn');
+      if (retryBtn) {
+        retryBtn.addEventListener('click', async () => {
+          UI.showToast('Retrying all failed transactions...', 'info');
+          const res = await window.offlineQueue.retryFailed();
+          refreshQueueUI();
+          UI.showToast(`Retry completed: ${res.syncedCount || 0} Synced, ${res.failedCount || 0} Failed`, res.failedCount > 0 ? 'warning' : 'success');
+        });
+      }
 
       // Clear Synced
       document.getElementById('clearSyncedBtn').addEventListener('click', async () => {
@@ -244,13 +578,81 @@
         UI.showToast('Cleared synced items from local queue', 'success');
       });
 
-      // Save Settings
+      // Save Settings (also saves shop phone/mobile, valuation config & payment methods)
       document.getElementById('saveAllSettingsBtn').addEventListener('click', () => {
         const newEndpoint = document.getElementById('cfgApiEndpoint').value.trim();
         if (newEndpoint) {
           window.api.setEndpoint(newEndpoint);
         }
-        UI.showToast('Settings saved successfully', 'success');
+        
+        // Save Shop Letterhead Details
+        localStorage.setItem('as_jewellar_shop_name_en', document.getElementById('cfgShopNameEn').value.trim());
+        localStorage.setItem('as_jewellar_shop_name_ta', document.getElementById('cfgShopNameTa').value.trim());
+        localStorage.setItem('as_jewellar_shop_lic_no', document.getElementById('cfgShopLicNo').value.trim());
+        localStorage.setItem('as_jewellar_shop_address_en', document.getElementById('cfgShopAddressEn').value.trim());
+        localStorage.setItem('as_jewellar_shop_address_ta', document.getElementById('cfgShopAddressTa').value.trim());
+        localStorage.setItem('as_jewellar_shop_phone', document.getElementById('cfgShopPhone').value.trim());
+        localStorage.setItem('as_jewellar_shop_mobile', document.getElementById('cfgShopMobile').value.trim());
+        localStorage.setItem('as_jewellar_default_print_format', document.getElementById('cfgDefaultPrintFormat').value);
+        localStorage.setItem('as_jewellar_default_doc_lang', document.getElementById('cfgDefaultDocLang').value);
+        localStorage.setItem('as_jewellar_terms_en', document.getElementById('cfgTermsEn').value.trim());
+        localStorage.setItem('as_jewellar_terms_ta', document.getElementById('cfgTermsTa').value.trim());
+
+        // Refresh billing manager shop info
+        if (window.billingManager) {
+          window.billingManager.refreshShopInfo();
+        }
+
+        // Save Valuation & Appraiser Fee Settings
+        localStorage.setItem('as_jewellar_appraiser_fee_type', document.getElementById('cfgAppraiserFeeType').value);
+        localStorage.setItem('as_jewellar_appraiser_fee_val', document.getElementById('cfgAppraiserFeeVal').value || '0');
+        localStorage.setItem('as_jewellar_other_fee_type', document.getElementById('cfgOtherFeeType').value);
+        localStorage.setItem('as_jewellar_other_fee_val', document.getElementById('cfgOtherFeeVal').value || '0');
+        localStorage.setItem('as_jewellar_fee_mode', document.getElementById('cfgFeeMode').value);
+        localStorage.setItem('as_jewellar_ltv_percent', document.getElementById('cfgLtvPercent').value || '75');
+        localStorage.setItem('as_jewellar_allow_custom_fee', document.getElementById('cfgAllowCustomFee').checked ? 'true' : 'false');
+
+        // Save Payment Methods
+        if (typeof PaymentMethodManager !== 'undefined') {
+          const methodRows = document.querySelectorAll('#paymentMethodsTbody tr');
+          const updatedMethods = [];
+          methodRows.forEach(row => {
+            const id = row.getAttribute('data-method-id');
+            const enabled = row.querySelector('.method-enable-chk').checked;
+            const nameEn = row.querySelector('.method-name-en').value.trim() || id;
+            const nameTa = row.querySelector('.method-name-ta').value.trim() || nameEn;
+            const refRule = row.querySelector('.method-ref-rule').value;
+            const notesRule = row.querySelector('.method-notes-rule').value;
+            const orig = PaymentMethodManager.getMethod(id);
+            updatedMethods.push({
+              id,
+              nameEn,
+              nameTa,
+              enabled: id === 'CASH' ? true : enabled,
+              refRule,
+              notesRule,
+              icon: orig.icon || '💳',
+              isDefault: orig.isDefault || false
+            });
+          });
+          PaymentMethodManager.saveMethods(updatedMethods);
+        }
+
+        if (window.auditLogger) {
+          window.auditLogger.log('SETTINGS_CHANGE', 'SHOP_CONFIG', 'SHOP_PROFILE', {
+            shopNameEn: document.getElementById('cfgShopNameEn').value.trim(),
+            licNo: document.getElementById('cfgShopLicNo').value.trim(),
+            apiEndpoint: newEndpoint
+          });
+
+          window.auditLogger.log('FEE_CONFIG_CHANGE', 'FEE_SETTINGS', 'APPRAISER_FEE', {
+            feeType: document.getElementById('cfgAppraiserFeeType').value,
+            feeVal: document.getElementById('cfgAppraiserFeeVal').value,
+            ltvPercent: document.getElementById('cfgLtvPercent').value
+          });
+        }
+
+        UI.showToast('All settings, shop details, statutory terms, valuation rules, and payment methods saved successfully ✓', 'success');
       });
 
       // Test API
@@ -262,6 +664,73 @@
         } else {
           UI.showToast(`Connection failed: ${res.message}`, 'error');
         }
+      });
+
+      // Load Production Sample Dataset
+      const loadSampleBtn = document.getElementById('loadSampleDataBtn');
+      if (loadSampleBtn) {
+        loadSampleBtn.addEventListener('click', async () => {
+          if (!window.sampleDataManager) {
+            UI.showToast('SampleDataManager is not loaded', 'error');
+            return;
+          }
+          const confirmed = confirm(
+            'Load comprehensive sample dataset into local storage & IndexedDB?\n\n' +
+            'This includes 5 bilingual customers, 6 pledges, 8 jewellery items, 4 payments, renewals, redemptions, documents, and cash entries.'
+          );
+          if (!confirmed) return;
+          try {
+            UI.showToast('Populating sample dataset...', 'info');
+            const res = await window.sampleDataManager.loadSampleData();
+            if (res.success) {
+              UI.showToast(`Sample dataset loaded successfully (${res.loadedCount} records). Reloading in 1s...`, 'success');
+              setTimeout(() => window.location.reload(), 1200);
+            } else {
+              UI.showToast(`Failed to load sample data: ${res.error}`, 'error');
+            }
+          } catch (err) {
+            UI.showToast(`Error: ${err.message}`, 'error');
+          }
+        });
+      }
+
+      // Clear Sample Data
+      const clearSampleBtn = document.getElementById('clearSampleDataBtn');
+      if (clearSampleBtn) {
+        clearSampleBtn.addEventListener('click', async () => {
+          if (!window.sampleDataManager) return;
+          const confirmed = confirm('Clear sample/demo data from local storage & IndexedDB?');
+          if (!confirmed) return;
+          try {
+            const res = await window.sampleDataManager.clearData();
+            if (res.success) {
+              UI.showToast('Sample data cleared. Reloading in 1s...', 'success');
+              setTimeout(() => window.location.reload(), 1200);
+            }
+          } catch (err) {
+            UI.showToast(`Error: ${err.message}`, 'error');
+          }
+        });
+      }
+
+      // ⚠ Clear All Local Demo Data (Production Reset)
+      document.getElementById('clearAllLocalDataBtn').addEventListener('click', () => {
+        const confirmed = confirm(
+          '⚠ WARNING: This will permanently DELETE all local data including customers, pledges, payments, renewals, and settings.\n\n' +
+          'Only use this if you need to clear old demo/test data before starting production.\n\n' +
+          'Type YES in the next prompt to confirm.'
+        );
+        if (!confirmed) return;
+        const typed = prompt('Type YES to confirm full reset:');
+        if (typed !== 'YES') {
+          UI.showToast('Reset cancelled — nothing was deleted', 'info');
+          return;
+        }
+        // Clear all AS Jewellar keys from localStorage
+        const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith('as_jewellar'));
+        keysToRemove.forEach(k => localStorage.removeItem(k));
+        UI.showToast(`Cleared ${keysToRemove.length} data items. Refreshing in 2 seconds...`, 'success');
+        setTimeout(() => window.location.reload(), 2000);
       });
 
       window.addEventListener('offlineQueueChanged', () => refreshQueueUI());

@@ -221,7 +221,7 @@ class ReminderManager {
       `நிலுவை வட்டி: ${intDue}\n` +
       `மொத்த தொகை: ${totalDue}\n\n` +
       `நேரில் வந்து வட்டி செலுத்தி புதுப்பிக்கவும் அல்லது நகைகளை மீட்டுக்கொள்ளவும் கேட்டுக்கொள்கிறோம்.\n` +
-      `தொடர்புக்கு: 0452-2345678 / 9876543210. நன்றி!`;
+      `தொடர்புக்கு: ${localStorage.getItem('as_jewellar_shop_phone') || 'AS JEWELLAR'} / ${localStorage.getItem('as_jewellar_shop_mobile') || ''}. நன்றி!`;
 
     const encoded = encodeURIComponent(message);
     return `https://wa.me/${mobileWithCountry}?text=${encoded}`;

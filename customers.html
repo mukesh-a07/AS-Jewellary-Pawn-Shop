@@ -4,6 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Customer Directory &bull; AS Jewellar Pawn Shop</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png" />
   <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg" />
   <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0F172A" />
@@ -66,6 +69,36 @@
     @media (max-width: 768px) {
       .customer-table-desktop { display: none; }
       .customer-mobile-card { display: block; }
+    }
+    /* Mobile FAB: always-visible New Customer button */
+    .mobile-add-customer-fab {
+      display: none;
+      position: fixed;
+      bottom: calc(56px + 16px); /* above mobile nav */
+      right: 16px;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--gold-500), var(--gold-600));
+      color: var(--slate-900);
+      border: none;
+      box-shadow: 0 4px 16px rgba(212, 175, 55, 0.5);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      font-size: 28px;
+      font-weight: 700;
+      line-height: 1;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .mobile-add-customer-fab:hover,
+    .mobile-add-customer-fab:active {
+      transform: scale(1.08);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.6);
+    }
+    @media (max-width: 768px) {
+      .mobile-add-customer-fab { display: flex; }
     }
   </style>
 </head>
@@ -193,6 +226,11 @@
     </div>
   </div>
 
+  <!-- Mobile FAB: Floating New Customer Button (always visible on mobile) -->
+  <button class="mobile-add-customer-fab" id="mobileFabAddCustBtn" title="Add New Customer" aria-label="Register New Customer">
+    +
+  </button>
+
   <!-- ==========================================================================
        MODAL: REGISTER NEW CUSTOMER (With Live Duplicate Detection)
        ========================================================================== -->
@@ -206,7 +244,7 @@
       </div>
 
       <form id="newCustomerForm">
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 140px); overflow-y: auto;">
           
           <!-- Live Duplicate Detection Warning Banner -->
           <div id="duplicateWarningBanner" class="alert alert-danger" style="display:none; flex-direction:column; gap:4px;">
@@ -370,10 +408,12 @@
 
         </div>
 
-        <div class="modal-footer">
-          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')" data-i18n="cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary" id="saveCustomerSubmitBtn" data-i18n="save_customer">
-            Save Customer Profile (சேமி)
+        <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; background:#F8FAFC; border-top:1px solid var(--border-subtle); padding:var(--space-3) var(--space-6);">
+          <button type="button" class="btn btn-outline" onclick="UI.closeModal('newCustomerModal')">
+            <span data-i18n="cancel">Cancel (ரத்து)</span>
+          </button>
+          <button type="submit" class="btn btn-primary btn-lg" id="saveCustomerSubmitBtn" style="font-weight:800; min-width:220px; box-shadow:0 4px 12px rgba(212,175,55,0.3);">
+            <span data-i18n="save_customer">✓ Register Customer (பதிவு செய்)</span>
           </button>
         </div>
       </form>
@@ -393,7 +433,7 @@
       </div>
       <form id="editCustomerForm">
         <input type="hidden" id="editCustId" />
-        <div class="modal-body">
+        <div class="modal-body" style="max-height: calc(90vh - 140px); overflow-y: auto;">
           <div class="grid-2">
             <div class="form-group">
               <label class="form-label" for="editCustNameEn">Full Name (English) *</label>
@@ -445,18 +485,37 @@
   <script src="js/validation.js"></script>
   <script src="js/ui.js"></script>
   <script src="js/customers.js"></script>
+  <script src="js/rates.js"></script>
+  <script src="js/financialCalculator.js"></script>
+  <script src="js/pledgePos.js"></script>
+  <script src="js/billing.js"></script>
+  <script src="js/payments.js"></script>
+  <script src="js/documents.js"></script>
+  <script src="js/audit.js"></script>
   <script src="js/app.js"></script>
 
   <script>
     let currentPage = 1;
     let pageSize = 10;
 
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('pageTitleText').textContent = window.t('customers');
 
       renderRecentChips();
       renderCustomerDirectory();
       bindDirectoryEvents();
+
+      // Fetch and synchronize real-time customers from Google Sheets
+      if (window.customerManager && typeof window.customerManager.syncWithBackend === 'function') {
+        await window.customerManager.syncWithBackend();
+        renderRecentChips();
+        renderCustomerDirectory();
+      }
+    });
+
+    window.addEventListener('customersSynced', () => {
+      renderRecentChips();
+      renderCustomerDirectory();
     });
 
     // 1. Render Recent Customer Quick Chips
@@ -472,9 +531,15 @@
         const c = window.customerManager.getCustomerById(id);
         if (!c) return '';
         const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(c.customerId);
+        const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+        const avatarHtml = photoUrl
+          ? `<img src="${photoUrl}" style="width:22px; height:22px; border-radius:50%; object-fit:cover;" alt="" />`
+          : `<span class="avatar">${initials}</span>`;
+
         return `
           <a href="customer.html?id=${c.customerId}" class="recent-chip" title="View 360 Profile">
-            <span class="avatar">${initials}</span>
+            ${avatarHtml}
             <span>${c.nameEn}</span>
             <span style="color:var(--slate-400); font-family:var(--font-family-mono); font-size:11px;">(${c.customerId.slice(-6)})</span>
           </a>
@@ -482,7 +547,7 @@
       }).join('');
     }
 
-    // 2. Render Customer Directory (Table + Mobile Cards with Masked KYC)
+    // 2. Render Customer Directory (Table + Mobile Cards with Masked KYC & Photo)
     function renderCustomerDirectory() {
       const query = document.getElementById('custSearchInput').value;
       const statusFilter = document.getElementById('custStatusFilter').value;
@@ -538,16 +603,28 @@
           ? `<span class="badge badge-active">${c.activePledgesCount} Active</span>`
           : `<span class="badge badge-slate">0 Active</span>`;
 
+        const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(c.customerId);
+        const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+        const avatarEl = photoUrl
+          ? `<img src="${photoUrl}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:2px solid var(--gold-400); flex-shrink:0;" alt="${c.nameEn}" />`
+          : `<div style="width:36px; height:36px; border-radius:50%; background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:12px; border:1px solid var(--gold-300); flex-shrink:0;">${initials}</div>`;
+
         return `
           <tr>
             <td class="cell-mono cell-primary">
               <a href="customer.html?id=${c.customerId}" style="color:inherit; font-weight:800;">${c.customerId}</a>
             </td>
             <td>
-              <div class="cell-primary">
-                <a href="customer.html?id=${c.customerId}">${c.nameEn}</a>
+              <div style="display:flex; align-items:center; gap:var(--space-2);">
+                ${avatarEl}
+                <div>
+                  <div class="cell-primary">
+                    <a href="customer.html?id=${c.customerId}">${c.nameEn}</a>
+                  </div>
+                  <div style="font-size:11px; color:var(--gold-700); font-weight:600;">${c.nameTa || ''}</div>
+                </div>
               </div>
-              <div style="font-size:11px; color:var(--gold-700); font-weight:600;">${c.nameTa || ''}</div>
             </td>
             <td class="cell-mono">
               <a href="tel:${c.mobile}" style="color:inherit;">${c.mobile}</a>
@@ -572,16 +649,26 @@
 
       // Mobile Card List Render (Touch Optimized)
       mobileList.innerHTML = result.items.map(c => {
+        const initials = c.nameEn.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        const photoDoc = window.documentManager && window.documentManager.getCustomerPhoto(c.customerId);
+        const photoUrl = c.photoUrl || (photoDoc && photoDoc.previewUrl);
+        const avatarEl = photoUrl
+          ? `<img src="${photoUrl}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:2px solid var(--gold-400); flex-shrink:0;" alt="${c.nameEn}" />`
+          : `<div style="width:40px; height:40px; border-radius:50%; background:var(--gold-100); color:var(--gold-800); display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; border:1px solid var(--gold-300); flex-shrink:0;">${initials}</div>`;
+
         return `
           <div class="customer-mobile-card">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:var(--space-2);">
-              <div>
-                <div style="font-weight:800; font-size:var(--font-size-base); color:var(--slate-900);">
-                  <a href="customer.html?id=${c.customerId}" style="color:inherit;">${c.nameEn}</a>
-                </div>
-                <div style="font-size:12px; color:var(--gold-700); font-weight:700;">${c.nameTa || ''}</div>
-                <div style="font-size:11px; color:var(--slate-500); margin-top:2px;">
-                  <span class="cell-mono">${c.customerId}</span> &bull; <span>${c.townVillage}</span>
+              <div style="display:flex; gap:var(--space-3); align-items:center;">
+                ${avatarEl}
+                <div>
+                  <div style="font-weight:800; font-size:var(--font-size-base); color:var(--slate-900);">
+                    <a href="customer.html?id=${c.customerId}" style="color:inherit;">${c.nameEn}</a>
+                  </div>
+                  <div style="font-size:12px; color:var(--gold-700); font-weight:700;">${c.nameTa || ''}</div>
+                  <div style="font-size:11px; color:var(--slate-500); margin-top:2px;">
+                    <span class="cell-mono">${c.customerId}</span> &bull; <span>${c.townVillage}</span>
+                  </div>
                 </div>
               </div>
               <span class="badge ${c.activePledgesCount > 0 ? 'badge-active' : 'badge-slate'}">
@@ -653,8 +740,15 @@
         renderCustomerDirectory();
       });
 
-      // Open New Customer Modal
+      // Open New Customer Modal (Desktop Header Button)
       document.getElementById('openNewCustBtn').addEventListener('click', () => {
+        document.getElementById('newCustomerForm').reset();
+        document.getElementById('duplicateWarningBanner').style.display = 'none';
+        UI.openModal('newCustomerModal');
+      });
+
+      // Open New Customer Modal (Mobile FAB Button — always visible at bottom right)
+      document.getElementById('mobileFabAddCustBtn').addEventListener('click', () => {
         document.getElementById('newCustomerForm').reset();
         document.getElementById('duplicateWarningBanner').style.display = 'none';
         UI.openModal('newCustomerModal');

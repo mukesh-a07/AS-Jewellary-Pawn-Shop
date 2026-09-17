@@ -26,14 +26,21 @@ class ReportManager {
     const filteredRenewals = renewals.filter(r => r.renewalDate >= sDate && r.renewalDate <= eDate);
     const filteredRedemptions = redemptions.filter(r => r.redemptionDate >= sDate && r.redemptionDate <= eDate);
 
-    // Inflows
-    const cashCollections = filteredPayments.filter(p => p.paymentMode === 'CASH' || !p.paymentMode).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    // Inflows by Payment Mode
+    const cashCollections = filteredPayments.filter(p => (p.paymentMode || 'CASH') === 'CASH').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const upiCollections = filteredPayments.filter(p => p.paymentMode === 'UPI').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
     const bankCollections = filteredPayments.filter(p => p.paymentMode === 'BANK_TRANSFER').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const totalCollections = cashCollections + upiCollections + bankCollections;
+    const cardCollections = filteredPayments.filter(p => p.paymentMode === 'CARD').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const otherCollections = filteredPayments.filter(p => p.paymentMode === 'OTHER' || (p.paymentMode && !['CASH', 'UPI', 'BANK_TRANSFER', 'CARD'].includes(p.paymentMode))).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalCollections = cashCollections + upiCollections + bankCollections + cardCollections + otherCollections;
     const interestCollected = filteredPayments.reduce((sum, p) => sum + (Number(p.interestSettled) || 0), 0);
 
-    // Outflows
+    // Outflows & Loans Disbursed by Mode
+    const cashLoansDisbursed = filteredPledges.filter(p => !p.disbursementMode || p.disbursementMode === 'CASH').reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
+    const upiLoansDisbursed = filteredPledges.filter(p => p.disbursementMode === 'UPI').reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
+    const bankLoansDisbursed = filteredPledges.filter(p => p.disbursementMode === 'BANK_TRANSFER').reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
+    const cardLoansDisbursed = filteredPledges.filter(p => p.disbursementMode === 'CARD').reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
+    const otherLoansDisbursed = filteredPledges.filter(p => p.disbursementMode === 'OTHER' || (p.disbursementMode && !['CASH', 'UPI', 'BANK_TRANSFER', 'CARD'].includes(p.disbursementMode))).reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
     const totalLoansDisbursed = filteredPledges.reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
 
     // Detailed transaction feed for table
@@ -41,6 +48,8 @@ class ReportManager {
 
     filteredPledges.forEach(p => {
       const cust = customers.find(c => c.customerId === p.customerId);
+      const disMode = p.disbursementMode || 'CASH';
+      const disRef = p.disbursementRefNo ? ` • Ref: ${p.disbursementRefNo}` : '';
       rows.push({
         type: 'LOAN_DISBURSED',
         typeLabel: 'New Pledge Loan',
@@ -49,8 +58,9 @@ class ReportManager {
         customerName: cust ? cust.nameEn : p.customerId,
         inflow: 0,
         outflow: p.loanAmount,
-        mode: 'CASH',
-        notes: `${p.totalNetWeight}g Net Gold (${p.packetId})`
+        mode: disMode,
+        referenceNo: p.disbursementRefNo || '',
+        notes: `${p.totalNetWeight}g Net Gold (${p.packetId})${disRef}`
       });
     });
 
@@ -65,7 +75,8 @@ class ReportManager {
         inflow: pay.amount,
         outflow: 0,
         mode: pay.paymentMode || 'CASH',
-        notes: `Pledge: ${pay.ticketNo} (Interest: ₹${pay.interestSettled})`
+        referenceNo: pay.referenceNo || '',
+        notes: `Pledge: ${pay.ticketNo} (Interest: ₹${pay.interestSettled})${pay.referenceNo ? ' • Ref: ' + pay.referenceNo : ''}`
       });
     });
 
@@ -75,10 +86,31 @@ class ReportManager {
       summary: {
         newPledgesCount: filteredPledges.length,
         totalLoansDisbursed,
+        cashLoansDisbursed,
+        upiLoansDisbursed,
+        bankLoansDisbursed,
+        cardLoansDisbursed,
+        otherLoansDisbursed,
+        loansByMode: {
+          CASH: cashLoansDisbursed,
+          UPI: upiLoansDisbursed,
+          BANK_TRANSFER: bankLoansDisbursed,
+          CARD: cardLoansDisbursed,
+          OTHER: otherLoansDisbursed
+        },
         totalCollections,
         cashCollections,
         upiCollections,
         bankCollections,
+        cardCollections,
+        otherCollections,
+        collectionsByMode: {
+          CASH: cashCollections,
+          UPI: upiCollections,
+          BANK_TRANSFER: bankCollections,
+          CARD: cardCollections,
+          OTHER: otherCollections
+        },
         interestCollected,
         redemptionsCount: filteredRedemptions.length,
         renewalsCount: filteredRenewals.length
@@ -107,7 +139,10 @@ class ReportManager {
 
     const rows = activePledges.map(p => {
       const cust = customers.find(c => c.customerId === p.customerId);
-      const accrual = window.paymentManager ? window.paymentManager.calculateInterestAccrual(p) : { netInterestDue: 0, totalAmountDue: p.loanAmount, daysElapsed: 0 };
+      const confirmedPayments = (window.paymentManager && window.paymentManager.payments) || [];
+      const accrual = (typeof FinancialCalculator !== 'undefined' && typeof FinancialCalculator.calculateInterestAccrual === 'function')
+        ? FinancialCalculator.calculateInterestAccrual(p, now, confirmedPayments)
+        : (window.paymentManager ? window.paymentManager.calculateInterestAccrual(p, now) : { netInterestDue: 0, totalAmountDue: p.loanAmount, daysElapsed: 0 });
 
       totalOutstandingPrincipal += (Number(p.loanAmount) || 0);
       totalEstimatedInterest += accrual.netInterestDue;
@@ -290,7 +325,12 @@ class ReportManager {
     const monthRedemptions = redemptions.filter(r => (r.redemptionDate || '').startsWith(monthPrefix));
 
     const totalLoansDisbursed = monthPledges.reduce((sum, p) => sum + (Number(p.loanAmount) || 0), 0);
-    const totalCollections = monthPayments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const cashCollections = monthPayments.filter(p => (p.paymentMode || 'CASH') === 'CASH').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const upiCollections = monthPayments.filter(p => p.paymentMode === 'UPI').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const bankCollections = monthPayments.filter(p => p.paymentMode === 'BANK_TRANSFER').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const cardCollections = monthPayments.filter(p => p.paymentMode === 'CARD').reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const otherCollections = monthPayments.filter(p => p.paymentMode === 'OTHER' || (p.paymentMode && !['CASH', 'UPI', 'BANK_TRANSFER', 'CARD'].includes(p.paymentMode))).reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
+    const totalCollections = cashCollections + upiCollections + bankCollections + cardCollections + otherCollections;
     const interestCollected = monthPayments.reduce((sum, p) => sum + (Number(p.interestSettled) || 0), 0);
     const principalCollected = monthPayments.reduce((sum, p) => sum + (Number(p.principalSettled) || 0), 0);
 
@@ -301,6 +341,18 @@ class ReportManager {
       totalLoansDisbursed,
       newPledgesCount: monthPledges.length,
       totalCollections,
+      cashCollections,
+      upiCollections,
+      bankCollections,
+      cardCollections,
+      otherCollections,
+      collectionsByMode: {
+        CASH: cashCollections,
+        UPI: upiCollections,
+        BANK_TRANSFER: bankCollections,
+        CARD: cardCollections,
+        OTHER: otherCollections
+      },
       interestCollected,
       principalCollected,
       redemptionsCount: monthRedemptions.length,
@@ -336,4 +388,5 @@ class ReportManager {
 }
 
 // Global ReportManager Instance
+window.ReportManager = ReportManager;
 window.reportManager = new ReportManager();

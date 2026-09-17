@@ -27,14 +27,24 @@ class RateManager {
     }
   }
 
+  get rates() {
+    return this.getRates();
+  }
+
+  getRates() {
+    return this.activeRates || this.loadRates();
+  }
+
   loadRates() {
     try {
-      const stored = localStorage.getItem(this.storageKey);
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        // Only return if it's the updated real market rate range (> 10,000 INR/g for 24K)
-        if (parsed && parsed.gold24k > 10000) {
-          return parsed;
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(this.storageKey);
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          // Only return if it's the updated real market rate range (> 10,000 INR/g for 24K)
+          if (parsed && parsed.gold24k > 10000) {
+            return parsed;
+          }
         }
       }
     } catch (e) {
@@ -50,7 +60,7 @@ class RateManager {
       source: 'LIVE_API',
       isOverride: false,
       updatedAt: new Date().toISOString(),
-      updatedBy: 'SYSTEM (api.metals.dev &bull; IBJA)',
+      updatedBy: 'SYSTEM (Gold-API &bull; Live Market Spot)',
       status: 'ACTIVE'
     };
 
@@ -60,9 +70,11 @@ class RateManager {
 
   loadHistory() {
     try {
-      const stored = localStorage.getItem(this.historyKey);
-      if (stored) {
-        return JSON.parse(stored);
+      if (typeof localStorage !== 'undefined') {
+        const stored = localStorage.getItem(this.historyKey);
+        if (stored) {
+          return JSON.parse(stored);
+        }
       }
     } catch (e) {
       console.warn('Failed to load rate history', e);
@@ -70,31 +82,21 @@ class RateManager {
 
     const now = new Date();
     const todayStr = now.toISOString().split('T')[0];
+    const todayTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
 
+    // Seed with a single entry using approximate rates (live sync will update it shortly)
     const seedHistory = [
       {
-        recordId: 'RATE-2026-0830-01',
+        recordId: `RATE-${todayStr}-SEED`,
         date: todayStr,
-        time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        time: todayTime,
         gold24k: 15958.00,
         gold22k: 14628.00,
         silver: 243.90,
-        source: 'LIVE_API',
+        source: 'MANUAL_SEED',
         isOverride: false,
-        updatedBy: 'SYSTEM (api.metals.dev - IBJA India)',
-        notes: 'Real-time IBJA market rate synchronization'
-      },
-      {
-        recordId: 'RATE-2026-0829-01',
-        date: '2026-08-29',
-        time: '10:00 AM',
-        gold24k: 15880.00,
-        gold22k: 14556.00,
-        silver: 241.50,
-        source: 'LIVE_API',
-        isOverride: false,
-        updatedBy: 'SYSTEM (api.metals.dev)',
-        notes: 'Previous closing market rate'
+        updatedBy: 'SYSTEM (Approximate — sync to update)',
+        notes: 'Initial approximate rate. Tap "Sync Now" on the Rates page to fetch live IBJA market rate.'
       }
     ];
 
@@ -105,9 +107,15 @@ class RateManager {
   saveRates(ratesData) {
     this.activeRates = ratesData;
     try {
-      localStorage.setItem(this.storageKey, JSON.stringify(ratesData));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.storageKey, JSON.stringify(ratesData));
+      }
     } catch (e) {
       console.warn('Failed to save rates to localStorage', e);
+    }
+    // Also save to IndexedDB ratesStore
+    if (typeof window !== 'undefined' && window.offlineDB && typeof window.offlineDB.putRecord === 'function') {
+      window.offlineDB.putRecord('ratesStore', { id: 'ACTIVE_RATE', ...ratesData }).catch(e => console.warn(e));
     }
     if (typeof window !== 'undefined') {
       window.dispatchEvent(new CustomEvent('metalRatesUpdated', { detail: ratesData }));
@@ -117,32 +125,81 @@ class RateManager {
   saveHistory(historyList) {
     this.history = historyList;
     try {
-      localStorage.setItem(this.historyKey, JSON.stringify(historyList));
+      if (typeof localStorage !== 'undefined') {
+        localStorage.setItem(this.historyKey, JSON.stringify(historyList));
+      }
     } catch (e) {
       console.warn('Failed to save rate history', e);
     }
   }
 
   /**
-   * Fetch Real-Time Live Rates from api.metals.dev
+   * Fetch Real-Time Live Rates from Live Bullion APIs with Multi-Provider Fallbacks
    */
   async fetchLatestRates(forceRefresh = false) {
-    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
       this.activeRates.source = 'CACHED';
       this.activeRates.status = 'CACHED_OFFLINE';
+      this.activeRates.statusLabel = '[ ⚠️ CACHED (Offline) ]';
       this.saveRates(this.activeRates);
-      return { success: true, rates: this.activeRates, isOffline: true };
+      return { success: true, rates: this.activeRates, isOffline: true, cached: true, statusLabel: '[ ⚠️ CACHED (Offline) ]' };
     }
 
+    // PROVIDER 1: Direct Free Real-Time Bullion Spot API (gold-api.com + open.er-api.com)
     try {
-      // Direct live fetch from api.metals.dev
+      const [goldRes, silverRes, fxRes] = await Promise.all([
+        fetch('https://api.gold-api.com/price/XAU'),
+        fetch('https://api.gold-api.com/price/XAG'),
+        fetch('https://open.er-api.com/v6/latest/USD')
+      ]);
+
+      if (goldRes.ok && silverRes.ok) {
+        const goldJson = await goldRes.json();
+        const silverJson = await silverRes.json();
+        const fxJson = fxRes.ok ? await fxRes.json() : null;
+
+        // 1 Troy Ounce = 31.1034768 grams
+        const TROY_OUNCE_IN_G = 31.1034768;
+        const usdInr = (fxJson && fxJson.rates && fxJson.rates.INR) ? Number(fxJson.rates.INR) : 86.85;
+
+        const xauUsd = Number(goldJson.price);
+        const xagUsd = Number(silverJson.price);
+
+        if (xauUsd > 0 && xagUsd > 0) {
+          const gold24k = Math.round(((xauUsd * usdInr) / TROY_OUNCE_IN_G) * 100) / 100;
+          const gold22k = Math.round(gold24k * (22 / 24) * 100) / 100;
+          const silver = Math.round(((xagUsd * usdInr) / TROY_OUNCE_IN_G) * 100) / 100;
+          const silverKg = Math.round(silver * 1000 * 100) / 100;
+
+          const freshRates = {
+            gold24k,
+            gold22k,
+            silver,
+            silverKg,
+            source: 'LIVE_API',
+            isOverride: false,
+            updatedAt: new Date().toISOString(),
+            updatedBy: 'SYSTEM (Gold-API &bull; Live Market Spot)',
+            status: 'ACTIVE',
+            statusLabel: '● LIVE MARKET SPOT API'
+          };
+
+          this.saveRates(freshRates);
+          this.logHistory(freshRates, 'Live market spot rate sync (XAU/XAG & FX USD/INR)');
+          return { success: true, rates: freshRates };
+        }
+      }
+    } catch (spotErr) {
+      console.warn('Live Bullion Spot API fallback:', spotErr);
+    }
+
+    // PROVIDER 2: Secondary Metals API (api.metals.dev)
+    try {
       const response = await fetch(LIVE_METALS_API_ENDPOINT);
       if (response.ok) {
         const json = await response.json();
         if (json && json.metals) {
           const m = json.metals;
-          
-          // In India, IBJA / MCX is the accurate domestic retail bullion standard
           const raw24k = m.ibja_gold || m.mcx_gold || m.gold || 15958.00;
           const gold24k = Math.round(Number(raw24k) * 100) / 100;
           const gold22k = Math.round(gold24k * (22 / 24) * 100) / 100;
@@ -159,7 +216,8 @@ class RateManager {
             isOverride: false,
             updatedAt: new Date().toISOString(),
             updatedBy: 'SYSTEM (api.metals.dev &bull; IBJA)',
-            status: 'ACTIVE'
+            status: 'ACTIVE',
+            statusLabel: '● LIVE MARKET API'
           };
 
           this.saveRates(freshRates);
@@ -171,7 +229,7 @@ class RateManager {
       console.warn('Direct live rate fetch fallback to backend / cache', err);
     }
 
-    // Backend proxy fallback if client fetch is blocked
+    // PROVIDER 3: Backend Google Apps Script Proxy fallback
     try {
       if (typeof window !== 'undefined' && window.api && typeof window.api.get === 'function') {
         const res = await window.api.get('getRates');
@@ -184,8 +242,9 @@ class RateManager {
             source: 'LIVE_API',
             isOverride: false,
             updatedAt: new Date().toISOString(),
-            updatedBy: 'SYSTEM (api.metals.dev)',
-            status: 'ACTIVE'
+            updatedBy: 'SYSTEM (Apps Script Proxy)',
+            status: 'ACTIVE',
+            statusLabel: '● LIVE MARKET API'
           };
 
           this.saveRates(fresh);
@@ -197,8 +256,12 @@ class RateManager {
       console.warn('Backend proxy rate fetch failed', backendErr);
     }
 
-    // Fallback to active cached rates
-    return { success: true, rates: this.activeRates, cached: true };
+    // PROVIDER 4: Fallback to active cached rates
+    this.activeRates.source = 'CACHED';
+    this.activeRates.status = 'CACHED_OFFLINE';
+    this.activeRates.statusLabel = '[ ⚠️ CACHED (Offline) ]';
+    this.saveRates(this.activeRates);
+    return { success: true, rates: this.activeRates, cached: true, isOffline: (typeof navigator !== 'undefined' && !navigator.onLine), statusLabel: '[ ⚠️ CACHED (Offline) ]' };
   }
 
   /**
@@ -228,6 +291,15 @@ class RateManager {
 
     this.saveRates(overriddenRates);
     this.logHistory(overriddenRates, notes || 'Counter admin manual rate override');
+
+    if (typeof window !== 'undefined' && window.auditLogger) {
+      window.auditLogger.log('MANUAL_RATE_OVERRIDE', 'RATES', overriddenRates.updatedBy, {
+        gold24k: overriddenRates.gold24k,
+        gold22k: overriddenRates.gold22k,
+        silver: overriddenRates.silver,
+        notes: overriddenRates.notes
+      });
+    }
 
     // Notify backend
     if (typeof window !== 'undefined' && window.api && typeof window.api.post === 'function') {
@@ -285,4 +357,15 @@ class RateManager {
 // Global RateManager Instance
 if (typeof window !== 'undefined') {
   window.rateManager = new RateManager();
+  window.ratesManager = window.rateManager;
+  window.RateManager = RateManager;
 }
+if (typeof global !== 'undefined') {
+  global.RateManager = RateManager;
+  global.rateManager = new RateManager();
+  global.ratesManager = global.rateManager;
+}
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { RateManager };
+}
+
